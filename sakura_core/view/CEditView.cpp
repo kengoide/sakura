@@ -416,6 +416,28 @@ void CEditView::Close()
 	m_pcRuler = NULL;
 }
 
+namespace {
+
+class ImmContext {
+public:
+	ImmContext(HWND hwnd) : m_hwnd(hwnd) { m_himc = ImmGetContext(hwnd); }
+	~ImmContext() { if (m_himc) ImmReleaseContext(m_hwnd, m_himc); }
+	HIMC Get() { return m_himc; }
+private:
+	HWND m_hwnd;
+	HIMC m_himc;
+};
+
+std::wstring GetCompositionString(HIMC imc, DWORD type) {
+	const int requiredSize = ImmGetCompositionString(imc, type, nullptr, 0);
+	std::wstring string(requiredSize / 2, L'\0');
+	const int actualSize = ImmGetCompositionString(imc, type, string.data(), requiredSize);
+	string.resize(actualSize / 2);
+	return string;
+}
+
+}
+
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 //                         イベント                            //
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
@@ -530,8 +552,23 @@ LRESULT CEditView::DispatchEvent(
 		}
 		return DefWindowProc( hwnd, uMsg, wParam, lParam );
 
+	case WM_IME_STARTCOMPOSITION:
+		return 0;
+
 	case WM_IME_COMPOSITION:
-		if( IsInsMode() && (lParam & GCS_RESULTSTR)){
+		if (IsInsMode() && (lParam & GCS_COMPSTR)) {
+			ImmContext imc(hwnd);
+			auto s = GetCompositionString(imc.Get(), GCS_COMPSTR);
+			s.push_back(L'\n');
+			OutputDebugStringW(s.c_str());
+
+			LayoutReplaceArg arg;
+			arg.sDelRange;
+			arg.pInsData;
+			m_pcEditDoc->m_cLayoutMgr.ReplaceData_CLayoutMgr(&arg);
+			return DefWindowProc( hwnd, uMsg, wParam, lParam );
+		}
+		else if( IsInsMode() && (lParam & GCS_RESULTSTR)){
 			HIMC hIMC;
 			DWORD dwSize;
 			HGLOBAL hstr;
