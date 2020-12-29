@@ -26,9 +26,12 @@
 #define SAKURA_CCOLORSTRATEGY_96B6EB56_C928_4B89_8841_166AAAB8D760_H_
 #pragma once
 
-#include "view/CEditView.h"
+// 要先行定義
+// #include "view/CEditView.h"
 #include "EColorIndexType.h"
 #include "uiparts/CGraphics.h"
+
+class	CEditView;
 
 bool _IsPosKeywordHead(const CStringRef& cStr, int nPos);
 
@@ -91,7 +94,6 @@ struct SColorStrategyInfo{
 		, m_pStrategySelect(NULL)
 		, m_colorIdxBackLine(COLORIDX_TEXT)
 		, m_gr(hDC)
-		, m_composition(false)
 	{
 		m_cIndex.eColorIndex = COLORIDX_TEXT;
 		m_cIndex.eColorIndex2 = COLORIDX_TEXT;
@@ -116,10 +118,6 @@ struct SColorStrategyInfo{
 	CColor_Select*		m_pStrategySelect;
 	EColorIndexType		m_colorIdxBackLine;
 	CColor3Setting		m_cIndex;
-
-	bool m_composition;
-	std::vector<CompositionAttribute>::iterator m_compositionAttributeIterator;
-	CompositionAttributeKind m_compositionAttributeKind;
 
 	//! 色の切り替え
 	bool CheckChangeColor(const CStringRef& cLineStr);

@@ -97,7 +97,6 @@ bool CFigure_Text::DrawImpBlock(SColorStrategyInfo* pInfo, int nPos, int nLength
 		sFont.m_hFont = pInfo->m_pcView->GetFontset().ChooseFontHandle(fontNo, sFont.m_sFontAttr);
 		pInfo->m_gr.PushMyFont(sFont);
 	}
-
 	int nHeightMargin = pInfo->m_pcView->GetTextMetrics().GetCharHeightMarginByFontNo(fontNo);
 	pInfo->m_pcView->GetTextDrawer().DispText(
 		pInfo->m_gr,
@@ -105,8 +104,6 @@ bool CFigure_Text::DrawImpBlock(SColorStrategyInfo* pInfo, int nPos, int nLength
 		nHeightMargin,
 		&pInfo->m_pLineOfLogic[nIdx],
 		nLength,
-		pInfo->m_compositionAttributeKind,
-		GetStockObject(WHITE_PEN),
 		bTrans
 	);
 	if( fontNo ){

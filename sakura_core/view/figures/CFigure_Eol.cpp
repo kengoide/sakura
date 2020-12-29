@@ -246,8 +246,7 @@ void _DispEOF(
 	cEofType.SetGraphicsState_WhileThisObj(gr);
 	int fontNo = WCODE::GetFontNo('E');
 	int nHeightMargin = pcView->GetTextMetrics().GetCharHeightMarginByFontNo(fontNo);
-	pcView->GetTextDrawer().DispText(gr, pDispPos, nHeightMargin, szEof, nEofLen,
-		CompositionAttributeKind::NONE, nullptr, bTrans);
+	pcView->GetTextDrawer().DispText(gr, pDispPos, nHeightMargin, szEof, nEofLen, bTrans);
 }
 
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
