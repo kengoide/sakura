@@ -422,7 +422,7 @@ class ImmContext {
 public:
 	ImmContext(HWND hwnd) : m_hwnd(hwnd) { m_himc = ImmGetContext(hwnd); }
 	~ImmContext() { if (m_himc) ImmReleaseContext(m_hwnd, m_himc); }
-	HIMC Get() { return m_himc; }
+	operator HIMC() { return m_himc; }
 private:
 	HWND m_hwnd;
 	HIMC m_himc;
@@ -563,22 +563,33 @@ LRESULT CEditView::DispatchEvent(
 	case WM_IME_STARTCOMPOSITION: {
 		const CLayoutPoint start = GetCaret().GetCaretLayoutPos();
 		m_compositionStringRange.Set(start);
+
+		ImmContext imc(hwnd);
+		CANDIDATEFORM form;
+		form.dwIndex = 0;
+		form.dwStyle = CFS_CANDIDATEPOS;
+		form.ptCurrentPos.x = 0;
+		form.ptCurrentPos.y = GetTextArea().GetAreaBottom() - 200;
+		ImmSetCandidateWindow(imc, &form);
 		return 0;
 	}
 	case WM_IME_COMPOSITION:
 		if (!(lParam & 0x1fff)) {
-			ReplaceData_CEditView(m_compositionStringRange, L"", CLogicInt(0), true, nullptr);
+			ReplaceData_CEditView(m_compositionStringRange, nullptr, CLogicInt(0), false, nullptr);
+			m_compositionStringRange.Clear(0);
+			m_compositionAttributes.clear();
+			Call_OnPaint(PAINT_BODY, false);
 		}
 		else if (lParam & GCS_COMPSTR) {
 			ImmContext imc(hwnd);
-			std::wstring s = GetCompositionString(imc.Get(), GCS_COMPSTR);
+			std::wstring s = GetCompositionString(imc, GCS_COMPSTR);
 			OutputDebugStringW(s.c_str());
 			OutputDebugStringW(L"\n");
 
-			ReplaceData_CEditView(m_compositionStringRange, s.c_str(), CLogicInt(s.size()), true, nullptr);
+			ReplaceData_CEditView(m_compositionStringRange, s.c_str(), CLogicInt(s.size()), false, nullptr);
 
-			std::vector<char> attrs = GetCompositionAttributes<char>(imc.Get(), GCS_COMPATTR);
-			std::vector<int> clauses = GetCompositionAttributes<int>(imc.Get(), GCS_COMPCLAUSE);
+			std::vector<char> attrs = GetCompositionAttributes<char>(imc, GCS_COMPATTR);
+			std::vector<int> clauses = GetCompositionAttributes<int>(imc, GCS_COMPCLAUSE);
 
 			const CLayoutPoint layoutZero = m_compositionStringRange.GetFrom();
 			CLogicPoint logicZero;
@@ -600,10 +611,14 @@ LRESULT CEditView::DispatchEvent(
 			CLayoutPoint layoutTo;
 			m_pcEditDoc->m_cLayoutMgr.LogicToLayout(logicTo, &layoutTo);
 			m_compositionStringRange.SetTo(layoutTo);
+
+			Call_OnPaint(PAINT_BODY, false);
 			return 0;
 		}
 		else if (lParam & GCS_RESULTSTR) {
 			ReplaceData_CEditView(m_compositionStringRange, L"", CLogicInt(0), false, nullptr);
+			m_compositionStringRange.Clear(0);
+			m_compositionAttributes.clear();
 
 			HIMC hIMC;
 			DWORD dwSize;
@@ -662,8 +677,6 @@ LRESULT CEditView::DispatchEvent(
 
 	case WM_IME_ENDCOMPOSITION:
 		m_szComposition[0] = L'\0';
-		m_compositionStringRange.Clear(0);
-		m_compositionAttributes.clear();
 		return 0;
 
 	// From Here 2008.03.24 Moca ATOK等の要求にこたえる

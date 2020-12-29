@@ -24,6 +24,7 @@
 */
 
 #include "StdAfx.h"
+#include <numeric>
 #include <vector>
 #include <limits.h>
 #pragma comment(lib, "Msimg32.lib")
@@ -847,7 +848,8 @@ void CEditView::OnPaint2( HDC _hdc, PAINTSTRUCT *pPs, BOOL bDrawFromComptibleBmp
 
 	// From Here 2007.09.09 Moca 互換BMPによる画面バッファ
 	//     アンダーライン描画をメモリDCからのコピー前処理から後に移動
-	if ( m_pcEditWnd->GetActivePane() == m_nMyIndex ){
+	if ( m_pcEditWnd->GetActivePane() == m_nMyIndex &&
+		 m_compositionStringRange.IsOne() ) {
 		/* アクティブペインは、アンダーライン描画 */
 		GetCaret().m_cUnderLine.CaretUnderLineON( true, false );
 	}
@@ -861,51 +863,9 @@ void CEditView::OnPaint2( HDC _hdc, PAINTSTRUCT *pPs, BOOL bDrawFromComptibleBmp
 		GetCaret().ShowCaret_( this->GetHwnd() ); // 2002/07/22 novice
 
 	if (!m_compositionStringRange.IsOne()) {
-		HDC dc = GetDC();
-		{
-			CGraphics g(dc);
-			CLayoutInt layoutLineFrom = m_compositionStringRange.GetFrom().GetY();
-			DispPos sPos(nCharDx, GetTextMetrics().GetHankakuDy());
-			sPos.InitDrawPos(CMyPoint(
-				GetTextArea().GetAreaLeft() - (Int)GetTextArea().GetViewLeftCol() * nCharDx,
-				GetTextArea().GetAreaTop() + (Int)( layoutLineFrom - GetTextArea().GetViewTopLine() ) * nLineHeight
-			));
-			sPos.SetLayoutLineRef(layoutLineFrom);
-
-			g.PushPen(RGB(255, 0, 0), 2);
-
-			for (const CompositionAttribute& attr : m_compositionAttributes) {
-				const CLayout* layout;
-				CLogicInt logicOffset;
-				CLogicInt layoutLength;
-				for (;;) {
-					layout = sPos.GetLayoutRef();
-					logicOffset = layout->GetLogicOffset();
-					layoutLength = layout->GetLengthWithoutEOL();
-					if (attr.start <= logicOffset + layoutLength)
-						break;
-					sPos.ForwardDrawLine(1);
-					sPos.ForwardLayoutLineRef(1);
-				}
-				const CDocLine* docLine = layout->GetDocLineRef();
-				if (attr.end <= logicOffset + layoutLength) {
-					SIZE sizeBefore{};
-					GetTextExtentPoint32(dc, docLine->GetPtr(), attr.start, &sizeBefore);
-					SIZE sizeText{};
-					GetTextExtentPoint32(dc, docLine->GetPtr() + attr.start, attr.end - attr.start, &sizeText);
-
-					int drawX = sPos.GetDrawPos().GetX();
-					int drawY = sPos.GetDrawPos().GetY();
-					g.DrawLine(drawX + sizeBefore.cx,
-								drawY + sPos.GetCharHeight(),
-								drawX + sizeText.cx,
-								drawY + sPos.GetCharHeight());
-				} else {
-				}
-			}
-			g.PopPen();
-		}
-		::ReleaseDC(GetHwnd(), dc);
+		HDC hdc = GetDC();
+		DrawCompositionAttributes(hdc);
+		ReleaseDC(hdc);
 	}
 	return;
 }
@@ -1134,7 +1094,7 @@ bool CEditView::DrawLayoutLine(SColorStrategyInfo* pInfo)
 				nextRenderType = CFigure_Text::GetRenderType(pInfo);
 			}
 			if (CFigure_Text::IsRenderType_Block(prevRenderType) &&
-				(prevRenderType != nextRenderType || nDrawBlockLen < nPosLength)) {
+				(prevRenderType != nextRenderType || (nDrawBlockLen < nPosLength))) {
 				if (0 < nPosLength) {
 					CFigure_Text::DrawImpBlock(pInfo, nPosBgn, nPosLength);
 					nPosBgn = nPosInLogic;
@@ -1501,6 +1461,142 @@ void CEditView::UseCompatibleDC(BOOL fCache)
 			::DeleteDC( m_hdcCompatDC );
 			DEBUG_TRACE(L"CEditView::UseCompatibleDC: Deleted.\n");
 			m_hdcCompatDC = NULL;
+		}
+	}
+}
+
+namespace {
+
+int GetFontNumber(std::wstring_view s) {
+	int nLengthFirst = CNativeW::GetSizeOfChar(s.data(), s.length(), 0);
+
+	// 先頭の文字のフォントを採用する。フォント判別は上位で行う必要がある
+	int fontNo = nLengthFirst == 2 ? WCODE::GetFontNo2(s[0], s[1])
+		                           : WCODE::GetFontNo(s[0]);
+	return fontNo;
+}
+/*
+	if( fontNo ){
+		CTypeSupport cCurrentType(&view, COLORIDX_TEXT);	// 周辺の色（現在の指定色/選択色）
+		SFONT sFont;
+		sFont.m_sFontAttr.m_bBoldFont  = (blendColor ? cCurrentType2.IsBoldFont() : cCurrentType.IsBoldFont());
+		sFont.m_sFontAttr.m_bUnderLine = (blendColor ? cCurrentType2.HasUnderLine() : cCurrentType.HasUnderLine());
+		sFont.m_hFont = pInfo->m_pcView->GetFontset().ChooseFontHandle(fontNo, sFont.m_sFontAttr);
+		pInfo->m_gr.PushMyFont(sFont);
+	}
+	int nHeightMargin = pInfo->m_pcView->GetTextMetrics().GetCharHeightMarginByFontNo(fontNo);
+	pInfo->m_pcView->GetTextDrawer().DispText(
+		pInfo->m_gr,
+		pInfo->m_pDispPos,
+		nHeightMargin,
+		&pInfo->m_pLineOfLogic[nIdx],
+		nLength,
+		bTrans
+	);
+	if( fontNo ){
+		pInfo->m_gr.PopMyFont();
+	}
+}
+*/
+
+void DrawUnderline(CEditView& view, CGraphics& gr, CompositionAttributeKind attr,
+	               const CMyPoint& pos,
+	               const wchar_t* s, int start, int length) {
+	const int fontNumber = GetFontNumber({s + start});
+	if (fontNumber) {
+		CTypeSupport cCurrentType(&view, COLORIDX_TEXT);	// 周辺の色（現在の指定色/選択色）
+		SFONT sFont;
+		sFont.m_sFontAttr.m_bBoldFont  = cCurrentType.IsBoldFont();
+		sFont.m_sFontAttr.m_bUnderLine = cCurrentType.HasUnderLine();
+		sFont.m_hFont = view.GetFontset().ChooseFontHandle(fontNumber, sFont.m_sFontAttr);
+		gr.PushMyFont(sFont);
+	}
+
+	const CTextMetrics& metrics = view.GetTextMetricsW();
+	static std::vector<int> vDxArray(1);
+	const int* pDxArray = metrics.GenerateDxArray2(&vDxArray, s, start + length);
+
+	if (fontNumber) {
+		gr.PopMyFont();
+	}
+
+	const int widthBefore = std::accumulate(pDxArray, pDxArray + start, 0);
+	const int widthText = std::accumulate(pDxArray + start, pDxArray + start + length, 0);
+
+	const int drawX = pos.GetX();
+	const int drawY = pos.GetY();
+	const int nHeightMargin = view.GetTextMetrics().GetCharHeightMarginByFontNo(fontNumber);
+
+	const int x1 = drawX + widthBefore + 1;
+	const int y1 = drawY + metrics.GetHankakuDy() + nHeightMargin;
+	const int x2 = drawX + widthBefore + widthText - 1;
+	const int y2 = drawY + metrics.GetHankakuDy() + nHeightMargin;
+	if (attr == CompositionAttributeKind::INPUT) {
+		gr.PushPen(0, 2);
+		gr.DrawDotLine(x1, y1, x2, y2);
+	} else if (attr == CompositionAttributeKind::CONVERTED) {
+		gr.PushPen(0, 1);
+		gr.DrawLine(x1, y1, x2, y2);
+	} else if (attr == CompositionAttributeKind::TARGET_CONVERTED) {
+		gr.PushPen(0, 2);
+		gr.DrawLine(x1, y1, x2, y2);
+	} else {
+		gr.PushPen(0, 1);
+		gr.DrawLine(x1, y1, x2, y2);
+	}
+	gr.PopPen();
+}
+
+}
+
+void CEditView::DrawCompositionAttributes(HDC hdc)
+{
+	CGraphics gr(hdc);
+	const int nLineHeight = GetTextMetrics().GetHankakuDy();
+	const int nCharDx = GetTextMetrics().GetCharPxWidth();
+
+	CLayoutInt layoutLineFrom = m_compositionStringRange.GetFrom().GetY();
+	DispPos sPos(nCharDx, GetTextMetrics().GetHankakuDy());
+	sPos.InitDrawPos(CMyPoint(
+		GetTextArea().GetAreaLeft() - (Int)GetTextArea().GetViewLeftCol() * nCharDx,
+		GetTextArea().GetAreaTop() + (Int)( layoutLineFrom - GetTextArea().GetViewTopLine() ) * nLineHeight
+	));
+	sPos.SetLayoutLineRef(layoutLineFrom);
+
+	for (const CompositionAttribute& attr : m_compositionAttributes) {
+		const CLayout* layout;
+		CLogicInt logicOffset;
+		CLogicInt layoutLength;
+		for (;;) {
+			layout = sPos.GetLayoutRef();
+			logicOffset = layout->GetLogicOffset();
+			layoutLength = layout->GetLengthWithoutEOL();
+			if (attr.start <= logicOffset + layoutLength)
+				break;
+			sPos.ForwardDrawLine(1);
+			sPos.ForwardLayoutLineRef(1);
+			sPos.ResetDrawCol();
+		}
+		const CDocLine* docLine = layout->GetDocLineRef();
+		if (attr.end <= logicOffset + layoutLength) {
+			DrawUnderline(*this, gr, attr.kind, sPos.GetDrawPos(),
+				docLine->GetPtr() + logicOffset,
+				attr.start - logicOffset, attr.end - attr.start);
+		} else {
+			// TODO: レイアウト3行以上にまたがるコンポジション
+			CLogicInt middle = logicOffset + layoutLength;
+			DrawUnderline(*this, gr, attr.kind, sPos.GetDrawPos(),
+				docLine->GetPtr() + logicOffset,
+				attr.start - logicOffset, middle - attr.start);
+			sPos.ForwardDrawLine(1);
+			sPos.ForwardLayoutLineRef(1);
+			sPos.ResetDrawCol();
+			layout = sPos.GetLayoutRef();
+			logicOffset = layout->GetLogicOffset();
+			layoutLength = layout->GetLengthWithoutEOL();
+			DrawUnderline(*this, gr, attr.kind, sPos.GetDrawPos(),
+				docLine->GetPtr() + logicOffset,
+				middle - logicOffset, attr.end - middle);
 		}
 	}
 }

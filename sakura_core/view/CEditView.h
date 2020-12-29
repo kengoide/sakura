@@ -281,6 +281,8 @@ public:
 	void RedrawLines( CLayoutYInt top, CLayoutYInt bottom );
 	void CaretUnderLineON(bool bDraw, bool bDrawPaint, bool DisalbeUnderLine);						/* カーソル行アンダーラインのON */
 	void CaretUnderLineOFF(bool bDraw, bool bDrawPaint, bool bResetFlag, bool DisalbeUnderLine);				/* カーソル行アンダーラインのOFF */
+	void DrawCompositionAttributes(HDC hdc);
+
 	bool GetDrawSwitch() const
 	{
 		return m_bDrawSWITCH;
