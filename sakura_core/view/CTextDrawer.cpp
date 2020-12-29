@@ -49,7 +49,7 @@ using namespace std;
 @@@ 2007.08.25 kobake 戻り値を void に変更。引数 x, y を DispPos に変更
 */
 void CTextDrawer::DispText( HDC hdc, DispPos* pDispPos, int marginy, const wchar_t* pData, int nLength,
-	std::optional<CompositionDisplayAttributeKind> compositionKind, HGDIOBJ compositionUnderlinePen, bool bTransparent ) const
+	CompositionAttributeKind compositionKind, HGDIOBJ compositionUnderlinePen, bool bTransparent ) const
 {
 	if( 0 >= nLength ){
 		return;
@@ -136,7 +136,7 @@ void CTextDrawer::DispText( HDC hdc, DispPos* pDispPos, int marginy, const wchar
 		}
 
 		COLORREF color;
-		if (compositionKind) {
+		if (compositionKind != CompositionAttributeKind::NONE) {
 			color = SetBkColor(hdc, RGB(255, 200, 255));
 		}
 
@@ -152,7 +152,7 @@ void CTextDrawer::DispText( HDC hdc, DispPos* pDispPos, int marginy, const wchar
 			pDrawDxArray			//文字間隔の入った配列
 		);
 
-		if (compositionKind) {
+		if (compositionKind != CompositionAttributeKind::NONE) {
 			SetBkColor(hdc, color);
 		}
 	}

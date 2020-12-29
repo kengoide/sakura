@@ -859,6 +859,54 @@ void CEditView::OnPaint2( HDC _hdc, PAINTSTRUCT *pPs, BOOL bDrawFromComptibleBmp
 	/* キャレットを現在位置に表示します */
 	if( bCaretShowFlag_Old )	// 2008.06.09 ryoji
 		GetCaret().ShowCaret_( this->GetHwnd() ); // 2002/07/22 novice
+
+	if (!m_compositionStringRange.IsOne()) {
+		HDC dc = GetDC();
+		{
+			CGraphics g(dc);
+			CLayoutInt layoutLineFrom = m_compositionStringRange.GetFrom().GetY();
+			DispPos sPos(nCharDx, GetTextMetrics().GetHankakuDy());
+			sPos.InitDrawPos(CMyPoint(
+				GetTextArea().GetAreaLeft() - (Int)GetTextArea().GetViewLeftCol() * nCharDx,
+				GetTextArea().GetAreaTop() + (Int)( layoutLineFrom - GetTextArea().GetViewTopLine() ) * nLineHeight
+			));
+			sPos.SetLayoutLineRef(layoutLineFrom);
+
+			g.PushPen(RGB(255, 0, 0), 2);
+
+			for (const CompositionAttribute& attr : m_compositionAttributes) {
+				const CLayout* layout;
+				CLogicInt logicOffset;
+				CLogicInt layoutLength;
+				for (;;) {
+					layout = sPos.GetLayoutRef();
+					logicOffset = layout->GetLogicOffset();
+					layoutLength = layout->GetLengthWithoutEOL();
+					if (attr.start <= logicOffset + layoutLength)
+						break;
+					sPos.ForwardDrawLine(1);
+					sPos.ForwardLayoutLineRef(1);
+				}
+				const CDocLine* docLine = layout->GetDocLineRef();
+				if (attr.end <= logicOffset + layoutLength) {
+					SIZE sizeBefore{};
+					GetTextExtentPoint32(dc, docLine->GetPtr(), attr.start, &sizeBefore);
+					SIZE sizeText{};
+					GetTextExtentPoint32(dc, docLine->GetPtr() + attr.start, attr.end - attr.start, &sizeText);
+
+					int drawX = sPos.GetDrawPos().GetX();
+					int drawY = sPos.GetDrawPos().GetY();
+					g.DrawLine(drawX + sizeBefore.cx,
+								drawY + sPos.GetCharHeight(),
+								drawX + sizeText.cx,
+								drawY + sPos.GetCharHeight());
+				} else {
+				}
+			}
+			g.PopPen();
+		}
+		::ReleaseDC(GetHwnd(), dc);
+	}
 	return;
 }
 
@@ -922,6 +970,14 @@ bool CEditView::DrawLogicLine(
 		pInfo->m_nPosInLogic = pcLayout?pcLayout->GetLogicOffset():CLogicInt(0);
 	}
 
+	CLayoutInt layoutLineOffset = pInfo->m_pDispPos->GetLayoutLineRef();
+	if (!m_compositionStringRange.IsOne() &&
+		(m_compositionStringRange.GetFrom().GetY() <= layoutLineOffset &&
+		 layoutLineOffset <= m_compositionStringRange.GetTo().GetY())) {
+		pInfo->m_composition = true;
+		pInfo->m_compositionAttributeIterator = m_compositionAttributes.begin();
+	}
+
 	for (;;) {
 		//対象行が描画範囲外だったら終了
 		if( GetTextArea().GetBottomLine() < pInfo->m_pDispPos->GetLayoutLineRef() ){
@@ -950,6 +1006,9 @@ bool CEditView::DrawLogicLine(
 			break;
 		}
 	}
+
+	pInfo->m_composition = false;
+	pInfo->m_compositionAttributeKind = CompositionAttributeKind::NONE;
 
 	return bDispEOF;
 }
@@ -1075,22 +1134,25 @@ bool CEditView::DrawLayoutLine(SColorStrategyInfo* pInfo)
 		int nPosTo = pcLayout->GetLogicOffset() + pcLayout->GetLengthWithEOL();
 		CFigureManager* pcFigureManager = CFigureManager::getInstance();
 		FigureRenderType prevRenderType = CFigure_Text::RenderType_None;
-		bool mayContainCompositionString = false;
-		if (!m_compositionStringRange.IsOne() &&
-			(m_compositionStringRange.GetFrom().GetY() <= nDrawY &&
-			 nDrawY <= m_compositionStringRange.GetTo().GetY())) {
-			mayContainCompositionString = true;
-		}
-		CompositionDisplayAttributeKind prevCompositionAttribute =
-			CompositionDisplayAttributeKind::NONE;
+		CompositionAttributeKind prevCompositionAttribute =
+			CompositionAttributeKind::NONE;
 		while(pInfo->m_nPosInLogic < nPosTo){
 			int nPosInLogic = pInfo->GetPosInLogic(); // FowardChars/DrawImpで更新される
 			nPosLength = nPosInLogic - nPosBgn;
 
-			CompositionDisplayAttributeKind nextCompositionAttribute =
-				CompositionDisplayAttributeKind::NONE;
-			if (mayContainCompositionString) {
-
+			CompositionAttributeKind nextCompositionAttribute = CompositionAttributeKind::NONE;
+			if (pInfo->m_composition) {
+				auto& it = pInfo->m_compositionAttributeIterator;
+				if (it->end == nPosInLogic) {
+					++it;
+					if (it == m_compositionAttributes.end()) {
+						pInfo->m_composition = false;
+					}
+					nextCompositionAttribute = CompositionAttributeKind::NONE;
+				}
+				if (pInfo->m_composition && it->start == nPosInLogic) {
+					nextCompositionAttribute = it->kind;
+				}
 			}
 
 			//1文字情報取得
@@ -1102,7 +1164,9 @@ bool CEditView::DrawLayoutLine(SColorStrategyInfo* pInfo)
 				nextRenderType = CFigure_Text::GetRenderType(pInfo);
 			}
 			if (CFigure_Text::IsRenderType_Block(prevRenderType) &&
-				(prevRenderType != nextRenderType || (nDrawBlockLen < nPosLength))) {
+				(prevRenderType != nextRenderType ||
+				 prevCompositionAttribute != nextCompositionAttribute ||
+				 (nDrawBlockLen < nPosLength))) {
 				if (0 < nPosLength) {
 					CFigure_Text::DrawImpBlock(pInfo, nPosBgn, nPosLength);
 					nPosBgn = nPosInLogic;
@@ -1110,6 +1174,8 @@ bool CEditView::DrawLayoutLine(SColorStrategyInfo* pInfo)
 				}
 			}
 			prevRenderType = nextRenderType;
+			prevCompositionAttribute = nextCompositionAttribute;
+			pInfo->m_compositionAttributeKind = nextCompositionAttribute;
 
 			//色切替
 			if( pInfo->CheckChangeColor(cLineStr) ){

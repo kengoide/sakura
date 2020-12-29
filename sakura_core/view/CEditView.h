@@ -112,14 +112,15 @@ typedef struct tagRECONVERTSTRING {
 ///	@date 2006.05.19 genta
 const int CMD_FROM_MOUSE = 2;
 
-enum class CompositionDisplayAttributeKind : char {
-	NONE, INPUT, TARGET_CONVERTED, CONVERTED,
+enum class CompositionAttributeKind : char {
+	NONE = -1, INPUT, TARGET_CONVERTED, CONVERTED,
 	TARGET_NOTCONVERTED, INPUT_ERROR, FIXEDCONVERTED
 };
 
-struct CompositionDisplayAttribute {
-	CLayoutRange range;
-	CompositionDisplayAttributeKind kind;
+struct CompositionAttribute {
+	CLogicInt start;
+	CLogicInt end;
+	CompositionAttributeKind kind;
 };
 
 /*-----------------------------------------------------------------------
@@ -762,7 +763,7 @@ public:
 	// IME
 	WCHAR			m_szComposition[512]; // IMR_DOCUMENTFEED用入力中文字列データ
 	CLayoutRange	m_compositionStringRange;
-	std::vector<CompositionDisplayAttribute> m_compositionDisplayAttributes;
+	std::vector<CompositionAttribute> m_compositionAttributes;
 
 private:
 	int				m_nLastReconvLine;             //2002.04.09 minfu 再変換情報保存用;

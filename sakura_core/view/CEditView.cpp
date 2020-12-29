@@ -580,23 +580,25 @@ LRESULT CEditView::DispatchEvent(
 			std::vector<char> attrs = GetCompositionAttributes<char>(imc.Get(), GCS_COMPATTR);
 			std::vector<int> clauses = GetCompositionAttributes<int>(imc.Get(), GCS_COMPCLAUSE);
 
-			CLayoutPoint layoutZero = m_compositionStringRange.GetFrom();
+			const CLayoutPoint layoutZero = m_compositionStringRange.GetFrom();
 			CLogicPoint logicZero;
 			m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(layoutZero, &logicZero);
-			CLayoutPoint layoutFrom, layoutTo;
 			std::vector<int>::iterator it = clauses.begin();
 			++it;  // 先頭は必ず0なので読み飛ばす
-			layoutFrom = layoutZero;
-			m_compositionDisplayAttributes.clear();
+			CLogicInt logicFromX = logicZero.GetX();
+			CLogicInt logicToX;
+			m_compositionAttributes.clear();
 			for (; it != clauses.end(); ++it) {
-				CLogicPoint logicTo = logicZero;
-				logicTo.Offset(*it, 0);
-				m_pcEditDoc->m_cLayoutMgr.LogicToLayout(logicTo, &layoutTo);
-				m_compositionDisplayAttributes.push_back(
-					{CLayoutRange(layoutFrom, layoutTo),
-					 static_cast<CompositionDisplayAttributeKind>(attrs[*it - 1] + 1)});
-				layoutFrom = layoutTo;
+				logicToX = logicZero.GetX() + *it;
+				m_compositionAttributes.push_back(
+					{logicFromX, logicToX,
+					 static_cast<CompositionAttributeKind>(attrs[*it - 1])});
+				logicFromX = logicToX;
 			}
+			CLogicPoint logicTo = logicZero;
+			logicTo.Offset(logicToX, 0);
+			CLayoutPoint layoutTo;
+			m_pcEditDoc->m_cLayoutMgr.LogicToLayout(logicTo, &layoutTo);
 			m_compositionStringRange.SetTo(layoutTo);
 			return 0;
 		}
@@ -661,7 +663,7 @@ LRESULT CEditView::DispatchEvent(
 	case WM_IME_ENDCOMPOSITION:
 		m_szComposition[0] = L'\0';
 		m_compositionStringRange.Clear(0);
-		m_compositionDisplayAttributes.clear();
+		m_compositionAttributes.clear();
 		return 0;
 
 	// From Here 2008.03.24 Moca ATOK等の要求にこたえる

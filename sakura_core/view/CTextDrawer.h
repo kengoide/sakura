@@ -37,7 +37,7 @@ class CLayout;
 #include "DispPos.h"
 
 class CGraphics;
-enum class CompositionDisplayAttributeKind : char;
+enum class CompositionAttributeKind : char;
 
 class CTextDrawer{
 public:
@@ -57,7 +57,7 @@ public:
 	//2007.08.25 kobake 戻り値を void に変更。引数 x, y を DispPos に変更
 	//実際には pX と nX が更新される。
 	void DispText( HDC hdc, DispPos* pDispPos, int marginy, const wchar_t* pData, int nLength,
-		           std::optional<CompositionDisplayAttributeKind> compositionKind,
+		           CompositionAttributeKind compositionKind,
 		           HGDIOBJ compositionUnderlinePen,
 		           bool bTransparent = false ) const; // テキスト表示
 
