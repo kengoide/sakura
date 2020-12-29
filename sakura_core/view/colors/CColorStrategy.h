@@ -119,6 +119,8 @@ struct SColorStrategyInfo{
 	EColorIndexType		m_colorIdxBackLine;
 	CColor3Setting		m_cIndex;
 
+	bool m_composition;
+
 	//! 色の切り替え
 	bool CheckChangeColor(const CStringRef& cLineStr);
 	void DoChangeColor(CColor3Setting *pcColor);

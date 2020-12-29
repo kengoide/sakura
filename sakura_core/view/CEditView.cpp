@@ -436,6 +436,14 @@ std::wstring GetCompositionString(HIMC imc, DWORD type) {
 	return string;
 }
 
+template <typename T>
+std::vector<T> GetCompositionAttributes(HIMC imc, DWORD type) {
+	const int requiredBytes = ImmGetCompositionString(imc, type, nullptr, 0);
+	std::vector<T> buffer(requiredBytes / sizeof(T));
+	ImmGetCompositionString(imc, type, buffer.data(), requiredBytes);
+	return buffer;
+}
+
 }
 
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
@@ -552,23 +560,49 @@ LRESULT CEditView::DispatchEvent(
 		}
 		return DefWindowProc( hwnd, uMsg, wParam, lParam );
 
-	case WM_IME_STARTCOMPOSITION:
+	case WM_IME_STARTCOMPOSITION: {
+		const CLayoutPoint start = GetCaret().GetCaretLayoutPos();
+		m_compositionStringRange.Set(start);
 		return 0;
-
+	}
 	case WM_IME_COMPOSITION:
-		if (IsInsMode() && (lParam & GCS_COMPSTR)) {
-			ImmContext imc(hwnd);
-			auto s = GetCompositionString(imc.Get(), GCS_COMPSTR);
-			s.push_back(L'\n');
-			OutputDebugStringW(s.c_str());
-
-			LayoutReplaceArg arg;
-			arg.sDelRange;
-			arg.pInsData;
-			m_pcEditDoc->m_cLayoutMgr.ReplaceData_CLayoutMgr(&arg);
-			return DefWindowProc( hwnd, uMsg, wParam, lParam );
+		if (!(lParam & 0x1fff)) {
+			ReplaceData_CEditView(m_compositionStringRange, L"", CLogicInt(0), true, nullptr);
 		}
-		else if( IsInsMode() && (lParam & GCS_RESULTSTR)){
+		else if (lParam & GCS_COMPSTR) {
+			ImmContext imc(hwnd);
+			std::wstring s = GetCompositionString(imc.Get(), GCS_COMPSTR);
+			OutputDebugStringW(s.c_str());
+			OutputDebugStringW(L"\n");
+
+			ReplaceData_CEditView(m_compositionStringRange, s.c_str(), CLogicInt(s.size()), true, nullptr);
+
+			std::vector<char> attrs = GetCompositionAttributes<char>(imc.Get(), GCS_COMPATTR);
+			std::vector<int> clauses = GetCompositionAttributes<int>(imc.Get(), GCS_COMPCLAUSE);
+
+			CLayoutPoint layoutZero = m_compositionStringRange.GetFrom();
+			CLogicPoint logicZero;
+			m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(layoutZero, &logicZero);
+			CLayoutPoint layoutFrom, layoutTo;
+			std::vector<int>::iterator it = clauses.begin();
+			++it;  // 先頭は必ず0なので読み飛ばす
+			layoutFrom = layoutZero;
+			m_compositionDisplayAttributes.clear();
+			for (; it != clauses.end(); ++it) {
+				CLogicPoint logicTo = logicZero;
+				logicTo.Offset(*it, 0);
+				m_pcEditDoc->m_cLayoutMgr.LogicToLayout(logicTo, &layoutTo);
+				m_compositionDisplayAttributes.push_back(
+					{CLayoutRange(layoutFrom, layoutTo),
+					 static_cast<CompositionDisplayAttributeKind>(attrs[*it - 1] + 1)});
+				layoutFrom = layoutTo;
+			}
+			m_compositionStringRange.SetTo(layoutTo);
+			return 0;
+		}
+		else if (lParam & GCS_RESULTSTR) {
+			ReplaceData_CEditView(m_compositionStringRange, L"", CLogicInt(0), false, nullptr);
+
 			HIMC hIMC;
 			DWORD dwSize;
 			HGLOBAL hstr;
@@ -620,19 +654,15 @@ LRESULT CEditView::DispatchEvent(
 			GlobalFree( hstr );
 
 			PostprocessCommand_hokan();	// 補完実行
-			return DefWindowProc( hwnd, uMsg, wParam, lParam );
+			return 0;
 		}
-		return DefWindowProc( hwnd, uMsg, wParam, lParam );
+		return 0;
 
 	case WM_IME_ENDCOMPOSITION:
 		m_szComposition[0] = L'\0';
-		return DefWindowProc( hwnd, uMsg, wParam, lParam );
-
-	case WM_IME_CHAR:
-		if( ! IsInsMode() /* Oct. 2, 2005 genta */ ){ /* 上書きモードか？ */
-			GetCommander().HandleCommand( F_IME_CHAR, true, wParam, 0, 0, 0 );
-		}
-		return 0L;
+		m_compositionStringRange.Clear(0);
+		m_compositionDisplayAttributes.clear();
+		return 0;
 
 	// From Here 2008.03.24 Moca ATOK等の要求にこたえる
 	case WM_PASTE:

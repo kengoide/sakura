@@ -42,6 +42,8 @@
 #define SAKURA_CEDITVIEW_54DE503F_6F97_4A16_8165_27F5F0D232E2_H_
 #pragma once
 
+#include <vector>
+
 #include <Windows.h>
 #include <ObjIdl.h>  // LPDATAOBJECT
 #include <ShellAPI.h>  // HDROP
@@ -109,6 +111,16 @@ typedef struct tagRECONVERTSTRING {
 ///	マウスからコマンドが実行された場合の上位ビット
 ///	@date 2006.05.19 genta
 const int CMD_FROM_MOUSE = 2;
+
+enum class CompositionDisplayAttributeKind : char {
+	NONE, INPUT, TARGET_CONVERTED, CONVERTED,
+	TARGET_NOTCONVERTED, INPUT_ERROR, FIXEDCONVERTED
+};
+
+struct CompositionDisplayAttribute {
+	CLayoutRange range;
+	CompositionDisplayAttributeKind kind;
+};
 
 /*-----------------------------------------------------------------------
 クラスの宣言
@@ -746,9 +758,12 @@ public:
 	BOOL			m_bInMenuLoop;			/* メニュー モーダル ループに入っています */
 	CDicMgr			m_cDicMgr;				/* 辞書マネージャ */
 
-	WCHAR			m_szComposition[512]; // IMR_DOCUMENTFEED用入力中文字列データ
 
 	// IME
+	WCHAR			m_szComposition[512]; // IMR_DOCUMENTFEED用入力中文字列データ
+	CLayoutRange	m_compositionStringRange;
+	std::vector<CompositionDisplayAttribute> m_compositionDisplayAttributes;
+
 private:
 	int				m_nLastReconvLine;             //2002.04.09 minfu 再変換情報保存用;
 	int				m_nLastReconvIndex;            //2002.04.09 minfu 再変換情報保存用;

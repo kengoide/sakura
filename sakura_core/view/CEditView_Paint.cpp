@@ -1070,13 +1070,29 @@ bool CEditView::DrawLayoutLine(SColorStrategyInfo* pInfo)
 		int nPosBgn = pInfo->m_nPosInLogic; // Logic
 		int nPosLength = 0;
 		CLayoutInt nDrawX = pInfo->m_pDispPos->GetDrawCol(); // Layout
+		CLayoutInt nDrawY = pInfo->m_pDispPos->GetDrawLine();
 		const int nDrawBlockLen = 1000; // ExtTextOutの長さ制限にかからない適当な値
 		int nPosTo = pcLayout->GetLogicOffset() + pcLayout->GetLengthWithEOL();
 		CFigureManager* pcFigureManager = CFigureManager::getInstance();
 		FigureRenderType prevRenderType = CFigure_Text::RenderType_None;
+		bool mayContainCompositionString = false;
+		if (!m_compositionStringRange.IsOne() &&
+			(m_compositionStringRange.GetFrom().GetY() <= nDrawY &&
+			 nDrawY <= m_compositionStringRange.GetTo().GetY())) {
+			mayContainCompositionString = true;
+		}
+		CompositionDisplayAttributeKind prevCompositionAttribute =
+			CompositionDisplayAttributeKind::NONE;
 		while(pInfo->m_nPosInLogic < nPosTo){
 			int nPosInLogic = pInfo->GetPosInLogic(); // FowardChars/DrawImpで更新される
 			nPosLength = nPosInLogic - nPosBgn;
+
+			CompositionDisplayAttributeKind nextCompositionAttribute =
+				CompositionDisplayAttributeKind::NONE;
+			if (mayContainCompositionString) {
+
+			}
+
 			//1文字情報取得
 			CFigure& cFigure = pcFigureManager->GetFigure(&cLineStr.GetPtr()[nPosInLogic],
 				cLineStr.GetLength() - nPosInLogic);
@@ -1228,7 +1244,6 @@ bool CEditView::DrawLayoutLine(SColorStrategyInfo* pInfo)
 					: CLayoutInt(0))
 		);
 	}
-
 	return bDispEOF;
 }
 

@@ -97,6 +97,13 @@ bool CFigure_Text::DrawImpBlock(SColorStrategyInfo* pInfo, int nPos, int nLength
 		sFont.m_hFont = pInfo->m_pcView->GetFontset().ChooseFontHandle(fontNo, sFont.m_sFontAttr);
 		pInfo->m_gr.PushMyFont(sFont);
 	}
+	std::optional<CompositionDisplayAttributeKind> attr;
+	if (pInfo->m_composition) {
+		attr = CompositionDisplayAttributeKind::INPUT;
+	} else {
+		attr = std::nullopt;
+	}
+
 	int nHeightMargin = pInfo->m_pcView->GetTextMetrics().GetCharHeightMarginByFontNo(fontNo);
 	pInfo->m_pcView->GetTextDrawer().DispText(
 		pInfo->m_gr,
@@ -104,6 +111,8 @@ bool CFigure_Text::DrawImpBlock(SColorStrategyInfo* pInfo, int nPos, int nLength
 		nHeightMargin,
 		&pInfo->m_pLineOfLogic[nIdx],
 		nLength,
+		attr,
+		GetStockObject(WHITE_PEN),
 		bTrans
 	);
 	if( fontNo ){
