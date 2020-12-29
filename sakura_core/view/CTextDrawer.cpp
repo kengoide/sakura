@@ -48,8 +48,7 @@ using namespace std;
 @@@ 2002.09.22 YAZAKI    const unsigned char* pDataを、const char* pDataに変更
 @@@ 2007.08.25 kobake 戻り値を void に変更。引数 x, y を DispPos に変更
 */
-void CTextDrawer::DispText( HDC hdc, DispPos* pDispPos, int marginy, const wchar_t* pData, int nLength,
-	CompositionAttributeKind compositionKind, HGDIOBJ compositionUnderlinePen, bool bTransparent ) const
+void CTextDrawer::DispText( HDC hdc, DispPos* pDispPos, int marginy, const wchar_t* pData, int nLength, bool bTransparent ) const
 {
 	if( 0 >= nLength ){
 		return;
@@ -135,11 +134,6 @@ void CTextDrawer::DispText( HDC hdc, DispPos* pDispPos, int marginy, const wchar
 			nDrawLength++;
 		}
 
-		COLORREF color;
-		if (compositionKind != CompositionAttributeKind::NONE) {
-			color = SetBkColor(hdc, RGB(255, 200, 255));
-		}
-
 		//描画
 		::ExtTextOut(
 			hdc,
@@ -151,18 +145,8 @@ void CTextDrawer::DispText( HDC hdc, DispPos* pDispPos, int marginy, const wchar
 			nDrawLength,			//文字列長
 			pDrawDxArray			//文字間隔の入った配列
 		);
+	}
 
-		if (compositionKind != CompositionAttributeKind::NONE) {
-			SetBkColor(hdc, color);
-		}
-	}
-	/*
-	if (compositionKind) {
-		::SelectObject(hdc, compositionUnderlinePen);
-		::MoveToEx(hdc, rcClip.left, rcClip.bottom, nullptr);
-		::LineTo(hdc, rcClip.right, rcClip.bottom);
-	}
-	*/
 end:
 	//描画位置を進める
 	pDispPos->ForwardDrawCol(CLayoutXInt(nTextWidth / nDx));
