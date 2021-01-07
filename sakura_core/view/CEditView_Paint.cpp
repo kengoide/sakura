@@ -1494,8 +1494,9 @@ const int* GetCharWidthArray(const CEditView& view, CGraphics& gr, std::wstring_
 	return array.data();
 }
 
-CMyPoint DrawUnderline(const CTextMetrics& metrics, CGraphics& gr, CompositionAttributeKind attr,
-	                   const CMyPoint& pos, const wchar_t* line, const int* charWidthArray,
+CMyPoint DrawUnderline(const CTextMetrics& metrics, CGraphics& gr, COLORREF color,
+	                   CompositionAttributeKind attr, const CMyPoint& pos,
+	                   const wchar_t* line, const int* charWidthArray,
 	                   int start, int length) {
 	const int textWidthBefore = std::accumulate(charWidthArray, charWidthArray + start, 0);
 	const int textWidthTarget = std::accumulate(charWidthArray + start, charWidthArray + start + length, 0);
@@ -1509,20 +1510,20 @@ CMyPoint DrawUnderline(const CTextMetrics& metrics, CGraphics& gr, CompositionAt
 	const int x2 = drawX + textWidthBefore + textWidthTarget - 1;
 	const int y2 = drawY + metrics.GetHankakuDy() + nHeightMargin;
 	if (attr == CompositionAttributeKind::INPUT) {
-		gr.PushPen(0, 2);
+		gr.PushPen(color, 2);
 		gr.DrawDotLine(x1, y1, x2, y2);
 	} else if (attr == CompositionAttributeKind::CONVERTED) {
-		gr.PushPen(0, 1);
+		gr.PushPen(color, 1);
 		gr.DrawLine(x1, y1, x2, y2);
 	} else if (attr == CompositionAttributeKind::TARGET_CONVERTED) {
-		gr.PushPen(0, 2);
+		gr.PushPen(color, 2);
 		gr.DrawLine(x1, y1, x2, y2);
 	} else {
-		gr.PushPen(0, 1);
+		gr.PushPen(color, 1);
 		gr.DrawLine(x1, y1, x2, y2);
 	}
 	gr.PopPen();
-	return CMyPoint(drawX + textWidthBefore, drawY + nHeightMargin);
+	return CMyPoint(drawX + textWidthBefore, drawY + nHeightMargin + 2);
 }
 
 }
@@ -1532,6 +1533,9 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 	CGraphics gr(hdc);
 	const int nLineHeight = GetTextMetrics().GetHankakuDy();
 	const int nCharDx = GetTextMetrics().GetCharPxWidth();
+
+	const ColorInfo& info = m_pTypeData->m_ColorInfoArr[COLORIDX_TEXT];
+	const COLORREF color = info.m_sColorAttr.m_cTEXT;
 
 	CLayoutInt layoutLineFrom = m_compositionLayoutRange.GetFrom().GetY();
 	DispPos sPos(nCharDx, GetTextMetrics().GetHankakuDy());
@@ -1562,13 +1566,15 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 			GetCharWidthArray(*this, gr, {layoutLinePtr, static_cast<std::size_t>(layoutLength)});
 
 		if (attr.end <= logicOffset + layoutLength) {
-			attr.pos = DrawUnderline(this->GetTextMetricsW(), gr, attr.kind, sPos.GetDrawPos(),
+			attr.pos = DrawUnderline(this->GetTextMetricsW(), gr, color,
+				attr.kind, sPos.GetDrawPos(),
 				layoutLinePtr, charWidthArray,
 				attr.start - logicOffset, attr.end - attr.start);
 		} else {
 			// TODO: レイアウト3行以上にまたがるコンポジション
 			CLogicInt middle = logicOffset + layoutLength;
-			attr.pos = DrawUnderline(this->GetTextMetricsW(), gr, attr.kind, sPos.GetDrawPos(),
+			attr.pos = DrawUnderline(this->GetTextMetricsW(), gr, color,
+				attr.kind, sPos.GetDrawPos(),
 				layoutLinePtr, charWidthArray,
 				attr.start - logicOffset, middle - attr.start);
 			sPos.ForwardDrawLine(1);
@@ -1581,7 +1587,8 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 			charWidthArray = GetCharWidthArray(*this, gr,
 				{layoutLinePtr, static_cast<std::size_t>(layoutLength)});
 
-			DrawUnderline(this->GetTextMetricsW(), gr, attr.kind, sPos.GetDrawPos(),
+			DrawUnderline(this->GetTextMetricsW(), gr, color,
+				attr.kind, sPos.GetDrawPos(),
 				layoutLinePtr, charWidthArray,
 				middle - logicOffset, attr.end - middle);
 		}
