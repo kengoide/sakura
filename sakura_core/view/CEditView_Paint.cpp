@@ -1469,42 +1469,16 @@ namespace {
 
 int GetFontNumber(std::wstring_view s) {
 	int nLengthFirst = CNativeW::GetSizeOfChar(s.data(), s.length(), 0);
-
-	// 先頭の文字のフォントを採用する。フォント判別は上位で行う必要がある
-	int fontNo = nLengthFirst == 2 ? WCODE::GetFontNo2(s[0], s[1])
-		                           : WCODE::GetFontNo(s[0]);
-	return fontNo;
+	return nLengthFirst == 2 ? WCODE::GetFontNo2(s[0], s[1])
+		                     : WCODE::GetFontNo(s[0]);
 }
-/*
-	if( fontNo ){
-		CTypeSupport cCurrentType(&view, COLORIDX_TEXT);	// 周辺の色（現在の指定色/選択色）
-		SFONT sFont;
-		sFont.m_sFontAttr.m_bBoldFont  = (blendColor ? cCurrentType2.IsBoldFont() : cCurrentType.IsBoldFont());
-		sFont.m_sFontAttr.m_bUnderLine = (blendColor ? cCurrentType2.HasUnderLine() : cCurrentType.HasUnderLine());
-		sFont.m_hFont = pInfo->m_pcView->GetFontset().ChooseFontHandle(fontNo, sFont.m_sFontAttr);
-		pInfo->m_gr.PushMyFont(sFont);
-	}
-	int nHeightMargin = pInfo->m_pcView->GetTextMetrics().GetCharHeightMarginByFontNo(fontNo);
-	pInfo->m_pcView->GetTextDrawer().DispText(
-		pInfo->m_gr,
-		pInfo->m_pDispPos,
-		nHeightMargin,
-		&pInfo->m_pLineOfLogic[nIdx],
-		nLength,
-		bTrans
-	);
-	if( fontNo ){
-		pInfo->m_gr.PopMyFont();
-	}
-}
-*/
 
 void DrawUnderline(CEditView& view, CGraphics& gr, CompositionAttributeKind attr,
 	               const CMyPoint& pos,
-	               const wchar_t* s, int start, int length) {
-	const int fontNumber = GetFontNumber({s + start});
+	               const wchar_t* line, int start, int length) {
+	const int fontNumber = GetFontNumber({line + start});
 	if (fontNumber) {
-		CTypeSupport cCurrentType(&view, COLORIDX_TEXT);	// 周辺の色（現在の指定色/選択色）
+		CTypeSupport cCurrentType(&view, COLORIDX_TEXT);
 		SFONT sFont;
 		sFont.m_sFontAttr.m_bBoldFont  = cCurrentType.IsBoldFont();
 		sFont.m_sFontAttr.m_bUnderLine = cCurrentType.HasUnderLine();
@@ -1514,22 +1488,22 @@ void DrawUnderline(CEditView& view, CGraphics& gr, CompositionAttributeKind attr
 
 	const CTextMetrics& metrics = view.GetTextMetricsW();
 	static std::vector<int> vDxArray(1);
-	const int* pDxArray = metrics.GenerateDxArray2(&vDxArray, s, start + length);
+	const int* pDxArray = metrics.GenerateDxArray2(&vDxArray, line, start + length);
 
 	if (fontNumber) {
 		gr.PopMyFont();
 	}
 
-	const int widthBefore = std::accumulate(pDxArray, pDxArray + start, 0);
-	const int widthText = std::accumulate(pDxArray + start, pDxArray + start + length, 0);
+	const int textWidthBefore = std::accumulate(pDxArray, pDxArray + start, 0);
+	const int textWidthTarget = std::accumulate(pDxArray + start, pDxArray + start + length, 0);
 
 	const int drawX = pos.GetX();
 	const int drawY = pos.GetY();
 	const int nHeightMargin = view.GetTextMetrics().GetCharHeightMarginByFontNo(fontNumber);
 
-	const int x1 = drawX + widthBefore + 1;
+	const int x1 = drawX + textWidthBefore + 1;
 	const int y1 = drawY + metrics.GetHankakuDy() + nHeightMargin;
-	const int x2 = drawX + widthBefore + widthText - 1;
+	const int x2 = drawX + textWidthBefore + textWidthTarget - 1;
 	const int y2 = drawY + metrics.GetHankakuDy() + nHeightMargin;
 	if (attr == CompositionAttributeKind::INPUT) {
 		gr.PushPen(0, 2);
