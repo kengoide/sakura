@@ -561,24 +561,18 @@ LRESULT CEditView::DispatchEvent(
 		return DefWindowProc( hwnd, uMsg, wParam, lParam );
 
 	case WM_IME_STARTCOMPOSITION: {
+		if (m_cViewSelect.IsTextSelected()) {
+			GetCommander().HandleCommand(F_DELETE, false, 0, 0, 0, 0);
+		}
 		const CLayoutPoint start = GetCaret().GetCaretLayoutPos();
-		m_compositionStringRange.Set(start);
-
-		ImmContext imc(hwnd);
-		// TODO: ちゃんと計算する
-		CANDIDATEFORM form;
-		form.dwIndex = 0;
-		form.dwStyle = CFS_CANDIDATEPOS;
-		form.ptCurrentPos.x = 0;
-		form.ptCurrentPos.y = GetTextArea().GetAreaBottom() - 200;
-		ImmSetCandidateWindow(imc, &form);
+		m_compositionLayoutRange.Set(start);
 		return 0;
 	}
 	case WM_IME_COMPOSITION:
-		// TODO: 上書きモード
-		if (!(lParam & 0x1fff)) {
-			ReplaceData_CEditView(m_compositionStringRange, nullptr, CLogicInt(0), false, nullptr);
-			m_compositionStringRange.Clear(0);
+		if (!(lParam & 0x1fff)) {  // 入力操作がキャンセルされた場合
+			ReplaceData_CEditView(m_compositionLayoutRange,
+				nullptr, CLogicInt(0), false, nullptr);
+			m_compositionLayoutRange.Clear(0);
 			m_compositionAttributes.clear();
 			Call_OnPaint(PAINT_BODY, false);
 		}
@@ -589,22 +583,23 @@ LRESULT CEditView::DispatchEvent(
 				OutputDebugStringW(s.c_str());
 				wchar_t buffer[32];
 				swprintf_s(buffer, L" {(%d,%d), (%d,%d)}",
-					m_compositionStringRange.GetFrom().GetX2(),
-					m_compositionStringRange.GetFrom().GetY2(),
-					m_compositionStringRange.GetTo().GetX2(),
-					m_compositionStringRange.GetTo().GetY2()
+					m_compositionLayoutRange.GetFrom().GetX().GetValue(),
+					m_compositionLayoutRange.GetFrom().GetY().GetValue(),
+					m_compositionLayoutRange.GetTo().GetX().GetValue(),
+					m_compositionLayoutRange.GetTo().GetY().GetValue()
 				);
 				OutputDebugStringW(buffer);
 				OutputDebugStringW(L"\n");
 			}
 
-			ReplaceData_CEditView(m_compositionStringRange, s.c_str(), CLogicInt(s.size()), false, nullptr);
+			ReplaceData_CEditView(m_compositionLayoutRange, s.c_str(),
+				CLogicInt(s.size()), false, nullptr);
 
 			std::vector<char> attrs = GetCompositionAttributes<char>(imc, GCS_COMPATTR);
 			std::vector<int> clauses = GetCompositionAttributes<int>(imc, GCS_COMPCLAUSE);
 			m_compositionAttributes.clear();
 
-			const CLayoutPoint layoutFrom = m_compositionStringRange.GetFrom();
+			const CLayoutPoint layoutFrom = m_compositionLayoutRange.GetFrom();
 			CLogicPoint logicFrom;
 			m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(layoutFrom, &logicFrom);
 			std::vector<int>::iterator it = clauses.begin();
@@ -613,23 +608,27 @@ LRESULT CEditView::DispatchEvent(
 			CLogicInt logicToX;
 			for (; it != clauses.end(); ++it) {
 				logicToX = logicFrom.GetX() + *it;
-				m_compositionAttributes.push_back(
-					{logicFromX, logicToX,
-					 static_cast<CompositionAttributeKind>(attrs[*it - 1])});
+				m_compositionAttributes.emplace_back(
+					static_cast<CompositionAttributeKind>(attrs[*it - 1]),
+					logicFromX, logicToX);
 				logicFromX = logicToX;
 			}
 			CLogicPoint logicTo = logicFrom;
 			logicTo.Offset(logicToX - logicFrom.GetX(), 0);
 			CLayoutPoint layoutTo;
 			m_pcEditDoc->m_cLayoutMgr.LogicToLayout(logicTo, &layoutTo);
-			m_compositionStringRange.SetTo(layoutTo);
+			m_compositionLayoutRange.SetTo(layoutTo);
 
 			Call_OnPaint(PAINT_BODY, false);
 			return 0;
 		}
 		else if (lParam & GCS_RESULTSTR) {
-			ReplaceData_CEditView(m_compositionStringRange, L"", CLogicInt(0), false, nullptr);
-			m_compositionStringRange.Clear(0);
+			ReplaceData_CEditView(m_compositionLayoutRange, L"", CLogicInt(0), false, nullptr);
+			if (!IsInsMode()) {
+				// 上書きモードなので挿入するものと同じ長さのテキストを先に消去しておく
+				ReplaceData_CEditView(m_compositionLayoutRange, L"", CLogicInt(0), false, nullptr);
+			}
+			m_compositionLayoutRange.Clear(0);
 			m_compositionAttributes.clear();
 
 			ImmContext imc(hwnd);
@@ -652,6 +651,49 @@ LRESULT CEditView::DispatchEvent(
 	case WM_IME_ENDCOMPOSITION:
 		m_szComposition[0] = L'\0';
 		return 0;
+
+	case WM_IME_REQUEST:  /* 再変換  by minfu 2002.03.27 */ // 20020331 aroka
+
+		// 2002.04.09 switch case に変更  minfu
+		switch ( wParam ){
+		case IMR_RECONVERTSTRING:
+			return SetReconvertStruct((PRECONVERTSTRING)lParam, UNICODE_BOOL);
+
+		case IMR_CONFIRMRECONVERTSTRING:
+			return SetSelectionFromReonvert((PRECONVERTSTRING)lParam, UNICODE_BOOL);
+
+		// 2010.03.16 MS-IME 2002 だと「カーソル位置の前後の内容を参照して変換を行う」の機能
+		case IMR_DOCUMENTFEED:
+			return SetReconvertStruct((PRECONVERTSTRING)lParam, UNICODE_BOOL, true);
+
+		case IMR_QUERYCHARPOSITION: {
+			IMECHARPOSITION* pos = reinterpret_cast<IMECHARPOSITION*>(lParam);
+			pos->dwSize = sizeof(IMECHARPOSITION);
+			pos->cLineHeight = m_cTextMetrics.GetHankakuDy();
+			pos->rcDocument = m_pcTextArea->GetAreaRect();
+			ClientToScreen(reinterpret_cast<POINT*>(&pos->rcDocument.left));
+			ClientToScreen(reinterpret_cast<POINT*>(&pos->rcDocument.right));
+
+			const auto end = m_compositionAttributes.end();
+			const auto it = std::find_if(
+				m_compositionAttributes.begin(), end,
+				[pos](const CompositionAttribute& attr) {
+					return attr.start.GetValue() <= pos->dwCharPos &&
+							pos->dwCharPos < attr.end.GetValue();
+				});
+			if (it != end) {
+				pos->pt = it->pos;
+			} else {
+				pos->pt = m_pcCaret->CalcCaretDrawPos(m_pcCaret->GetCaretLayoutPos());
+			}
+			ClientToScreen(&pos->pt);
+			return 1;
+		}
+		default:
+			break;
+		}
+		// 2010.03.16 0LではなくTSFが何かするかもしれないのでDefにまかせる
+		return ::DefWindowProc( hwnd, uMsg, wParam, lParam );
 
 	// From Here 2008.03.24 Moca ATOK等の要求にこたえる
 	case WM_PASTE:
@@ -863,26 +905,6 @@ LRESULT CEditView::DispatchEvent(
 		m_pcEditWnd->SetActivePane( m_nMyIndex );
 		::PostMessageAny( m_hwndParent, MYWM_SETACTIVEPANE, (WPARAM)m_nMyIndex, 0 );
 		return 0L;
-
-	case WM_IME_REQUEST:  /* 再変換  by minfu 2002.03.27 */ // 20020331 aroka
-
-		// 2002.04.09 switch case に変更  minfu
-		switch ( wParam ){
-		case IMR_RECONVERTSTRING:
-			return SetReconvertStruct((PRECONVERTSTRING)lParam, UNICODE_BOOL);
-
-		case IMR_CONFIRMRECONVERTSTRING:
-			return SetSelectionFromReonvert((PRECONVERTSTRING)lParam, UNICODE_BOOL);
-
-		// 2010.03.16 MS-IME 2002 だと「カーソル位置の前後の内容を参照して変換を行う」の機能
-		case IMR_DOCUMENTFEED:
-			return SetReconvertStruct((PRECONVERTSTRING)lParam, UNICODE_BOOL, true);
-
-		default:
-			break;
-		}
-		// 2010.03.16 0LではなくTSFが何かするかもしれないのでDefにまかせる
-		return ::DefWindowProc( hwnd, uMsg, wParam, lParam );
 
 	case MYWM_DROPFILES:	// 独自のドロップファイル通知	// 2008.06.20 ryoji
 		OnMyDropFiles( (HDROP)wParam );

@@ -118,9 +118,13 @@ enum class CompositionAttributeKind : char {
 };
 
 struct CompositionAttribute {
+	CompositionAttributeKind kind;
 	CLogicInt start;
 	CLogicInt end;
-	CompositionAttributeKind kind;
+	POINT pos;  // 先頭の文字の左上のクライアント座標
+
+	CompositionAttribute(CompositionAttributeKind kind, CLogicInt start, CLogicInt end)
+		: kind(kind), start(start), end(end), pos() {}
 };
 
 /*-----------------------------------------------------------------------
@@ -764,7 +768,7 @@ public:
 
 	// IME
 	WCHAR			m_szComposition[512]; // IMR_DOCUMENTFEED用入力中文字列データ
-	CLayoutRange	m_compositionStringRange;
+	CLayoutRange	m_compositionLayoutRange;
 	std::vector<CompositionAttribute> m_compositionAttributes;
 
 private:
