@@ -583,31 +583,41 @@ LRESULT CEditView::DispatchEvent(
 		else if (lParam & GCS_COMPSTR) {
 			ImmContext imc(hwnd);
 			std::wstring s = GetCompositionString(imc, GCS_COMPSTR);
-			OutputDebugStringW(s.c_str());
-			OutputDebugStringW(L"\n");
+			{
+				OutputDebugStringW(s.c_str());
+				wchar_t buffer[32];
+				swprintf_s(buffer, L" {(%d,%d), (%d,%d)}",
+					m_compositionStringRange.GetFrom().GetX(),
+					m_compositionStringRange.GetFrom().GetY(),
+					m_compositionStringRange.GetTo().GetX(),
+					m_compositionStringRange.GetTo().GetY()
+				);
+				OutputDebugStringW(buffer);
+				OutputDebugStringW(L"\n");
+			}
 
 			ReplaceData_CEditView(m_compositionStringRange, s.c_str(), CLogicInt(s.size()), false, nullptr);
 
 			std::vector<char> attrs = GetCompositionAttributes<char>(imc, GCS_COMPATTR);
 			std::vector<int> clauses = GetCompositionAttributes<int>(imc, GCS_COMPCLAUSE);
+			m_compositionAttributes.clear();
 
-			const CLayoutPoint layoutZero = m_compositionStringRange.GetFrom();
-			CLogicPoint logicZero;
-			m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(layoutZero, &logicZero);
+			const CLayoutPoint layoutFrom = m_compositionStringRange.GetFrom();
+			CLogicPoint logicFrom;
+			m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(layoutFrom, &logicFrom);
 			std::vector<int>::iterator it = clauses.begin();
 			++it;  // 先頭は必ず0なので読み飛ばす
-			CLogicInt logicFromX = logicZero.GetX();
+			CLogicInt logicFromX = logicFrom.GetX();
 			CLogicInt logicToX;
-			m_compositionAttributes.clear();
 			for (; it != clauses.end(); ++it) {
-				logicToX = logicZero.GetX() + *it;
+				logicToX = logicFrom.GetX() + *it;
 				m_compositionAttributes.push_back(
 					{logicFromX, logicToX,
 					 static_cast<CompositionAttributeKind>(attrs[*it - 1])});
 				logicFromX = logicToX;
 			}
-			CLogicPoint logicTo = logicZero;
-			logicTo.Offset(logicToX, 0);
+			CLogicPoint logicTo = logicFrom;
+			logicTo.Offset(logicToX - logicFrom.GetX(), 0);
 			CLayoutPoint layoutTo;
 			m_pcEditDoc->m_cLayoutMgr.LogicToLayout(logicTo, &layoutTo);
 			m_compositionStringRange.SetTo(layoutTo);
