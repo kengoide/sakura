@@ -565,6 +565,7 @@ LRESULT CEditView::DispatchEvent(
 		m_compositionStringRange.Set(start);
 
 		ImmContext imc(hwnd);
+		// TODO: ちゃんと計算する
 		CANDIDATEFORM form;
 		form.dwIndex = 0;
 		form.dwStyle = CFS_CANDIDATEPOS;
@@ -574,6 +575,7 @@ LRESULT CEditView::DispatchEvent(
 		return 0;
 	}
 	case WM_IME_COMPOSITION:
+		// TODO: 上書きモード
 		if (!(lParam & 0x1fff)) {
 			ReplaceData_CEditView(m_compositionStringRange, nullptr, CLogicInt(0), false, nullptr);
 			m_compositionStringRange.Clear(0);
