@@ -317,7 +317,13 @@ public:
 public:
 	//	Aug. 25, 2002 genta protected->publicに移動
 	bool IsImeON( void );	// IME ONか	// 2006.12.04 ryoji
-	void OnImeStartComposition();
+	void StartComposition();
+	void UpdateCompositionString(std::wstring_view text, int cursorPos,
+		const std::vector<CompositionAttributeKind>& attributes,
+		const std::vector<int>& clauses);
+	void CompleteComposition(std::wstring_view text);
+	void CancelComposition();
+
 	void OnImeComposition(LPARAM lParam);
 	void OnImeEndComposition();
 	LRESULT OnImeRequest(WPARAM wParam, LPARAM lParam);

@@ -531,7 +531,7 @@ LRESULT CEditView::DispatchEvent(
 		return DefWindowProc( hwnd, uMsg, wParam, lParam );
 
 	case WM_IME_STARTCOMPOSITION:
-		OnImeStartComposition();
+		StartComposition();
 		return 0;
 
 	case WM_IME_COMPOSITION:

@@ -94,7 +94,7 @@ bool CEditView::IsImeON( void )
 	return bRet;
 }
 
-void CEditView::OnImeStartComposition()
+void CEditView::StartComposition()
 {
 	if (m_cViewSelect.IsTextSelected()) {
 		GetCommander().HandleCommand(F_DELETE, false, 0, 0, 0, 0);
@@ -102,106 +102,119 @@ void CEditView::OnImeStartComposition()
 	m_compositionLayoutRange.Set(GetCaret().GetCaretLayoutPos());
 }
 
+void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
+	const std::vector<CompositionAttributeKind>& attrs, const std::vector<int>& clauses)
+{
+#ifdef _DEBUG
+	std::wstring s(text);
+	OutputDebugStringW(s.c_str());
+	wchar_t buffer[32];
+	swprintf_s(buffer, L" {(%d,%d), (%d,%d)}",
+		m_compositionLayoutRange.GetFrom().GetX().GetValue(),
+		m_compositionLayoutRange.GetFrom().GetY().GetValue(),
+		m_compositionLayoutRange.GetTo().GetX().GetValue(),
+		m_compositionLayoutRange.GetTo().GetY().GetValue()
+	);
+	OutputDebugStringW(buffer);
+	OutputDebugStringW(L"\n");
+#endif
+
+	ReplaceData_CEditView(m_compositionLayoutRange,
+		text.data(), CLogicInt(text.size()), false, nullptr);
+
+	m_compositionAttributes.clear();
+
+	CLogicPoint logicFrom;
+	m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(m_compositionLayoutRange.GetFrom(), &logicFrom);
+
+	// 属性データを内部形式に変換する
+	auto it = clauses.begin();
+	++it;  // 先頭は必ず0なので読み飛ばす
+	CLogicInt logicFromX = logicFrom.GetX();
+	CLogicInt logicToX;
+	for (; it != clauses.end(); ++it) {
+		logicToX = logicFrom.GetX() + *it;
+		m_compositionAttributes.emplace_back(attrs[*it - 1], logicFromX, logicToX);
+		logicFromX = logicToX;
+	}
+
+	m_pcEditDoc->m_cLayoutMgr.LogicToLayout(
+		CLogicPoint(logicToX, logicFrom.GetY()), m_compositionLayoutRange.GetToPointer());
+
+	// GCS_CURSORPOSの値に従って一時的にキャレットを動かす
+	CLogicPoint caretLogicPos = logicFrom;
+	caretLogicPos.Offset(cursorPos, 0);
+	m_pcCaret->SetCaretLogicPos(caretLogicPos);
+
+	CLayoutPoint caretLayoutPos;
+	m_pcEditDoc->m_cLayoutMgr.LogicToLayout(caretLogicPos, &caretLayoutPos);
+	m_pcCaret->SetCaretLayoutPos(caretLayoutPos);
+
+	// 再描画
+	RedrawLines(m_compositionLayoutRange.GetFrom().GetY(),
+		m_compositionLayoutRange.GetTo().GetY() + 2);
+	m_pcCaret->ShowEditCaret();
+}
+
+void CEditView::CompleteComposition(std::wstring_view text)
+{
+	ReplaceData_CEditView(m_compositionLayoutRange, L"", CLogicInt(0), false, nullptr);
+	if (!IsInsMode()) {
+		// 上書きモードなので挿入するものと同じ長さのテキストを先に消去しておく
+		ReplaceData_CEditView(m_compositionLayoutRange, L"", CLogicInt(0), false, nullptr);
+	}
+
+	const CLayoutInt redrawTopLine = m_compositionLayoutRange.GetFrom().GetY();
+	const CLayoutInt redrawBottomLine = m_compositionLayoutRange.GetTo().GetY();
+	m_compositionLayoutRange.Clear(0);
+	m_compositionAttributes.clear();
+
+	/* テキストを貼り付け */
+	if( m_bHideMouse && 0 <= m_nMousePouse ){
+		m_nMousePouse = -1;
+		::SetCursor( NULL );
+	}
+	BOOL bHokan = m_bHokan;
+
+	GetCommander().HandleCommand( F_INSTEXT_W, false, (LPARAM)text.data(), (LPARAM)text.size(), TRUE, 0 );
+	RedrawLines(redrawTopLine, redrawBottomLine + 2);
+	m_pcCaret->ShowEditCaret();
+
+	m_bHokan = bHokan;	// 消されても表示中であるかのように誤魔化して入力補完を動作させる
+	PostprocessCommand_hokan();	// 補完実行
+}
+
+void CEditView::CancelComposition()
+{
+	ReplaceData_CEditView(m_compositionLayoutRange, nullptr, CLogicInt(0), false, nullptr);
+
+	const CLayoutInt redrawTopLine = m_compositionLayoutRange.GetFrom().GetY();
+	const CLayoutInt redrawBottomLine = m_compositionLayoutRange.GetTo().GetY();
+	m_compositionLayoutRange.Clear(0);
+	m_compositionAttributes.clear();
+	RedrawLines(redrawTopLine, redrawBottomLine + 2);
+	m_pcCaret->ShowEditCaret();
+}
+
 void CEditView::OnImeComposition(LPARAM lParam)
 {
 	if (!(lParam & 0x1fff)) {  // 入力操作のキャンセル通知
-		ReplaceData_CEditView(m_compositionLayoutRange,
-			nullptr, CLogicInt(0), false, nullptr);
-
-		const CLayoutInt redrawTopLine = m_compositionLayoutRange.GetFrom().GetY();
-		const CLayoutInt redrawBottomLine = m_compositionLayoutRange.GetTo().GetY();
-		m_compositionLayoutRange.Clear(0);
-		m_compositionAttributes.clear();
-		RedrawLines(redrawTopLine, redrawBottomLine + 2);
-		m_pcCaret->ShowEditCaret();
+		CancelComposition();
 		return;
 	}
 	else if (lParam & GCS_COMPSTR) {  // 編集中文字列の変更通知
 		ImmContext imc(GetHwnd());
-		const std::wstring s = GetCompositionString(imc, GCS_COMPSTR);
-#ifdef _DEBUG
-		OutputDebugStringW(s.c_str());
-		wchar_t buffer[32];
-		swprintf_s(buffer, L" {(%d,%d), (%d,%d)}",
-			m_compositionLayoutRange.GetFrom().GetX().GetValue(),
-			m_compositionLayoutRange.GetFrom().GetY().GetValue(),
-			m_compositionLayoutRange.GetTo().GetX().GetValue(),
-			m_compositionLayoutRange.GetTo().GetY().GetValue()
-		);
-		OutputDebugStringW(buffer);
-		OutputDebugStringW(L"\n");
-#endif
-
-		ReplaceData_CEditView(m_compositionLayoutRange, s.c_str(),
-			CLogicInt(s.size()), false, nullptr);
-
-		const std::vector<char> attrs = GetCompositionAttributes<char>(imc, GCS_COMPATTR);
+		const std::wstring text = GetCompositionString(imc, GCS_COMPSTR);
+		const std::vector<CompositionAttributeKind> attrs =
+			GetCompositionAttributes<CompositionAttributeKind>(imc, GCS_COMPATTR);
 		const std::vector<int> clauses = GetCompositionAttributes<int>(imc, GCS_COMPCLAUSE);
-		m_compositionAttributes.clear();
-
-		CLogicPoint logicFrom;
-		m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(m_compositionLayoutRange.GetFrom(), &logicFrom);
-
-		// 属性データを内部形式に変換する
-		auto it = clauses.begin();
-		++it;  // 先頭は必ず0なので読み飛ばす
-		CLogicInt logicFromX = logicFrom.GetX();
-		CLogicInt logicToX;
-		for (; it != clauses.end(); ++it) {
-			logicToX = logicFrom.GetX() + *it;
-			m_compositionAttributes.emplace_back(
-				static_cast<CompositionAttributeKind>(attrs[*it - 1]),
-				logicFromX, logicToX);
-			logicFromX = logicToX;
-		}
-
-		m_pcEditDoc->m_cLayoutMgr.LogicToLayout(
-			CLogicPoint(logicToX, logicFrom.GetY()), m_compositionLayoutRange.GetToPointer());
-
-		// GCS_CURSORPOSの値に従って一時的にキャレットを動かす
 		const int cursorPos = ImmGetCompositionString(imc, GCS_CURSORPOS, nullptr, 0);
-		CLogicPoint caretLogicPos = logicFrom;
-		caretLogicPos.Offset(cursorPos, 0);
-		m_pcCaret->SetCaretLogicPos(caretLogicPos);
-
-		CLayoutPoint caretLayoutPos;
-		m_pcEditDoc->m_cLayoutMgr.LogicToLayout(caretLogicPos, &caretLayoutPos);
-		m_pcCaret->SetCaretLayoutPos(caretLayoutPos);
-
-		// 再描画
-		RedrawLines(m_compositionLayoutRange.GetFrom().GetY(),
-			        m_compositionLayoutRange.GetTo().GetY() + 2);
-		m_pcCaret->ShowEditCaret();
+		UpdateCompositionString(text, cursorPos, attrs, clauses);
 		return;
 	}
 	else if (lParam & GCS_RESULTSTR) {  // 文字列の確定通知
-		ReplaceData_CEditView(m_compositionLayoutRange, L"", CLogicInt(0), false, nullptr);
-		if (!IsInsMode()) {
-			// 上書きモードなので挿入するものと同じ長さのテキストを先に消去しておく
-			ReplaceData_CEditView(m_compositionLayoutRange, L"", CLogicInt(0), false, nullptr);
-		}
-
-		const CLayoutInt redrawTopLine = m_compositionLayoutRange.GetFrom().GetY();
-		const CLayoutInt redrawBottomLine = m_compositionLayoutRange.GetTo().GetY();
-		m_compositionLayoutRange.Clear(0);
-		m_compositionAttributes.clear();
-
 		ImmContext imc(GetHwnd());
-		std::wstring text = GetCompositionString(imc, GCS_RESULTSTR);
-
-		/* テキストを貼り付け */
-		if( m_bHideMouse && 0 <= m_nMousePouse ){
-			m_nMousePouse = -1;
-			::SetCursor( NULL );
-		}
-		BOOL bHokan = m_bHokan;
-
-		GetCommander().HandleCommand( F_INSTEXT_W, false, (LPARAM)text.data(), (LPARAM)text.size(), TRUE, 0 );
-		RedrawLines(redrawTopLine, redrawBottomLine + 2);
-		m_pcCaret->ShowEditCaret();
-
-		m_bHokan = bHokan;	// 消されても表示中であるかのように誤魔化して入力補完を動作させる
-		PostprocessCommand_hokan();	// 補完実行
+		CompleteComposition(GetCompositionString(imc, GCS_RESULTSTR));
 		return;
 	}
 }
