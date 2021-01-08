@@ -382,9 +382,6 @@ bool CNormalProcess::InitializeProcess()
 
 	SetMainWindow( pEditWnd->GetHwnd() );
 
-	//	YAZAKI 2002/05/30 IMEウィンドウの位置がおかしいのを修正。
-	pEditWnd->GetActiveView().SetIMECompFormPos();
-
 	//WM_SIZEをポスト
 	{	// ファイル読み込みしなかった場合にはこの WM_SIZE がアウトライン画面を配置する
 		HWND hEditWnd = pEditWnd->GetHwnd();

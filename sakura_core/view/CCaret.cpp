@@ -529,7 +529,6 @@ void CCaret::ShowEditCaret()
 	}else {
 		// 画面外の場合はキャレットを隠す
 		HideCaret_( m_pEditView->GetHwnd() ); // 2002/07/22 novice
-		m_pEditView->SetIMECompFormPos();
 		return;
 	}
 
@@ -637,7 +636,6 @@ void CCaret::ShowEditCaret()
 
 	m_crCaret = crCaret;	//	2006.12.07 ryoji
 	m_pEditView->m_crBack2 = crBack;		//	2006.12.07 ryoji
-	m_pEditView->SetIMECompFormPos();
 }
 
 /*! キャレットの行桁位置およびステータスバーの状態表示の更新

@@ -1126,8 +1126,6 @@ void CEditView::OnSetFocus( void )
 
 	GetCaret().ShowEditCaret();
 
-	SetIMECompFormFont();
-
 	/* ルーラのカーソルをグレーから黒に変更する */
 	HDC hdc = ::GetDC( GetHwnd() );
 	GetRuler().DispRuler( hdc );
@@ -1210,9 +1208,6 @@ void CEditView::SetFont( void )
 
 	// ぜんぶ再描画
 	::InvalidateRect( GetHwnd(), NULL, TRUE );
-
-	//	Oct. 11, 2002 genta IMEのフォントも変更
-	SetIMECompFormFont();
 }
 
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //

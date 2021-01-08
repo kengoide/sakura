@@ -1050,8 +1050,6 @@ void CEditWnd::EndLayoutBars( BOOL bAdjust/* = TRUE*/ )
 		::SendMessage( GetHwnd(), WM_SIZE, 0, 0 ); // ツールバーの表示ON/OFFを行うとちらつきが発生する事への対策
 		::SendMessage( GetHwnd(), WM_SIZE, nWinSizeType, MAKELONG( rc.right - rc.left, rc.bottom - rc.top ) );
 		::RedrawWindow( GetHwnd(), NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW );	// ステータスバーに必要？
-
-		GetActiveView().SetIMECompFormPos();
 	}
 }
 
@@ -1958,7 +1956,6 @@ LRESULT CEditWnd::DispatchEvent(
 			RECT		rc;
 			::GetClientRect( GetHwnd(), &rc );
 			OnSize2( m_nWinSizeType, MAKELONG( rc.right - rc.left, rc.bottom - rc.top ), false );
-			GetActiveView().SetIMECompFormPos();
 		}
 		return 0L;
 

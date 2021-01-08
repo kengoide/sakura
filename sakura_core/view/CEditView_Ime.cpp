@@ -63,48 +63,6 @@ bool CEditView::IsImeON( void )
 	return bRet;
 }
 
-/* IME編集エリアの位置を変更 */
-void CEditView::SetIMECompFormPos( void )
-{
-	//
-	// If current composition form mode is near caret operation,
-	// application should inform IME UI the caret position has been
-	// changed. IME UI will make decision whether it has to adjust
-	// composition window position.
-	//
-	//
-	HIMC hIMC = ::ImmGetContext( GetHwnd() );
-	if ( hIMC ){
-		if ( ::ImmGetOpenStatus( hIMC ) ){
-			POINT point;
-			::GetCaretPos( &point );
-			COMPOSITIONFORM CompForm;
-			CompForm.dwStyle = CFS_POINT;
-			CompForm.ptCurrentPos.x = (long) point.x;
-			CompForm.ptCurrentPos.y = (long) point.y + GetCaret().GetCaretSize().cy - GetTextMetrics().GetHankakuHeight();
-			::ImmSetCompositionWindow( hIMC, &CompForm );
-		}
-		::ImmReleaseContext( GetHwnd() , hIMC );
-	}
-}
-
-/* IME編集エリアの表示フォントを変更 */
-void CEditView::SetIMECompFormFont( void )
-{
-	//
-	// If current composition form mode is near caret operation,
-	// application should inform IME UI the caret position has been
-	// changed. IME UI will make decision whether it has to adjust
-	// composition window position.
-	//
-	//
-	HIMC	hIMC = ::ImmGetContext( GetHwnd() );
-	if ( hIMC ){
-		::ImmSetCompositionFont( hIMC, const_cast<LOGFONT *>(&(m_pcEditWnd->GetLogfont())) );
-	}
-	::ImmReleaseContext( GetHwnd() , hIMC );
-}
-
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 //                          再変換・変換補助
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
