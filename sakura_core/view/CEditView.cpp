@@ -652,54 +652,6 @@ LRESULT CEditView::DispatchEvent(
 		m_szComposition[0] = L'\0';
 		return 0;
 
-	case WM_IME_REQUEST:  /* 再変換  by minfu 2002.03.27 */ // 20020331 aroka
-
-		// 2002.04.09 switch case に変更  minfu
-		switch ( wParam ){
-		case IMR_RECONVERTSTRING:
-			return SetReconvertStruct((PRECONVERTSTRING)lParam, UNICODE_BOOL);
-
-		case IMR_CONFIRMRECONVERTSTRING:
-			return SetSelectionFromReonvert((PRECONVERTSTRING)lParam, UNICODE_BOOL);
-
-		// 2010.03.16 MS-IME 2002 だと「カーソル位置の前後の内容を参照して変換を行う」の機能
-		case IMR_DOCUMENTFEED:
-			return SetReconvertStruct((PRECONVERTSTRING)lParam, UNICODE_BOOL, true);
-
-		case IMR_QUERYCHARPOSITION: {
-			IMECHARPOSITION* pos = reinterpret_cast<IMECHARPOSITION*>(lParam);
-			pos->dwSize = sizeof(IMECHARPOSITION);
-			pos->cLineHeight = m_cTextMetrics.GetHankakuDy();
-			pos->rcDocument = m_pcTextArea->GetAreaRect();
-			ClientToScreen(reinterpret_cast<POINT*>(&pos->rcDocument.left));
-			ClientToScreen(reinterpret_cast<POINT*>(&pos->rcDocument.right));
-
-			const POINT caretDrawPos = m_pcCaret->CalcCaretDrawPos(m_pcCaret->GetCaretLayoutPos());
-			if (m_compositionLayoutRange.IsOne()) {
-				pos->pt = caretDrawPos;
-			} else {
-				CLogicPoint logicFrom;
-				m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(
-					m_compositionLayoutRange.GetFrom(), &logicFrom);
-				CLogicInt logicCharPos = logicFrom.GetX() + CLogicInt(pos->dwCharPos);
-
-				const auto end = m_compositionAttributes.end();
-				const auto it = std::find_if(
-					m_compositionAttributes.begin(), end,
-					[logicCharPos](const CompositionAttribute& attr) {
-						return attr.start <= logicCharPos && logicCharPos < attr.end;
-					});
-				pos->pt = (it != end) ? it->pos : caretDrawPos;
-			}
-			ClientToScreen(&pos->pt);
-			return 1;
-		}
-		default:
-			break;
-		}
-		// 2010.03.16 0LではなくTSFが何かするかもしれないのでDefにまかせる
-		return ::DefWindowProc( hwnd, uMsg, wParam, lParam );
-
 	// From Here 2008.03.24 Moca ATOK等の要求にこたえる
 	case WM_PASTE:
 		return GetCommander().HandleCommand( F_PASTE, true, 0, 0, 0, 0 );
@@ -910,6 +862,54 @@ LRESULT CEditView::DispatchEvent(
 		m_pcEditWnd->SetActivePane( m_nMyIndex );
 		::PostMessageAny( m_hwndParent, MYWM_SETACTIVEPANE, (WPARAM)m_nMyIndex, 0 );
 		return 0L;
+
+	case WM_IME_REQUEST:  /* 再変換  by minfu 2002.03.27 */ // 20020331 aroka
+
+		// 2002.04.09 switch case に変更  minfu
+		switch ( wParam ){
+		case IMR_RECONVERTSTRING:
+			return SetReconvertStruct((PRECONVERTSTRING)lParam, UNICODE_BOOL);
+
+		case IMR_CONFIRMRECONVERTSTRING:
+			return SetSelectionFromReonvert((PRECONVERTSTRING)lParam, UNICODE_BOOL);
+
+		// 2010.03.16 MS-IME 2002 だと「カーソル位置の前後の内容を参照して変換を行う」の機能
+		case IMR_DOCUMENTFEED:
+			return SetReconvertStruct((PRECONVERTSTRING)lParam, UNICODE_BOOL, true);
+
+		case IMR_QUERYCHARPOSITION: {
+			IMECHARPOSITION* pos = reinterpret_cast<IMECHARPOSITION*>(lParam);
+			pos->dwSize = sizeof(IMECHARPOSITION);
+			pos->cLineHeight = m_cTextMetrics.GetHankakuDy();
+			pos->rcDocument = m_pcTextArea->GetAreaRect();
+			ClientToScreen(reinterpret_cast<POINT*>(&pos->rcDocument.left));
+			ClientToScreen(reinterpret_cast<POINT*>(&pos->rcDocument.right));
+
+			const POINT caretDrawPos = m_pcCaret->CalcCaretDrawPos(m_pcCaret->GetCaretLayoutPos());
+			if (m_compositionLayoutRange.IsOne()) {
+				pos->pt = caretDrawPos;
+			} else {
+				CLogicPoint logicFrom;
+				m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(
+					m_compositionLayoutRange.GetFrom(), &logicFrom);
+				CLogicInt logicCharPos = logicFrom.GetX() + CLogicInt(pos->dwCharPos);
+
+				const auto end = m_compositionAttributes.end();
+				const auto it = std::find_if(
+					m_compositionAttributes.begin(), end,
+					[logicCharPos](const CompositionAttribute& attr) {
+						return attr.start <= logicCharPos && logicCharPos < attr.end;
+					});
+				pos->pt = (it != end) ? it->pos : caretDrawPos;
+			}
+			ClientToScreen(&pos->pt);
+			return 1;
+		}
+		default:
+			break;
+		}
+		// 2010.03.16 0LではなくTSFが何かするかもしれないのでDefにまかせる
+		return ::DefWindowProc( hwnd, uMsg, wParam, lParam );
 
 	case MYWM_DROPFILES:	// 独自のドロップファイル通知	// 2008.06.20 ryoji
 		OnMyDropFiles( (HDROP)wParam );
