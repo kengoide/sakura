@@ -674,17 +674,22 @@ LRESULT CEditView::DispatchEvent(
 			ClientToScreen(reinterpret_cast<POINT*>(&pos->rcDocument.left));
 			ClientToScreen(reinterpret_cast<POINT*>(&pos->rcDocument.right));
 
-			const auto end = m_compositionAttributes.end();
-			const auto it = std::find_if(
-				m_compositionAttributes.begin(), end,
-				[pos](const CompositionAttribute& attr) {
-					return attr.start.GetValue() <= pos->dwCharPos &&
-						   pos->dwCharPos < attr.end.GetValue();
-				});
-			if (it != end) {
-				pos->pt = it->pos;
+			const POINT caretDrawPos = m_pcCaret->CalcCaretDrawPos(m_pcCaret->GetCaretLayoutPos());
+			if (m_compositionLayoutRange.IsOne()) {
+				pos->pt = caretDrawPos;
 			} else {
-				pos->pt = m_pcCaret->CalcCaretDrawPos(m_pcCaret->GetCaretLayoutPos());
+				CLogicPoint logicFrom;
+				m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(
+					m_compositionLayoutRange.GetFrom(), &logicFrom);
+				CLogicInt logicCharPos = logicFrom.GetX() + CLogicInt(pos->dwCharPos);
+
+				const auto end = m_compositionAttributes.end();
+				const auto it = std::find_if(
+					m_compositionAttributes.begin(), end,
+					[logicCharPos](const CompositionAttribute& attr) {
+						return attr.start <= logicCharPos && logicCharPos < attr.end;
+					});
+				pos->pt = (it != end) ? it->pos : caretDrawPos;
 			}
 			ClientToScreen(&pos->pt);
 			return 1;
