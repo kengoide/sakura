@@ -416,36 +416,6 @@ void CEditView::Close()
 	m_pcRuler = NULL;
 }
 
-namespace {
-
-class ImmContext {
-public:
-	ImmContext(HWND hwnd) : m_hwnd(hwnd) { m_himc = ImmGetContext(hwnd); }
-	~ImmContext() { if (m_himc) ImmReleaseContext(m_hwnd, m_himc); }
-	operator HIMC() { return m_himc; }
-private:
-	HWND m_hwnd;
-	HIMC m_himc;
-};
-
-std::wstring GetCompositionString(HIMC imc, DWORD type) {
-	const int requiredSize = ImmGetCompositionString(imc, type, nullptr, 0);
-	std::wstring string(requiredSize / 2, L'\0');
-	const int actualSize = ImmGetCompositionString(imc, type, string.data(), requiredSize);
-	string.resize(actualSize / 2);
-	return string;
-}
-
-template <typename T>
-std::vector<T> GetCompositionAttributes(HIMC imc, DWORD type) {
-	const int requiredBytes = ImmGetCompositionString(imc, type, nullptr, 0);
-	std::vector<T> buffer(requiredBytes / sizeof(T));
-	ImmGetCompositionString(imc, type, buffer.data(), requiredBytes);
-	return buffer;
-}
-
-}
-
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 //                         イベント                            //
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
@@ -560,92 +530,15 @@ LRESULT CEditView::DispatchEvent(
 		}
 		return DefWindowProc( hwnd, uMsg, wParam, lParam );
 
-	case WM_IME_STARTCOMPOSITION: {
+	case WM_IME_STARTCOMPOSITION:
 		if (m_cViewSelect.IsTextSelected()) {
 			GetCommander().HandleCommand(F_DELETE, false, 0, 0, 0, 0);
 		}
-		const CLayoutPoint start = GetCaret().GetCaretLayoutPos();
-		m_compositionLayoutRange.Set(start);
+		m_compositionLayoutRange.Set(GetCaret().GetCaretLayoutPos());
 		return 0;
-	}
+
 	case WM_IME_COMPOSITION:
-		if (!(lParam & 0x1fff)) {  // 入力操作がキャンセルされた場合
-			ReplaceData_CEditView(m_compositionLayoutRange,
-				nullptr, CLogicInt(0), false, nullptr);
-			m_compositionLayoutRange.Clear(0);
-			m_compositionAttributes.clear();
-			Call_OnPaint(PAINT_BODY, false);
-		}
-		else if (lParam & GCS_COMPSTR) {
-			ImmContext imc(hwnd);
-			std::wstring s = GetCompositionString(imc, GCS_COMPSTR);
-			{
-				OutputDebugStringW(s.c_str());
-				wchar_t buffer[32];
-				swprintf_s(buffer, L" {(%d,%d), (%d,%d)}",
-					m_compositionLayoutRange.GetFrom().GetX().GetValue(),
-					m_compositionLayoutRange.GetFrom().GetY().GetValue(),
-					m_compositionLayoutRange.GetTo().GetX().GetValue(),
-					m_compositionLayoutRange.GetTo().GetY().GetValue()
-				);
-				OutputDebugStringW(buffer);
-				OutputDebugStringW(L"\n");
-			}
-
-			ReplaceData_CEditView(m_compositionLayoutRange, s.c_str(),
-				CLogicInt(s.size()), false, nullptr);
-
-			std::vector<char> attrs = GetCompositionAttributes<char>(imc, GCS_COMPATTR);
-			std::vector<int> clauses = GetCompositionAttributes<int>(imc, GCS_COMPCLAUSE);
-			m_compositionAttributes.clear();
-
-			const CLayoutPoint layoutFrom = m_compositionLayoutRange.GetFrom();
-			CLogicPoint logicFrom;
-			m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(layoutFrom, &logicFrom);
-			std::vector<int>::iterator it = clauses.begin();
-			++it;  // 先頭は必ず0なので読み飛ばす
-			CLogicInt logicFromX = logicFrom.GetX();
-			CLogicInt logicToX;
-			for (; it != clauses.end(); ++it) {
-				logicToX = logicFrom.GetX() + *it;
-				m_compositionAttributes.emplace_back(
-					static_cast<CompositionAttributeKind>(attrs[*it - 1]),
-					logicFromX, logicToX);
-				logicFromX = logicToX;
-			}
-			CLogicPoint logicTo = logicFrom;
-			logicTo.Offset(logicToX - logicFrom.GetX(), 0);
-			CLayoutPoint layoutTo;
-			m_pcEditDoc->m_cLayoutMgr.LogicToLayout(logicTo, &layoutTo);
-			m_compositionLayoutRange.SetTo(layoutTo);
-
-			Call_OnPaint(PAINT_BODY, false);
-			return 0;
-		}
-		else if (lParam & GCS_RESULTSTR) {
-			ReplaceData_CEditView(m_compositionLayoutRange, L"", CLogicInt(0), false, nullptr);
-			if (!IsInsMode()) {
-				// 上書きモードなので挿入するものと同じ長さのテキストを先に消去しておく
-				ReplaceData_CEditView(m_compositionLayoutRange, L"", CLogicInt(0), false, nullptr);
-			}
-			m_compositionLayoutRange.Clear(0);
-			m_compositionAttributes.clear();
-
-			ImmContext imc(hwnd);
-			std::wstring text = GetCompositionString(imc, GCS_RESULTSTR);
-
-			/* テキストを貼り付け */
-			BOOL bHokan;
-			bHokan = m_bHokan;
-			if( m_bHideMouse && 0 <= m_nMousePouse ){
-				m_nMousePouse = -1;
-				::SetCursor( NULL );
-			}
-			GetCommander().HandleCommand( F_INSTEXT_W, true, (LPARAM)text.data(), (LPARAM)text.size(), TRUE, 0 );
-			m_bHokan = bHokan;	// 消されても表示中であるかのように誤魔化して入力補完を動作させる
-			PostprocessCommand_hokan();	// 補完実行
-			return 0;
-		}
+		OnImeComposition(lParam);
 		return 0;
 
 	case WM_IME_ENDCOMPOSITION:
@@ -863,53 +756,8 @@ LRESULT CEditView::DispatchEvent(
 		::PostMessageAny( m_hwndParent, MYWM_SETACTIVEPANE, (WPARAM)m_nMyIndex, 0 );
 		return 0L;
 
-	case WM_IME_REQUEST:  /* 再変換  by minfu 2002.03.27 */ // 20020331 aroka
-
-		// 2002.04.09 switch case に変更  minfu
-		switch ( wParam ){
-		case IMR_RECONVERTSTRING:
-			return SetReconvertStruct((PRECONVERTSTRING)lParam, UNICODE_BOOL);
-
-		case IMR_CONFIRMRECONVERTSTRING:
-			return SetSelectionFromReonvert((PRECONVERTSTRING)lParam, UNICODE_BOOL);
-
-		// 2010.03.16 MS-IME 2002 だと「カーソル位置の前後の内容を参照して変換を行う」の機能
-		case IMR_DOCUMENTFEED:
-			return SetReconvertStruct((PRECONVERTSTRING)lParam, UNICODE_BOOL, true);
-
-		case IMR_QUERYCHARPOSITION: {
-			IMECHARPOSITION* pos = reinterpret_cast<IMECHARPOSITION*>(lParam);
-			pos->dwSize = sizeof(IMECHARPOSITION);
-			pos->cLineHeight = m_cTextMetrics.GetHankakuDy();
-			pos->rcDocument = m_pcTextArea->GetAreaRect();
-			ClientToScreen(reinterpret_cast<POINT*>(&pos->rcDocument.left));
-			ClientToScreen(reinterpret_cast<POINT*>(&pos->rcDocument.right));
-
-			const POINT caretDrawPos = m_pcCaret->CalcCaretDrawPos(m_pcCaret->GetCaretLayoutPos());
-			if (m_compositionLayoutRange.IsOne()) {
-				pos->pt = caretDrawPos;
-			} else {
-				CLogicPoint logicFrom;
-				m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(
-					m_compositionLayoutRange.GetFrom(), &logicFrom);
-				CLogicInt logicCharPos = logicFrom.GetX() + CLogicInt(pos->dwCharPos);
-
-				const auto end = m_compositionAttributes.end();
-				const auto it = std::find_if(
-					m_compositionAttributes.begin(), end,
-					[logicCharPos](const CompositionAttribute& attr) {
-						return attr.start <= logicCharPos && logicCharPos < attr.end;
-					});
-				pos->pt = (it != end) ? it->pos : caretDrawPos;
-			}
-			ClientToScreen(&pos->pt);
-			return 1;
-		}
-		default:
-			break;
-		}
-		// 2010.03.16 0LではなくTSFが何かするかもしれないのでDefにまかせる
-		return ::DefWindowProc( hwnd, uMsg, wParam, lParam );
+	case WM_IME_REQUEST:
+		return OnImeRequest(wParam, lParam);
 
 	case MYWM_DROPFILES:	// 独自のドロップファイル通知	// 2008.06.20 ryoji
 		OnMyDropFiles( (HDROP)wParam );

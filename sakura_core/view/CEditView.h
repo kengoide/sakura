@@ -317,6 +317,8 @@ public:
 public:
 	//	Aug. 25, 2002 genta protected->publicに移動
 	bool IsImeON( void );	// IME ONか	// 2006.12.04 ryoji
+	void OnImeComposition(LPARAM lParam);
+	LRESULT OnImeRequest(WPARAM wParam, LPARAM lParam);
 
 	// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 	//                        スクロール                           //
