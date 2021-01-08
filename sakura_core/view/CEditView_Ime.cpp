@@ -94,6 +94,14 @@ bool CEditView::IsImeON( void )
 	return bRet;
 }
 
+void CEditView::OnImeStartComposition()
+{
+	if (m_cViewSelect.IsTextSelected()) {
+		GetCommander().HandleCommand(F_DELETE, false, 0, 0, 0, 0);
+	}
+	m_compositionLayoutRange.Set(GetCaret().GetCaretLayoutPos());
+}
+
 void CEditView::OnImeComposition(LPARAM lParam)
 {
 	if (!(lParam & 0x1fff)) {  // 入力操作のキャンセル通知
@@ -185,6 +193,11 @@ void CEditView::OnImeComposition(LPARAM lParam)
 		PostprocessCommand_hokan();	// 補完実行
 		return;
 	}
+}
+
+void CEditView::OnImeEndComposition()
+{
+	m_szComposition[0] = L'\0';
 }
 
 /* 再変換  by minfu 2002.03.27 */ // 20020331 aroka

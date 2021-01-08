@@ -531,10 +531,7 @@ LRESULT CEditView::DispatchEvent(
 		return DefWindowProc( hwnd, uMsg, wParam, lParam );
 
 	case WM_IME_STARTCOMPOSITION:
-		if (m_cViewSelect.IsTextSelected()) {
-			GetCommander().HandleCommand(F_DELETE, false, 0, 0, 0, 0);
-		}
-		m_compositionLayoutRange.Set(GetCaret().GetCaretLayoutPos());
+		OnImeStartComposition();
 		return 0;
 
 	case WM_IME_COMPOSITION:
@@ -542,7 +539,7 @@ LRESULT CEditView::DispatchEvent(
 		return 0;
 
 	case WM_IME_ENDCOMPOSITION:
-		m_szComposition[0] = L'\0';
+		OnImeEndComposition();
 		return 0;
 
 	// From Here 2008.03.24 Moca ATOK等の要求にこたえる
