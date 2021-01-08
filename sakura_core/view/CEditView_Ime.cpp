@@ -111,18 +111,18 @@ void CEditView::OnImeComposition(LPARAM lParam)
 	else if (lParam & GCS_COMPSTR) {  // 編集中文字列の変更通知
 		ImmContext imc(GetHwnd());
 		std::wstring s = GetCompositionString(imc, GCS_COMPSTR);
-		{
-			OutputDebugStringW(s.c_str());
-			wchar_t buffer[32];
-			swprintf_s(buffer, L" {(%d,%d), (%d,%d)}",
-				m_compositionLayoutRange.GetFrom().GetX().GetValue(),
-				m_compositionLayoutRange.GetFrom().GetY().GetValue(),
-				m_compositionLayoutRange.GetTo().GetX().GetValue(),
-				m_compositionLayoutRange.GetTo().GetY().GetValue()
-			);
-			OutputDebugStringW(buffer);
-			OutputDebugStringW(L"\n");
-		}
+#ifdef DEBUG
+		OutputDebugStringW(s.c_str());
+		wchar_t buffer[32];
+		swprintf_s(buffer, L" {(%d,%d), (%d,%d)}",
+			m_compositionLayoutRange.GetFrom().GetX().GetValue(),
+			m_compositionLayoutRange.GetFrom().GetY().GetValue(),
+			m_compositionLayoutRange.GetTo().GetX().GetValue(),
+			m_compositionLayoutRange.GetTo().GetY().GetValue()
+		);
+		OutputDebugStringW(buffer);
+		OutputDebugStringW(L"\n");
+#endif
 
 		ReplaceData_CEditView(m_compositionLayoutRange, s.c_str(),
 			CLogicInt(s.size()), false, nullptr);

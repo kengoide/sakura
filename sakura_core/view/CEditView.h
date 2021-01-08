@@ -765,6 +765,7 @@ public:
 	WCHAR			m_szComposition[512]; // IMR_DOCUMENTFEED用入力中文字列データ
 	CLayoutRange	m_compositionLayoutRange;
 	std::vector<CompositionAttribute> m_compositionAttributes;
+	std::vector<wchar_t> m_overwrittenChars;
 
 private:
 	int				m_nLastReconvLine;             //2002.04.09 minfu 再変換情報保存用;
