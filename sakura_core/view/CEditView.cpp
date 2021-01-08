@@ -679,7 +679,7 @@ LRESULT CEditView::DispatchEvent(
 				m_compositionAttributes.begin(), end,
 				[pos](const CompositionAttribute& attr) {
 					return attr.start.GetValue() <= pos->dwCharPos &&
-							pos->dwCharPos < attr.end.GetValue();
+						   pos->dwCharPos < attr.end.GetValue();
 				});
 			if (it != end) {
 				pos->pt = it->pos;

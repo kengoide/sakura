@@ -1468,32 +1468,6 @@ void CEditView::UseCompatibleDC(BOOL fCache)
 
 namespace {
 
-int GetFontNumber(std::wstring_view s) {
-	int nLengthFirst = CNativeW::GetSizeOfChar(s.data(), s.length(), 0);
-	return nLengthFirst == 2 ? WCODE::GetFontNo2(s[0], s[1])
-		                     : WCODE::GetFontNo(s[0]);
-}
-
-const int* GetCharWidthArray(const CEditView& view, CGraphics& gr, std::wstring_view chars) {
-	const int fontNumber = GetFontNumber(chars);
-	if (fontNumber) {
-		CTypeSupport cCurrentType(&view, COLORIDX_TEXT);
-		SFONT sFont;
-		sFont.m_sFontAttr.m_bBoldFont  = cCurrentType.IsBoldFont();
-		sFont.m_sFontAttr.m_bUnderLine = cCurrentType.HasUnderLine();
-		sFont.m_hFont = view.GetFontset().ChooseFontHandle(fontNumber, sFont.m_sFontAttr);
-		gr.PushMyFont(sFont);
-	}
-
-	static std::vector<int> array;
-	view.GetTextMetricsW().GenerateDxArray2(&array, chars.data(), chars.length());
-
-	if (fontNumber) {
-		gr.PopMyFont();
-	}
-	return array.data();
-}
-
 CMyPoint DrawUnderline(const CTextMetrics& metrics, CGraphics& gr, COLORREF color,
 	                   CompositionAttributeKind attr, const CMyPoint& pos,
 	                   const wchar_t* line, const int* charWidthArray,
@@ -1530,15 +1504,17 @@ CMyPoint DrawUnderline(const CTextMetrics& metrics, CGraphics& gr, COLORREF colo
 
 void CEditView::DrawCompositionAttributes(HDC hdc)
 {
+	static std::vector<int> dxArray;
+
 	CGraphics gr(hdc);
-	const int nLineHeight = GetTextMetrics().GetHankakuDy();
-	const int nCharDx = GetTextMetrics().GetCharPxWidth();
+	const int nLineHeight = m_cTextMetrics.GetHankakuDy();
+	const int nCharDx = m_cTextMetrics.GetCharPxWidth();
 
 	const ColorInfo& info = m_pTypeData->m_ColorInfoArr[COLORIDX_TEXT];
 	const COLORREF color = info.m_sColorAttr.m_cTEXT;
 
 	CLayoutInt layoutLineFrom = m_compositionLayoutRange.GetFrom().GetY();
-	DispPos sPos(nCharDx, GetTextMetrics().GetHankakuDy());
+	DispPos sPos(nCharDx, m_cTextMetrics.GetHankakuDy());
 	sPos.InitDrawPos(CMyPoint(
 		GetTextArea().GetAreaLeft() - (Int)GetTextArea().GetViewLeftCol() * nCharDx,
 		GetTextArea().GetAreaTop() + (Int)( layoutLineFrom - GetTextArea().GetViewTopLine() ) * nLineHeight
@@ -1562,20 +1538,19 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 		const CDocLine* docLine = layout->GetDocLineRef();
 		const wchar_t* layoutLinePtr = docLine->GetPtr() + logicOffset;
 
-		const int* charWidthArray =
-			GetCharWidthArray(*this, gr, {layoutLinePtr, static_cast<std::size_t>(layoutLength)});
+		m_cTextMetrics.GenerateDxArray2(&dxArray, layoutLinePtr, layoutLength);
 
 		if (attr.end <= logicOffset + layoutLength) {
-			attr.pos = DrawUnderline(this->GetTextMetricsW(), gr, color,
+			attr.pos = DrawUnderline(m_cTextMetrics, gr, color,
 				attr.kind, sPos.GetDrawPos(),
-				layoutLinePtr, charWidthArray,
+				layoutLinePtr, dxArray.data(),
 				attr.start - logicOffset, attr.end - attr.start);
 		} else {
 			// TODO: レイアウト3行以上にまたがるコンポジション
 			CLogicInt middle = logicOffset + layoutLength;
-			attr.pos = DrawUnderline(this->GetTextMetricsW(), gr, color,
+			attr.pos = DrawUnderline(m_cTextMetrics, gr, color,
 				attr.kind, sPos.GetDrawPos(),
-				layoutLinePtr, charWidthArray,
+				layoutLinePtr, dxArray.data(),
 				attr.start - logicOffset, middle - attr.start);
 			sPos.ForwardDrawLine(1);
 			sPos.ForwardLayoutLineRef(1);
@@ -1584,12 +1559,12 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 			logicOffset = layout->GetLogicOffset();
 			layoutLength = layout->GetLengthWithoutEOL();
 			layoutLinePtr = docLine->GetPtr() + logicOffset;
-			charWidthArray = GetCharWidthArray(*this, gr,
-				{layoutLinePtr, static_cast<std::size_t>(layoutLength)});
 
-			DrawUnderline(this->GetTextMetricsW(), gr, color,
+			m_cTextMetrics.GenerateDxArray2(&dxArray, layoutLinePtr, layoutLength);
+
+			DrawUnderline(m_cTextMetrics, gr, color,
 				attr.kind, sPos.GetDrawPos(),
-				layoutLinePtr, charWidthArray,
+				layoutLinePtr, dxArray.data(),
 				middle - logicOffset, attr.end - middle);
 		}
 	}
