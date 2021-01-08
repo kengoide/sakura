@@ -99,9 +99,12 @@ void CEditView::OnImeComposition(LPARAM lParam)
 	if (!(lParam & 0x1fff)) {  // 入力操作のキャンセル通知
 		ReplaceData_CEditView(m_compositionLayoutRange,
 			nullptr, CLogicInt(0), false, nullptr);
+
+		const CLayoutInt redrawTopLine = m_compositionLayoutRange.GetFrom().GetY();
+		const CLayoutInt redrawBottomLine = m_compositionLayoutRange.GetTo().GetY();
 		m_compositionLayoutRange.Clear(0);
 		m_compositionAttributes.clear();
-		Call_OnPaint(PAINT_BODY, false);
+		RedrawLines(redrawTopLine, redrawBottomLine + 2);
 		return;
 	}
 	else if (lParam & GCS_COMPSTR) {  // 編集中文字列の変更通知
@@ -146,7 +149,8 @@ void CEditView::OnImeComposition(LPARAM lParam)
 		m_pcEditDoc->m_cLayoutMgr.LogicToLayout(
 			CLogicPoint(logicToX, logicFrom.GetY()), m_compositionLayoutRange.GetToPointer());
 
-		Call_OnPaint(PAINT_BODY, false);
+		RedrawLines(m_compositionLayoutRange.GetFrom().GetY(),
+			        m_compositionLayoutRange.GetTo().GetY() + 2);
 		return;
 	}
 	else if (lParam & GCS_RESULTSTR) {  // 文字列の確定通知
@@ -155,6 +159,9 @@ void CEditView::OnImeComposition(LPARAM lParam)
 			// 上書きモードなので挿入するものと同じ長さのテキストを先に消去しておく
 			ReplaceData_CEditView(m_compositionLayoutRange, L"", CLogicInt(0), false, nullptr);
 		}
+
+		const CLayoutInt redrawTopLine = m_compositionLayoutRange.GetFrom().GetY();
+		const CLayoutInt redrawBottomLine = m_compositionLayoutRange.GetTo().GetY();
 		m_compositionLayoutRange.Clear(0);
 		m_compositionAttributes.clear();
 
@@ -162,13 +169,13 @@ void CEditView::OnImeComposition(LPARAM lParam)
 		std::wstring text = GetCompositionString(imc, GCS_RESULTSTR);
 
 		/* テキストを貼り付け */
-		BOOL bHokan;
-		bHokan = m_bHokan;
 		if( m_bHideMouse && 0 <= m_nMousePouse ){
 			m_nMousePouse = -1;
 			::SetCursor( NULL );
 		}
-		GetCommander().HandleCommand( F_INSTEXT_W, true, (LPARAM)text.data(), (LPARAM)text.size(), TRUE, 0 );
+		BOOL bHokan = m_bHokan;
+		GetCommander().HandleCommand( F_INSTEXT_W, false, (LPARAM)text.data(), (LPARAM)text.size(), TRUE, 0 );
+		RedrawLines(redrawTopLine, redrawBottomLine + 2);
 		m_bHokan = bHokan;	// 消されても表示中であるかのように誤魔化して入力補完を動作させる
 		PostprocessCommand_hokan();	// 補完実行
 		return;
