@@ -127,9 +127,10 @@ void CEditView::OnImeComposition(LPARAM lParam)
 		std::vector<int> clauses = GetCompositionAttributes<int>(imc, GCS_COMPCLAUSE);
 		m_compositionAttributes.clear();
 
-		const CLayoutPoint layoutFrom = m_compositionLayoutRange.GetFrom();
+		// 属性データを内部形式に変換しておく
 		CLogicPoint logicFrom;
-		m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(layoutFrom, &logicFrom);
+		m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(m_compositionLayoutRange.GetFrom(), &logicFrom);
+
 		std::vector<int>::iterator it = clauses.begin();
 		++it;  // 先頭は必ず0なので読み飛ばす
 		CLogicInt logicFromX = logicFrom.GetX();
@@ -141,11 +142,9 @@ void CEditView::OnImeComposition(LPARAM lParam)
 				logicFromX, logicToX);
 			logicFromX = logicToX;
 		}
-		CLogicPoint logicTo = logicFrom;
-		logicTo.Offset(logicToX - logicFrom.GetX(), 0);
-		CLayoutPoint layoutTo;
-		m_pcEditDoc->m_cLayoutMgr.LogicToLayout(logicTo, &layoutTo);
-		m_compositionLayoutRange.SetTo(layoutTo);
+
+		m_pcEditDoc->m_cLayoutMgr.LogicToLayout(
+			CLogicPoint(logicToX, logicFrom.GetY()), m_compositionLayoutRange.GetToPointer());
 
 		Call_OnPaint(PAINT_BODY, false);
 		return;
