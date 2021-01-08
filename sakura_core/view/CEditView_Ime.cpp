@@ -203,6 +203,9 @@ LRESULT CEditView::OnImeRequest(WPARAM wParam, LPARAM lParam)
 		return SetReconvertStruct((PRECONVERTSTRING)lParam, UNICODE_BOOL, true);
 
 	case IMR_QUERYCHARPOSITION: {
+		// コンポジション文字列の描画位置の問い合わせ
+		// pos->dwCharPos にIMEが問い合わせたい文字のインデックスが入っている。
+		// 該当文字のスクリーン座標を pos->pt に入れて返す。
 		IMECHARPOSITION* pos = reinterpret_cast<IMECHARPOSITION*>(lParam);
 		pos->dwSize = sizeof(IMECHARPOSITION);
 		pos->cLineHeight = m_cTextMetrics.GetHankakuDy();
