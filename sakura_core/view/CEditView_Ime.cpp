@@ -33,12 +33,12 @@ namespace {
 
 class ImmContext {
 public:
-	ImmContext(HWND hwnd) : m_hwnd(hwnd) { m_himc = ImmGetContext(hwnd); }
+	ImmContext(HWND hwnd) : m_hwnd(hwnd), m_himc(ImmGetContext(hwnd)) {}
 	~ImmContext() { if (m_himc) ImmReleaseContext(m_hwnd, m_himc); }
-	operator HIMC() { return m_himc; }
+	operator HIMC() const { return m_himc; }
 private:
-	HWND m_hwnd;
-	HIMC m_himc;
+	const HWND m_hwnd;
+	const HIMC m_himc;
 };
 
 std::wstring GetCompositionString(HIMC imc, DWORD type) {
@@ -118,7 +118,7 @@ void CEditView::OnImeComposition(LPARAM lParam)
 	}
 	else if (lParam & GCS_COMPSTR) {  // 編集中文字列の変更通知
 		ImmContext imc(GetHwnd());
-		std::wstring s = GetCompositionString(imc, GCS_COMPSTR);
+		const std::wstring s = GetCompositionString(imc, GCS_COMPSTR);
 #ifdef _DEBUG
 		OutputDebugStringW(s.c_str());
 		wchar_t buffer[32];
@@ -135,15 +135,15 @@ void CEditView::OnImeComposition(LPARAM lParam)
 		ReplaceData_CEditView(m_compositionLayoutRange, s.c_str(),
 			CLogicInt(s.size()), false, nullptr);
 
-		std::vector<char> attrs = GetCompositionAttributes<char>(imc, GCS_COMPATTR);
-		std::vector<int> clauses = GetCompositionAttributes<int>(imc, GCS_COMPCLAUSE);
+		const std::vector<char> attrs = GetCompositionAttributes<char>(imc, GCS_COMPATTR);
+		const std::vector<int> clauses = GetCompositionAttributes<int>(imc, GCS_COMPCLAUSE);
 		m_compositionAttributes.clear();
 
 		CLogicPoint logicFrom;
 		m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(m_compositionLayoutRange.GetFrom(), &logicFrom);
 
 		// 属性データを内部形式に変換する
-		std::vector<int>::iterator it = clauses.begin();
+		auto it = clauses.begin();
 		++it;  // 先頭は必ず0なので読み飛ばす
 		CLogicInt logicFromX = logicFrom.GetX();
 		CLogicInt logicToX;
