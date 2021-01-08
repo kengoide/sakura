@@ -1538,39 +1538,27 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 		const CDocLine* docLine = layout->GetDocLineRef();
 		const wchar_t* layoutLinePtr = docLine->GetPtr() + logicOffset;
 
-		m_cTextMetrics.GenerateDxArray2(&dxArray, layoutLinePtr, layoutLength);
+		CLogicInt start = attr.start;
+		for (;;) {
+			m_cTextMetrics.GenerateDxArray2(&dxArray, layoutLinePtr, layoutLength);
 
-		if (attr.end <= logicOffset + layoutLength) {
+			CLogicInt end = std::min(logicOffset + layoutLength, attr.end);
 			attr.pos = DrawUnderline(m_cTextMetrics, gr, color,
 				attr.kind, sPos.GetDrawPos(),
 				layoutLinePtr, dxArray.data(),
-				attr.start - logicOffset, attr.end - attr.start);
-		} else {
-			CLogicInt start = attr.start;
-			CLogicInt end = logicOffset + layoutLength;
+				start - logicOffset, end - start);
+			if (end == attr.end)
+				break;
 
-			for (;;) {
-				m_cTextMetrics.GenerateDxArray2(&dxArray, layoutLinePtr, layoutLength);
+			sPos.ForwardDrawLine(1);
+			sPos.ForwardLayoutLineRef(1);
+			sPos.ResetDrawCol();
+			layout = sPos.GetLayoutRef();
+			logicOffset = layout->GetLogicOffset();
+			layoutLength = layout->GetLengthWithoutEOL();
+			layoutLinePtr = docLine->GetPtr() + logicOffset;
 
-				end = std::min(end, attr.end);
-				attr.pos = DrawUnderline(m_cTextMetrics, gr, color,
-					attr.kind, sPos.GetDrawPos(),
-					layoutLinePtr, dxArray.data(),
-					start - logicOffset, end - start);
-				if (end == attr.end)
-					break;
-
-				sPos.ForwardDrawLine(1);
-				sPos.ForwardLayoutLineRef(1);
-				sPos.ResetDrawCol();
-				layout = sPos.GetLayoutRef();
-				logicOffset = layout->GetLogicOffset();
-				layoutLength = layout->GetLengthWithoutEOL();
-				layoutLinePtr = docLine->GetPtr() + logicOffset;
-
-				start = end;
-				end = logicOffset + layoutLength;
-			}
+			start = end;
 		}
 	}
 }
