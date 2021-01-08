@@ -42,10 +42,10 @@ private:
 };
 
 std::wstring GetCompositionString(HIMC imc, DWORD type) {
-	const int requiredSize = ImmGetCompositionString(imc, type, nullptr, 0);
-	std::wstring string(requiredSize / 2, L'\0');
-	const int actualSize = ImmGetCompositionString(imc, type, string.data(), requiredSize);
-	string.resize(actualSize / 2);
+	const int requiredBytes = ImmGetCompositionString(imc, type, nullptr, 0);
+	std::wstring string(requiredBytes / 2, L'\0');
+	const int actualBytes = ImmGetCompositionString(imc, type, string.data(), requiredBytes);
+	string.resize(actualBytes / 2);
 	return string;
 }
 
@@ -119,7 +119,7 @@ void CEditView::OnImeComposition(LPARAM lParam)
 	else if (lParam & GCS_COMPSTR) {  // 編集中文字列の変更通知
 		ImmContext imc(GetHwnd());
 		std::wstring s = GetCompositionString(imc, GCS_COMPSTR);
-#ifdef DEBUG
+#ifdef _DEBUG
 		OutputDebugStringW(s.c_str());
 		wchar_t buffer[32];
 		swprintf_s(buffer, L" {(%d,%d), (%d,%d)}",
@@ -139,10 +139,10 @@ void CEditView::OnImeComposition(LPARAM lParam)
 		std::vector<int> clauses = GetCompositionAttributes<int>(imc, GCS_COMPCLAUSE);
 		m_compositionAttributes.clear();
 
-		// 属性データを内部形式に変換しておく
 		CLogicPoint logicFrom;
 		m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(m_compositionLayoutRange.GetFrom(), &logicFrom);
 
+		// 属性データを内部形式に変換する
 		std::vector<int>::iterator it = clauses.begin();
 		++it;  // 先頭は必ず0なので読み飛ばす
 		CLogicInt logicFromX = logicFrom.GetX();
@@ -158,6 +158,17 @@ void CEditView::OnImeComposition(LPARAM lParam)
 		m_pcEditDoc->m_cLayoutMgr.LogicToLayout(
 			CLogicPoint(logicToX, logicFrom.GetY()), m_compositionLayoutRange.GetToPointer());
 
+		// GCS_CURSORPOSの値に従って一時的にキャレットを動かす
+		const int cursorPos = ImmGetCompositionString(imc, GCS_CURSORPOS, nullptr, 0);
+		CLogicPoint caretLogicPos = logicFrom;
+		caretLogicPos.Offset(cursorPos, 0);
+		m_pcCaret->SetCaretLogicPos(caretLogicPos);
+
+		CLayoutPoint caretLayoutPos;
+		m_pcEditDoc->m_cLayoutMgr.LogicToLayout(caretLogicPos, &caretLayoutPos);
+		m_pcCaret->SetCaretLayoutPos(caretLayoutPos);
+
+		// 再描画
 		RedrawLines(m_compositionLayoutRange.GetFrom().GetY(),
 			        m_compositionLayoutRange.GetTo().GetY() + 2);
 		m_pcCaret->ShowEditCaret();
