@@ -1546,26 +1546,31 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 				layoutLinePtr, dxArray.data(),
 				attr.start - logicOffset, attr.end - attr.start);
 		} else {
-			// TODO: レイアウト3行以上にまたがるコンポジション
-			CLogicInt middle = logicOffset + layoutLength;
-			attr.pos = DrawUnderline(m_cTextMetrics, gr, color,
-				attr.kind, sPos.GetDrawPos(),
-				layoutLinePtr, dxArray.data(),
-				attr.start - logicOffset, middle - attr.start);
-			sPos.ForwardDrawLine(1);
-			sPos.ForwardLayoutLineRef(1);
-			sPos.ResetDrawCol();
-			layout = sPos.GetLayoutRef();
-			logicOffset = layout->GetLogicOffset();
-			layoutLength = layout->GetLengthWithoutEOL();
-			layoutLinePtr = docLine->GetPtr() + logicOffset;
+			CLogicInt start = attr.start;
+			CLogicInt end = logicOffset + layoutLength;
 
-			m_cTextMetrics.GenerateDxArray2(&dxArray, layoutLinePtr, layoutLength);
+			for (;;) {
+				m_cTextMetrics.GenerateDxArray2(&dxArray, layoutLinePtr, layoutLength);
 
-			DrawUnderline(m_cTextMetrics, gr, color,
-				attr.kind, sPos.GetDrawPos(),
-				layoutLinePtr, dxArray.data(),
-				middle - logicOffset, attr.end - middle);
+				end = std::min(end, attr.end);
+				attr.pos = DrawUnderline(m_cTextMetrics, gr, color,
+					attr.kind, sPos.GetDrawPos(),
+					layoutLinePtr, dxArray.data(),
+					start - logicOffset, end - start);
+				if (end == attr.end)
+					break;
+
+				sPos.ForwardDrawLine(1);
+				sPos.ForwardLayoutLineRef(1);
+				sPos.ResetDrawCol();
+				layout = sPos.GetLayoutRef();
+				logicOffset = layout->GetLogicOffset();
+				layoutLength = layout->GetLengthWithoutEOL();
+				layoutLinePtr = docLine->GetPtr() + logicOffset;
+
+				start = end;
+				end = logicOffset + layoutLength;
+			}
 		}
 	}
 }
