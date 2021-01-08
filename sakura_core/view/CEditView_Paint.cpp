@@ -1522,35 +1522,25 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 	sPos.SetLayoutLineRef(layoutLineFrom);
 
 	for (CompositionAttribute& attr : m_compositionAttributes) {
-		const CLayout* layout;
-		for (;;) {
-			layout = sPos.GetLayoutRef();
-			if (attr.start <= layout->GetLogicOffset() + layout->GetLengthWithoutEOL())
-				break;
-			else assert(false);
-			sPos.ForwardDrawLine(1);
-			sPos.ForwardLayoutLineRef(1);
-			sPos.ResetDrawCol();
-		}
-
 		CLogicInt start = attr.start;
 		for (;;) {
-			m_cTextMetrics.GenerateDxArray2(&dxArray,
-				layout->GetPtr(), layout->GetLengthWithoutEOL());
+			const CLayout* layout = sPos.GetLayoutRef();
+			const CLogicInt logicOffset = layout->GetLogicOffset();
+			const CLogicInt layoutLength = layout->GetLengthWithoutEOL();
 
-			CLogicInt end =
-				std::min(layout->GetLogicOffset() + layout->GetLengthWithoutEOL(), attr.end);
+			m_cTextMetrics.GenerateDxArray2(&dxArray, layout->GetPtr(), layoutLength);
+
+			CLogicInt end =	std::min(attr.end, logicOffset + layoutLength);
 			attr.pos = DrawUnderline(m_cTextMetrics, gr, color,
 				attr.kind, sPos.GetDrawPos(),
 				layout->GetPtr(), dxArray.data(),
-				start - layout->GetLogicOffset(), end - start);
+				start - logicOffset, end - start);
 			if (end == attr.end)
 				break;
 
 			sPos.ForwardDrawLine(1);
 			sPos.ForwardLayoutLineRef(1);
 			sPos.ResetDrawCol();
-			layout = sPos.GetLayoutRef();
 
 			start = end;
 		}
