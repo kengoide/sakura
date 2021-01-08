@@ -105,6 +105,7 @@ void CEditView::OnImeComposition(LPARAM lParam)
 		m_compositionLayoutRange.Clear(0);
 		m_compositionAttributes.clear();
 		RedrawLines(redrawTopLine, redrawBottomLine + 2);
+		m_pcCaret->ShowEditCaret();
 		return;
 	}
 	else if (lParam & GCS_COMPSTR) {  // 編集中文字列の変更通知
@@ -151,6 +152,7 @@ void CEditView::OnImeComposition(LPARAM lParam)
 
 		RedrawLines(m_compositionLayoutRange.GetFrom().GetY(),
 			        m_compositionLayoutRange.GetTo().GetY() + 2);
+		m_pcCaret->ShowEditCaret();
 		return;
 	}
 	else if (lParam & GCS_RESULTSTR) {  // 文字列の確定通知
@@ -174,8 +176,11 @@ void CEditView::OnImeComposition(LPARAM lParam)
 			::SetCursor( NULL );
 		}
 		BOOL bHokan = m_bHokan;
+
 		GetCommander().HandleCommand( F_INSTEXT_W, false, (LPARAM)text.data(), (LPARAM)text.size(), TRUE, 0 );
 		RedrawLines(redrawTopLine, redrawBottomLine + 2);
+		m_pcCaret->ShowEditCaret();
+
 		m_bHokan = bHokan;	// 消されても表示中であるかのように誤魔化して入力補完を動作させる
 		PostprocessCommand_hokan();	// 補完実行
 		return;
