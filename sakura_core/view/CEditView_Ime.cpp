@@ -177,7 +177,7 @@ void CEditView::CompleteComposition(std::wstring_view text)
 	BOOL bHokan = m_bHokan;
 
 	GetCommander().HandleCommand( F_INSTEXT_W, false, (LPARAM)text.data(), (LPARAM)text.size(), TRUE, 0 );
-	RedrawLines(redrawTopLine, redrawBottomLine + 2);
+	RedrawLines(redrawTopLine, m_pcTextArea->GetBottomLine());
 	m_pcCaret->ShowEditCaret();
 
 	m_bHokan = bHokan;	// 消されても表示中であるかのように誤魔化して入力補完を動作させる
