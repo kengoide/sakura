@@ -18,6 +18,12 @@ bool CFigure_ZenSpace::Match(const wchar_t* pText, int nTextLen) const
 	return false;
 }
 
+CLayoutInt CFigure_ZenSpace::GetDisplayWidth(
+	const CEditView& view, const DispPos& dispPos, std::wstring_view text)
+{
+	return CLayoutInt(view.GetTextMetrics().CalcTextWidth3(L"　", 1));
+}
+
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 //                         描画実装                            //
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //

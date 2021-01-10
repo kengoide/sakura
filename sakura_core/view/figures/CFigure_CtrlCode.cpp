@@ -19,6 +19,12 @@ bool CFigure_CtrlCode::Match(const wchar_t* pText, int nTextLen) const
 	return false;
 }
 
+CLayoutInt CFigure_CtrlCode::GetDisplayWidth(
+	const CEditView& view, const DispPos& dispPos, std::wstring_view text)
+{
+	return CLayoutInt(view.GetTextMetrics().CalcTextWidth3(text.data(), 1));
+}
+
 bool CFigure_CtrlCode::DrawImp(SColorStrategyInfo* pInfo)
 {
 	bool bTrans = DrawImp_StyleSelect(pInfo);

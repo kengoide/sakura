@@ -26,8 +26,12 @@
 #define SAKURA_CFIGURESTRATEGY_5D122522_91F9_4FC5_A31A_E78FB5DB0D0F_H_
 #pragma once
 
+#include <string_view>
 #include <vector>
 #include "view/colors/CColorStrategy.h" //SColorStrategyInfo
+
+class CTextMetrics;
+struct DispPos;
 
 //$$レイアウト構築フロー(DoLayout)も CFigure で行うと整理しやすい
 class CFigure{
@@ -35,6 +39,8 @@ public:
 	virtual ~CFigure(){}
 	virtual bool DrawImp(SColorStrategyInfo* pInfo) = 0;
 	virtual bool Match(const wchar_t* pText, int nTextLen) const = 0;
+	virtual CLayoutInt GetDisplayWidth(
+		const CEditView& view, const DispPos& dispPos, std::wstring_view text) = 0;
 
 	//! 色分け表示対象判定
 	virtual bool Disp(void) const = 0;
@@ -70,6 +76,8 @@ public:
 	{
 		return true;
 	}
+	CLayoutInt GetDisplayWidth(
+		const CEditView& view, const DispPos& dispPos, std::wstring_view text) override;
 
 	//! 色分け表示対象判定
 	bool Disp(void) const override

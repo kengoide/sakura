@@ -43,6 +43,8 @@ public:
 	{
 		return true;
 	}
+	CLayoutInt GetDisplayWidth(
+		const CEditView& view, const DispPos& dispPos, std::wstring_view text);
 
 	//action
 	bool DrawImp(SColorStrategyInfo* pInfo) override;

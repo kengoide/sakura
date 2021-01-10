@@ -37,6 +37,8 @@ public:
 	{
 		return true;
 	}
+	CLayoutInt GetDisplayWidth(
+		const CEditView& view, const DispPos& dispPos, std::wstring_view text) override;
 
 	//action
 	void DispSpace(CGraphics& gr, DispPos* pDispPos, CEditView* pcView, bool bTrans) const override;

@@ -23,6 +23,18 @@ bool CFigure_Tab::Match(const wchar_t* pText, int nTextLen) const
 	return false;
 }
 
+CLayoutInt CFigure_Tab::GetDisplayWidth(
+	const CEditView& view, const DispPos& dispPos, std::wstring_view text)
+{
+	if (view.m_bMiniMap){
+		CLayoutMgr mgrTemp;
+		mgrTemp.SetTabSpaceInfo(view.m_pcEditDoc->m_cLayoutMgr.GetTabSpaceKetas(),
+			CLayoutXInt(view.GetTextMetrics().GetHankakuWidth()));
+		return mgrTemp.GetActualTabSpace(dispPos.GetDrawCol());
+	}
+	return view.m_pcEditDoc->m_cLayoutMgr.GetActualTsvSpace(dispPos.GetDrawCol(), WCODE::TAB);
+}
+
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 //                         描画実装                            //
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //

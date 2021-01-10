@@ -136,6 +136,13 @@ bool CFigure_Eol::DrawImp(SColorStrategyInfo* pInfo)
 	return true;
 }
 
+CLayoutInt CFigure_Eol::GetDisplayWidth(
+	const CEditView& view, const DispPos& dispPos, std::wstring_view text)
+{
+	// 未使用パス。0を返しているのは仮実装です。
+	return CLayoutInt(0);
+}
+
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 //                     折り返し描画実装                        //
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //

@@ -126,6 +126,13 @@ bool CFigure_Text::DrawImp(SColorStrategyInfo* pInfo)
 	return true;
 }
 
+CLayoutInt CFigure_Text::GetDisplayWidth(
+	const CEditView& view, const DispPos& dispPos, std::wstring_view text)
+{
+	int length = CNativeW::GetSizeOfChar(text.data(), text.size(), 0);
+	return CLayoutInt(view.GetTextMetrics().CalcTextWidth3(text.data(), length));
+}
+
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 //                         描画統合                            //
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //

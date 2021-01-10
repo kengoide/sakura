@@ -25,6 +25,18 @@ bool CFigure_Comma::Disp(void) const
 	return m_pTypeData->m_nTsvMode == TSV_MODE_CSV;
 }
 
+CLayoutInt CFigure_Comma::GetDisplayWidth(
+	const CEditView& view, const DispPos& dispPos, std::wstring_view text)
+{
+	if (view.m_bMiniMap){
+		CLayoutMgr mgrTemp;
+		mgrTemp.SetTabSpaceInfo(view.m_pcEditDoc->m_cLayoutMgr.GetTabSpaceKetas(),
+			CLayoutXInt(view.GetTextMetrics().GetHankakuWidth()));
+		return mgrTemp.GetActualTabSpace(dispPos.GetDrawCol());
+	}
+	return view.m_pcEditDoc->m_cLayoutMgr.GetActualTsvSpace(dispPos.GetDrawCol(), L',');
+}
+
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 //                         描画実装                            //
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //

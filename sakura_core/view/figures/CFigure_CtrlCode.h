@@ -33,6 +33,8 @@ class CFigure_CtrlCode : public CFigureSpace{
 public:
 	//traits
 	bool Match(const wchar_t* pText, int nTextLen) const override;
+	CLayoutInt GetDisplayWidth(
+		const CEditView& view, const DispPos& dispPos, std::wstring_view text);
 
 	//action
 	bool DrawImp(SColorStrategyInfo* pInfo) override;

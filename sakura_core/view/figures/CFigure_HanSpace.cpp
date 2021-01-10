@@ -17,6 +17,12 @@ bool CFigure_HanSpace::Match(const wchar_t* pText, int nTextLen) const
 	return false;
 }
 
+CLayoutInt CFigure_HanSpace::GetDisplayWidth(
+	const CEditView& view, const DispPos& dispPos, std::wstring_view text)
+{
+	return CLayoutInt(view.GetTextMetrics().CalcTextWidth3(L" ", 1));
+}
+
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 //                         描画実装                            //
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //

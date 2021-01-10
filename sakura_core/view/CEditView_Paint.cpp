@@ -1468,21 +1468,22 @@ void CEditView::UseCompatibleDC(BOOL fCache)
 
 namespace {
 
-CMyPoint DrawUnderline(const CTextMetrics& metrics, CGraphics& gr, COLORREF color,
-	                   CompositionAttributeKind attr, const CMyPoint& pos,
-	                   const wchar_t* line, const int* charWidthArray,
-	                   int start, int length) {
-	const int textWidthBefore = std::accumulate(charWidthArray, charWidthArray + start, 0);
-	const int textWidthTarget = std::accumulate(charWidthArray + start, charWidthArray + start + length, 0);
+CMyPoint DrawUnderline(DispPos& dispPos, const CTextMetrics& metrics, CGraphics& gr,
+	                   COLORREF color, CompositionAttributeKind attr,
+	                   const wchar_t* text, int length) {
+	static std::vector<int> dxArray;
+	metrics.GenerateDxArray2(&dxArray, text, length);
 
-	const int drawX = pos.GetX();
-	const int drawY = pos.GetY();
+	const int textWidth = std::accumulate(dxArray.begin(), dxArray.begin() + length, 0);
+
+	const int drawX = dispPos.GetDrawPos().GetX();
+	const int drawY = dispPos.GetDrawPos().GetY();
 	const int nHeightMargin = metrics.GetCharHeightMarginByFontNo(0);
 
-	const int x1 = drawX + textWidthBefore + 1;
+	const int x1 = drawX + 1;
 	const int y1 = drawY + metrics.GetHankakuDy() + nHeightMargin;
-	const int x2 = drawX + textWidthBefore + textWidthTarget - 1;
-	const int y2 = drawY + metrics.GetHankakuDy() + nHeightMargin;
+	const int x2 = drawX + textWidth - 1;
+	const int y2 = y1;
 	if (attr == CompositionAttributeKind::INPUT) {
 		gr.PushPen(color, 2);
 		gr.DrawDotLine(x1, y1, x2, y2);
@@ -1497,15 +1498,30 @@ CMyPoint DrawUnderline(const CTextMetrics& metrics, CGraphics& gr, COLORREF colo
 		gr.DrawLine(x1, y1, x2, y2);
 	}
 	gr.PopPen();
-	return CMyPoint(drawX + textWidthBefore, drawY + nHeightMargin + 2);
+
+	dispPos.ForwardDrawCol(CLayoutInt(textWidth));
+
+	return CMyPoint(drawX, drawY + nHeightMargin + 2);
+}
+
+CLayoutInt CalculateTextDisplayWidth(
+	const CEditView& view, const DispPos& dispPos, std::wstring_view text)
+{
+	CLayoutInt result(0);
+	std::wstring_view subtext = text;
+	while (subtext.size() > 0) {
+		CFigure& figure = CFigureManager::getInstance()->GetFigure(subtext.data(), subtext.size());
+		result += figure.GetDisplayWidth(view, dispPos, subtext);
+
+		subtext = subtext.substr(CNativeW::GetSizeOfChar(subtext.data(), subtext.size(), 0));
+	}
+	return result;
 }
 
 }
 
 void CEditView::DrawCompositionAttributes(HDC hdc)
 {
-	static std::vector<int> dxArray;
-
 	CGraphics gr(hdc);
 	RECT clipRect;
 	m_pcTextArea->GenerateTextAreaRect(&clipRect);
@@ -1526,6 +1542,11 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 	));
 	sPos.SetLayoutLineRef(layoutLineFrom);
 
+	const CLayout* layout = sPos.GetLayoutRef();
+	std::wstring_view s(layout->GetPtr(),
+		m_compositionAttributes.front().start - layout->GetLogicOffset());
+	sPos.ForwardDrawCol(CalculateTextDisplayWidth(*this, sPos, s));
+
 	for (CompositionAttribute& attr : m_compositionAttributes) {
 		CLogicInt start = attr.start;
 		for (;;) {
@@ -1533,13 +1554,9 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 			const CLogicInt logicOffset = layout->GetLogicOffset();
 			const CLogicInt layoutLength = layout->GetLengthWithoutEOL();
 
-			m_cTextMetrics.GenerateDxArray2(&dxArray, layout->GetPtr(), layoutLength);
-
 			CLogicInt end =	std::min(attr.end, logicOffset + layoutLength);
-			attr.pos = DrawUnderline(m_cTextMetrics, gr, color,
-				attr.kind, sPos.GetDrawPos(),
-				layout->GetPtr(), dxArray.data(),
-				start - logicOffset, end - start);
+			attr.pos = DrawUnderline(sPos, m_cTextMetrics, gr, color,
+				attr.kind, layout->GetPtr() + start - logicOffset, end - start);
 			if (end == attr.end)
 				break;
 
