@@ -188,6 +188,8 @@ void CEditView::CompleteComposition(std::wstring_view text)
 	}
 	BOOL bHokan = m_bHokan;
 	GetCommander().HandleCommand( F_INSTEXT_W, true, (LPARAM)text.data(), (LPARAM)text.size(), TRUE, 0 );
+	// 下線が消えないので追加で再描画
+	RedrawLines(redrawTopLine, redrawBottomLine + 2);
 	m_bHokan = bHokan;	// 消されても表示中であるかのように誤魔化して入力補完を動作させる
 	PostprocessCommand_hokan();	// 補完実行
 }
