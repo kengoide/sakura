@@ -1507,6 +1507,11 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 	static std::vector<int> dxArray;
 
 	CGraphics gr(hdc);
+	RECT clipRect;
+	m_pcTextArea->GenerateTextAreaRect(&clipRect);
+	clipRect.left += m_pcTextArea->GetLineNumberWidth() + m_pcTextArea->GetLeftYohaku();
+	gr.SetClipping(clipRect);
+
 	const int nLineHeight = m_cTextMetrics.GetHankakuDy();
 	const int nCharDx = m_cTextMetrics.GetCharPxWidth();
 

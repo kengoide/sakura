@@ -103,8 +103,7 @@ void CEditView::StartComposition()
 }
 
 static bool IsTargetAttribute(const CompositionAttribute& attr) {
-	return attr.kind == CompositionAttributeKind::TARGET_CONVERTED ||
-		   attr.kind == CompositionAttributeKind::TARGET_NOTCONVERTED;
+	return attr.kind == CompositionAttributeKind::TARGET_CONVERTED;
 }
 
 void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
@@ -140,17 +139,17 @@ void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
 	// キャレットの位置を決める
 	// IMMから通知されるカーソル位置と変換中の文字列の位置は必ずしも一致しない。現在変換中の文字列が
 	// 画面外にスクロールされてしまうことがあるため、変換中文字列がある場合はその位置で上書きしておく。
-	if (cursorPos == logicToX) {
+	CLogicPoint caretLogicPos = logicFrom;
+	caretLogicPos.Offset(cursorPos, 0);
+	if (cursorPos == text.size()) {
 		const auto attr = std::find_if(m_compositionAttributes.begin(),
 			m_compositionAttributes.end(), IsTargetAttribute);
 		if (attr != m_compositionAttributes.end()) {
-			cursorPos = attr->start;
+			caretLogicPos.SetX(attr->start);
 		}
 	}
 
 	// キャレットの移動と追従スクロール
-	CLogicPoint caretLogicPos = logicFrom;
-	caretLogicPos.Offset(cursorPos, 0);
 	CLayoutPoint caretLayoutPos;
 	m_pcEditDoc->m_cLayoutMgr.LogicToLayout(caretLogicPos, &caretLayoutPos);
 	m_pcCaret->MoveCursor(caretLayoutPos, true);
@@ -158,13 +157,15 @@ void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
 	Call_OnPaint(PAINT_LINENUMBER | PAINT_BODY, false);
 
 #ifdef _DEBUG
-	wchar_t buffer[64];
-	swprintf_s(buffer, L"\nCursor = %d, LayoutRange {(%d,%d), (%d,%d)}\n",
-		cursorPos,
+	wchar_t buffer[128];
+	swprintf_s(buffer, L"\nLayoutRange  {(%d,%d), (%d,%d)}, Cursor = %d, CaretPos = (%d,%d)\n",
 		m_compositionLayoutRange.GetFrom().GetX().GetValue(),
 		m_compositionLayoutRange.GetFrom().GetY().GetValue(),
 		m_compositionLayoutRange.GetTo().GetX().GetValue(),
-		m_compositionLayoutRange.GetTo().GetY().GetValue()
+		m_compositionLayoutRange.GetTo().GetY().GetValue(),
+		cursorPos,
+		caretLayoutPos.GetX().GetValue(),
+		caretLayoutPos.GetY().GetValue()
 	);
 	OutputDebugStringW(buffer);
 #endif
@@ -189,11 +190,7 @@ void CEditView::CompleteComposition(std::wstring_view text)
 		::SetCursor( NULL );
 	}
 	BOOL bHokan = m_bHokan;
-
-	GetCommander().HandleCommand( F_INSTEXT_W, false, (LPARAM)text.data(), (LPARAM)text.size(), TRUE, 0 );
-	RedrawLines(redrawTopLine, redrawBottomLine);
-	m_pcCaret->ShowEditCaret();
-
+	GetCommander().HandleCommand( F_INSTEXT_W, true, (LPARAM)text.data(), (LPARAM)text.size(), TRUE, 0 );
 	m_bHokan = bHokan;	// 消されても表示中であるかのように誤魔化して入力補完を動作させる
 	PostprocessCommand_hokan();	// 補完実行
 }
@@ -201,9 +198,10 @@ void CEditView::CompleteComposition(std::wstring_view text)
 void CEditView::CancelComposition()
 {
 	ReplaceData_CEditView(m_compositionLayoutRange, nullptr, CLogicInt(0), false, nullptr);
-	m_pcCaret->MoveCursor(m_compositionLayoutRange.GetFrom(), true);
-	m_compositionLayoutRange.Clear(0);
 	m_compositionAttributes.clear();
+	CLayoutPoint from = m_compositionLayoutRange.GetFrom();
+	m_compositionLayoutRange.Clear(0);
+	m_pcCaret->MoveCursor(from, true);
 	Call_OnPaint(PAINT_LINENUMBER | PAINT_BODY, false);
 }
 
