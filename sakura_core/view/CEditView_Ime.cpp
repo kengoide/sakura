@@ -102,34 +102,25 @@ void CEditView::StartComposition()
 	m_compositionLayoutRange.Set(GetCaret().GetCaretLayoutPos());
 }
 
+static bool IsTargetAttribute(const CompositionAttribute& attr) {
+	return attr.kind == CompositionAttributeKind::TARGET_CONVERTED ||
+		   attr.kind == CompositionAttributeKind::TARGET_NOTCONVERTED;
+}
+
 void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
 	const std::vector<CompositionAttributeKind>& attrs, const std::vector<int>& clauses)
 {
 #ifdef _DEBUG
 	std::wstring s(text);
 	OutputDebugStringW(s.c_str());
-	wchar_t buffer[32];
-	swprintf_s(buffer, L" {(%d,%d), (%d,%d)}",
-		m_compositionLayoutRange.GetFrom().GetX().GetValue(),
-		m_compositionLayoutRange.GetFrom().GetY().GetValue(),
-		m_compositionLayoutRange.GetTo().GetX().GetValue(),
-		m_compositionLayoutRange.GetTo().GetY().GetValue()
-	);
-	OutputDebugStringW(buffer);
-	OutputDebugStringW(L"\n");
 #endif
-
-	ReplaceData_CEditView(m_compositionLayoutRange,
-		text.data(), CLogicInt(text.size()), false, nullptr);
-
-	m_compositionAttributes.clear();
 
 	CLogicPoint logicFrom;
 	m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(m_compositionLayoutRange.GetFrom(), &logicFrom);
 
 	// 属性データを内部形式に変換する
-	auto it = clauses.begin();
-	++it;  // 先頭は必ず0なので読み飛ばす
+	m_compositionAttributes.clear();
+	auto it = clauses.begin() + 1;  // 先頭は必ず0なので読み飛ばす
 	CLogicInt logicFromX = logicFrom.GetX();
 	CLogicInt logicToX;
 	for (; it != clauses.end(); ++it) {
@@ -138,22 +129,43 @@ void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
 		logicFromX = logicToX;
 	}
 
+	// 行データ・レイアウト情報の更新と再描画
+	ReplaceData_CEditView(m_compositionLayoutRange,
+		text.data(), CLogicInt(text.size()), true, nullptr);
+
+	// 新しい範囲情報を保存しておく
 	m_pcEditDoc->m_cLayoutMgr.LogicToLayout(
 		CLogicPoint(logicToX, logicFrom.GetY()), m_compositionLayoutRange.GetToPointer());
 
-	// GCS_CURSORPOSの値に従って一時的にキャレットを動かす
+	// キャレットの位置を決める
+	// IMMから通知されるカーソル位置と変換中の文字列の位置は必ずしも一致しない。現在変換中の文字列が
+	// 画面外にスクロールされてしまうことがあるため、変換中文字列がある場合はその位置で上書きしておく。
+	if (cursorPos == logicToX) {
+		auto attr = std::find_if(m_compositionAttributes.begin(),
+			m_compositionAttributes.end(), IsTargetAttribute);
+		if (attr != m_compositionAttributes.end()) {
+			cursorPos = attr->end;
+		}
+	}
+
+	// キャレットの移動と追従スクロール
 	CLogicPoint caretLogicPos = logicFrom;
 	caretLogicPos.Offset(cursorPos, 0);
-	m_pcCaret->SetCaretLogicPos(caretLogicPos);
-
 	CLayoutPoint caretLayoutPos;
 	m_pcEditDoc->m_cLayoutMgr.LogicToLayout(caretLogicPos, &caretLayoutPos);
-	m_pcCaret->SetCaretLayoutPos(caretLayoutPos);
+	m_pcCaret->MoveCursor(caretLayoutPos, true);
 
-	// 再描画
-	RedrawLines(m_compositionLayoutRange.GetFrom().GetY(),
-		m_compositionLayoutRange.GetTo().GetY() + 2);
-	m_pcCaret->ShowEditCaret();
+#ifdef _DEBUG
+	wchar_t buffer[64];
+	swprintf_s(buffer, L"\nCursor = %d, LayoutRange {(%d,%d), (%d,%d)}\n",
+		cursorPos,
+		m_compositionLayoutRange.GetFrom().GetX().GetValue(),
+		m_compositionLayoutRange.GetFrom().GetY().GetValue(),
+		m_compositionLayoutRange.GetTo().GetX().GetValue(),
+		m_compositionLayoutRange.GetTo().GetY().GetValue()
+	);
+	OutputDebugStringW(buffer);
+#endif
 }
 
 void CEditView::CompleteComposition(std::wstring_view text)
