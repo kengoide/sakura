@@ -109,11 +109,6 @@ static bool IsTargetAttribute(const CompositionAttribute& attr) {
 void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
 	const std::vector<CompositionAttributeKind>& attrs, const std::vector<int>& clauses)
 {
-#ifdef _DEBUG
-	std::wstring s(text);
-	OutputDebugStringW(s.c_str());
-#endif
-
 	CLogicPoint logicFrom;
 	m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(m_compositionLayoutRange.GetFrom(), &logicFrom);
 
@@ -157,6 +152,8 @@ void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
 	Call_OnPaint(PAINT_LINENUMBER | PAINT_BODY, false);
 
 #ifdef _DEBUG
+	std::wstring s(text);
+	OutputDebugStringW(s.c_str());
 	wchar_t buffer[128];
 	swprintf_s(buffer, L"\nLayoutRange  {(%d,%d), (%d,%d)}, Cursor = %d, CaretPos = (%d,%d)\n",
 		m_compositionLayoutRange.GetFrom().GetX().GetValue(),
