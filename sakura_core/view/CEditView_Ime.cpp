@@ -116,7 +116,7 @@ void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
 	m_compositionAttributes.clear();
 	auto it = clauses.begin() + 1;  // 先頭は必ず0なので読み飛ばす
 	CLogicInt logicFromX = logicFrom.GetX();
-	CLogicInt logicToX;
+	CLogicInt logicToX(0);
 	for (; it != clauses.end(); ++it) {
 		logicToX = logicFrom.GetX() + *it;
 		m_compositionAttributes.emplace_back(attrs[*it - 1], logicFromX, logicToX);
