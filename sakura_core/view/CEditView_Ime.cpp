@@ -129,9 +129,9 @@ void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
 		logicFromX = logicToX;
 	}
 
-	// 行データ・レイアウト情報の更新と再描画
+	// 行データ・レイアウト情報の更新
 	ReplaceData_CEditView(m_compositionLayoutRange,
-		text.data(), CLogicInt(text.size()), true, nullptr);
+		text.data(), CLogicInt(text.size()), false, nullptr);
 
 	// 新しい範囲情報を保存しておく
 	m_pcEditDoc->m_cLayoutMgr.LogicToLayout(
@@ -141,10 +141,10 @@ void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
 	// IMMから通知されるカーソル位置と変換中の文字列の位置は必ずしも一致しない。現在変換中の文字列が
 	// 画面外にスクロールされてしまうことがあるため、変換中文字列がある場合はその位置で上書きしておく。
 	if (cursorPos == logicToX) {
-		auto attr = std::find_if(m_compositionAttributes.begin(),
+		const auto attr = std::find_if(m_compositionAttributes.begin(),
 			m_compositionAttributes.end(), IsTargetAttribute);
 		if (attr != m_compositionAttributes.end()) {
-			cursorPos = attr->end;
+			cursorPos = attr->start;
 		}
 	}
 
@@ -154,6 +154,8 @@ void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
 	CLayoutPoint caretLayoutPos;
 	m_pcEditDoc->m_cLayoutMgr.LogicToLayout(caretLogicPos, &caretLayoutPos);
 	m_pcCaret->MoveCursor(caretLayoutPos, true);
+
+	Call_OnPaint(PAINT_LINENUMBER | PAINT_BODY, false);
 
 #ifdef _DEBUG
 	wchar_t buffer[64];
@@ -189,7 +191,7 @@ void CEditView::CompleteComposition(std::wstring_view text)
 	BOOL bHokan = m_bHokan;
 
 	GetCommander().HandleCommand( F_INSTEXT_W, false, (LPARAM)text.data(), (LPARAM)text.size(), TRUE, 0 );
-	RedrawLines(redrawTopLine, m_pcTextArea->GetBottomLine());
+	RedrawLines(redrawTopLine, redrawBottomLine);
 	m_pcCaret->ShowEditCaret();
 
 	m_bHokan = bHokan;	// 消されても表示中であるかのように誤魔化して入力補完を動作させる
@@ -199,13 +201,10 @@ void CEditView::CompleteComposition(std::wstring_view text)
 void CEditView::CancelComposition()
 {
 	ReplaceData_CEditView(m_compositionLayoutRange, nullptr, CLogicInt(0), false, nullptr);
-
-	const CLayoutInt redrawTopLine = m_compositionLayoutRange.GetFrom().GetY();
-	const CLayoutInt redrawBottomLine = m_compositionLayoutRange.GetTo().GetY();
+	m_pcCaret->MoveCursor(m_compositionLayoutRange.GetFrom(), true);
 	m_compositionLayoutRange.Clear(0);
 	m_compositionAttributes.clear();
-	RedrawLines(redrawTopLine, redrawBottomLine + 2);
-	m_pcCaret->ShowEditCaret();
+	Call_OnPaint(PAINT_LINENUMBER | PAINT_BODY, false);
 }
 
 void CEditView::OnImeComposition(LPARAM lParam)
