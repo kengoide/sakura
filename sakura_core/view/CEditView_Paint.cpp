@@ -1470,7 +1470,8 @@ namespace {
 
 CMyPoint DrawUnderline(DispPos& dispPos, const CTextMetrics& metrics, CGraphics& gr,
 	                   COLORREF color, CompositionAttributeKind attr,
-	                   const wchar_t* text, int length) {
+	                   const wchar_t* text, int length)
+{
 	static std::vector<int> dxArray;
 	metrics.GenerateDxArray2(&dxArray, text, length);
 
@@ -1518,7 +1519,7 @@ CLayoutInt CalculateTextDisplayWidth(
 	return result;
 }
 
-}
+}  // namespace
 
 void CEditView::DrawCompositionAttributes(HDC hdc)
 {
