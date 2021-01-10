@@ -96,7 +96,10 @@ bool CEditView::IsImeON( void )
 
 void CEditView::StartComposition()
 {
-	if (m_cViewSelect.IsTextSelected()) {
+	if (m_cViewSelect.IsBoxSelecting()) {
+		m_savedSelectionStatus.emplace(this);
+		m_cViewSelect.CopySelectStatus(&(m_savedSelectionStatus.value()));
+	} else if (m_cViewSelect.IsTextSelected()) {
 		GetCommander().HandleCommand(F_DELETE, false, 0, 0, 0, 0);
 	}
 	m_compositionLayoutRange.Set(GetCaret().GetCaretLayoutPos());
@@ -181,6 +184,12 @@ void CEditView::CompleteComposition(std::wstring_view text)
 	m_compositionLayoutRange.Clear(0);
 	m_compositionAttributes.clear();
 
+	// 矩形選択中だった場合は状態の復旧が必要
+	if (m_savedSelectionStatus) {
+		m_savedSelectionStatus->CopySelectStatus(&m_cViewSelect);
+		m_savedSelectionStatus.reset();
+	}
+
 	/* テキストを貼り付け */
 	if( m_bHideMouse && 0 <= m_nMousePouse ){
 		m_nMousePouse = -1;
@@ -196,6 +205,7 @@ void CEditView::CompleteComposition(std::wstring_view text)
 
 void CEditView::CancelComposition()
 {
+	m_savedSelectionStatus.reset();
 	ReplaceData_CEditView(m_compositionLayoutRange, nullptr, CLogicInt(0), false, nullptr);
 	m_compositionAttributes.clear();
 	CLayoutPoint from = m_compositionLayoutRange.GetFrom();

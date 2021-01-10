@@ -42,6 +42,7 @@
 #define SAKURA_CEDITVIEW_54DE503F_6F97_4A16_8165_27F5F0D232E2_H_
 #pragma once
 
+#include <optional>
 #include <vector>
 
 #include <Windows.h>
@@ -773,6 +774,7 @@ public:
 	WCHAR			m_szComposition[512]; // IMR_DOCUMENTFEED用入力中文字列データ
 	CLayoutRange	m_compositionLayoutRange;
 	std::vector<CompositionAttribute> m_compositionAttributes;
+	std::optional<CViewSelect> m_savedSelectionStatus;
 	std::vector<wchar_t> m_overwrittenChars;
 
 private:
