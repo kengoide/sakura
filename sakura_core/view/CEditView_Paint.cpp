@@ -1505,20 +1505,6 @@ CMyPoint DrawUnderline(DispPos& dispPos, const CTextMetrics& metrics, CGraphics&
 	return CMyPoint(drawX, drawY + nHeightMargin + 2);
 }
 
-CLayoutInt CalculateTextDisplayWidth(
-	const CEditView& view, const DispPos& dispPos, std::wstring_view text)
-{
-	CLayoutInt result(0);
-	std::wstring_view subtext = text;
-	while (subtext.size() > 0) {
-		CFigure& figure = CFigureManager::getInstance()->GetFigure(subtext.data(), subtext.size());
-		result += figure.GetDisplayWidth(view, dispPos, subtext);
-
-		subtext = subtext.substr(CNativeW::GetSizeOfChar(subtext.data(), subtext.size(), 0));
-	}
-	return result;
-}
-
 }  // namespace
 
 void CEditView::DrawCompositionAttributes(HDC hdc)
@@ -1543,10 +1529,15 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 	));
 	sPos.SetLayoutLineRef(layoutLineFrom);
 
+	// 行頭からコンポジション文字列までのテキストをスキップ
 	const CLayout* layout = sPos.GetLayoutRef();
-	std::wstring_view s(layout->GetPtr(),
+	std::wstring_view subtext(layout->GetPtr(),
 		m_compositionAttributes.front().start - layout->GetLogicOffset());
-	sPos.ForwardDrawCol(CalculateTextDisplayWidth(*this, sPos, s));
+	while (subtext.size() > 0) {
+		CFigure& figure = CFigureManager::getInstance()->GetFigure(subtext.data(), subtext.size());
+		sPos.ForwardDrawCol(figure.GetDisplayWidth(*this, sPos, subtext));
+		subtext = subtext.substr(CNativeW::GetSizeOfChar(subtext.data(), subtext.size(), 0));
+	}
 
 	for (CompositionAttribute& attr : m_compositionAttributes) {
 		CLogicInt start = attr.start;
