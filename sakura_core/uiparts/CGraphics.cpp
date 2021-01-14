@@ -4,6 +4,7 @@
 */
 
 #include "StdAfx.h"
+#include <cmath>
 #include "CGraphics.h"
 #include "util/std_macro.h"
 
@@ -365,6 +366,19 @@ void CGraphics::DrawDotLine(int x1, int y1, int x2, int y2)
 		if(mx<0 && x<=x2)break;
 		if(my>0 && y>=y2)break;
 		if(my<0 && y<=y2)break;
+	}
+}
+
+void CGraphics::DrawSquigglyLine(int thickness, int x1, int x2, int y)
+{
+	const float PI = 3.14159f;
+
+	COLORREF c = GetPenColor();
+	const int width = x2 - x1;
+	const int frequency = thickness * 2;
+	for (int i = 0; i <= width; ++i) {
+		float cos_rad = std::cos(static_cast<float>(i % frequency) / frequency * 2 * PI);
+		SetPixel(m_hdc, i + x1, static_cast<int>(std::round(cos_rad / PI * thickness)) + y, c);
 	}
 }
 

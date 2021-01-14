@@ -276,6 +276,8 @@ public:
 		::LineTo(m_hdc,x2,y2);
 	}
 	void DrawDotLine(int x1, int y1, int x2, int y2);	//点線
+	void DrawSquigglyLine(int thickness, int x1, int x2, int y);  // 波線
+
 	//! 矩形塗り潰し
 	void FillMyRect(const RECT& rc)
 	{

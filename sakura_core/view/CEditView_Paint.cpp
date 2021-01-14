@@ -1487,7 +1487,7 @@ CMyPoint DrawUnderline(DispPos& dispPos, const CTextMetrics& metrics, CGraphics&
 	const int y2 = y1;
 	if (attr == CompositionAttributeKind::INPUT) {
 		gr.PushPen(color, 2);
-		gr.DrawDotLine(x1, y1, x2, y2);
+		gr.DrawSquigglyLine(3, x1, x2, y1);
 	} else if (attr == CompositionAttributeKind::CONVERTED) {
 		gr.PushPen(color, 1);
 		gr.DrawLine(x1, y1, x2, y2);
