@@ -373,10 +373,9 @@ void CGraphics::DrawSquigglyLine(int thickness, int x1, int x2, int y)
 {
 	const float PI = 3.14159f;
 
-	COLORREF c = GetPenColor();
-	const int width = x2 - x1;
+	const COLORREF c = GetPenColor();
 	const int frequency = thickness * 2;
-	for (int i = 0; i <= width; ++i) {
+	for (int i = 0; i <= x2 - x1; ++i) {
 		float cos_rad = std::cos(static_cast<float>(i % frequency) / frequency * 2 * PI);
 		SetPixel(m_hdc, i + x1, static_cast<int>(std::round(cos_rad / PI * thickness)) + y, c);
 	}

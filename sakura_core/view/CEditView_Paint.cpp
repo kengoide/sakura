@@ -1518,43 +1518,56 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 	const int nLineHeight = m_cTextMetrics.GetHankakuDy();
 	const int nCharDx = m_cTextMetrics.GetCharPxWidth();
 
-	const ColorInfo& info = m_pTypeData->m_ColorInfoArr[COLORIDX_TEXT];
-	const COLORREF color = info.m_sColorAttr.m_cTEXT;
-
 	CLayoutInt layoutLineFrom = m_compositionLayoutRange.GetFrom().GetY();
-	DispPos sPos(nCharDx, m_cTextMetrics.GetHankakuDy());
-	sPos.InitDrawPos(CMyPoint(
+	DispPos dispPos(nCharDx, m_cTextMetrics.GetHankakuDy());
+	dispPos.InitDrawPos(CMyPoint(
 		GetTextArea().GetAreaLeft() - (Int)GetTextArea().GetViewLeftCol() * nCharDx,
 		GetTextArea().GetAreaTop() + (Int)( layoutLineFrom - GetTextArea().GetViewTopLine() ) * nLineHeight
 	));
-	sPos.SetLayoutLineRef(layoutLineFrom);
+	dispPos.SetLayoutLineRef(layoutLineFrom);
+	const CLayout* layout = dispPos.GetLayoutRef();
+	const CStringRef logicLineStringRef = layout->GetDocLineRef()->GetStringRefWithEOL();
 
-	// 行頭からコンポジション文字列までのテキストをスキップ
-	const CLayout* layout = sPos.GetLayoutRef();
+	// 色情報の初期化
+	SColorStrategyInfo info(gr);
+	info.m_pDispPos = &dispPos;
+	info.m_pcView = this;
+	info.m_pLineOfLogic = dispPos.GetLayoutRef()->GetDocLineRef()->GetPtr();
+	CColor3Setting color = GetColorIndex(dispPos.GetLayoutRef(), layoutLineFrom, 0, &info, true);
+	SetCurrentColor(gr, color.eColorIndex, color.eColorIndex2, color.eColorIndexBg);
+
+	// レイアウト行頭からコンポジション文字列までのテキストをスキップ
 	std::wstring_view subtext(layout->GetPtr(),
 		m_compositionAttributes.front().start - layout->GetLogicOffset());
 	while (subtext.size() > 0) {
 		CFigure& figure = CFigureManager::getInstance()->GetFigure(subtext.data(), subtext.size());
-		sPos.ForwardDrawCol(figure.GetDisplayWidth(*this, sPos, subtext));
-		subtext = subtext.substr(CNativeW::GetSizeOfChar(subtext.data(), subtext.size(), 0));
+		dispPos.ForwardDrawCol(figure.GetDisplayWidth(*this, dispPos, subtext));
+		if (info.CheckChangeColor(logicLineStringRef)) {
+			info.DoChangeColor(&color);
+			SetCurrentColor(gr, color.eColorIndex, color.eColorIndex2, color.eColorIndexBg);
+		}
+		const CLogicInt size = CNativeW::GetSizeOfChar(subtext.data(), subtext.size(), 0);
+		info.m_nPosInLogic += size;
+		subtext = subtext.substr(size);
 	}
 
+	// 描画
 	for (CompositionAttribute& attr : m_compositionAttributes) {
 		CLogicInt start = attr.start;
 		for (;;) {
-			const CLayout* layout = sPos.GetLayoutRef();
+			const CLayout* layout = dispPos.GetLayoutRef();
 			const CLogicInt logicOffset = layout->GetLogicOffset();
 			const CLogicInt layoutLength = layout->GetLengthWithoutEOL();
 
 			CLogicInt end =	std::min(attr.end, logicOffset + layoutLength);
-			attr.pos = DrawUnderline(sPos, m_cTextMetrics, gr, color,
+			attr.pos = DrawUnderline(dispPos, m_cTextMetrics, gr, gr.GetCurrentTextForeColor(),
 				attr.kind, layout->GetPtr() + start - logicOffset, end - start);
 			if (end == attr.end)
 				break;
 
-			sPos.ForwardDrawLine(1);
-			sPos.ForwardLayoutLineRef(1);
-			sPos.ResetDrawCol();
+			dispPos.ForwardDrawLine(1);
+			dispPos.ForwardLayoutLineRef(1);
+			dispPos.ResetDrawCol();
 
 			start = end;
 		}
