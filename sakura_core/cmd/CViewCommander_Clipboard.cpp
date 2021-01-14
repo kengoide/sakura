@@ -559,18 +559,40 @@ void CViewCommander::Command_INSTEXT(
 		}
 
 		// 現在位置にデータを挿入
-		CLayoutPoint ptLayoutNew; //挿入された部分の次の位置
-		m_pCommanderView->InsertData_CEditView(
-			GetCaret().GetCaretLayoutPos(),
-			pszText,
-			nTextLen,
-			&ptLayoutNew,
-			bRedraw
-		);
+		if (m_pCommanderView->m_compositionLayoutRange.IsOne()) {
+			CLayoutPoint ptLayoutNew; //挿入された部分の次の位置
+			m_pCommanderView->InsertData_CEditView(
+				GetCaret().GetCaretLayoutPos(),
+				pszText,
+				nTextLen,
+				&ptLayoutNew,
+				bRedraw
+			);
 
-		// 挿入データの最後へカーソルを移動
-		GetCaret().MoveCursor( ptLayoutNew, bRedraw );
-		GetCaret().m_nCaretPosX_Prev = GetCaret().GetCaretLayoutPos().GetX2();
+			// 挿入データの最後へカーソルを移動
+			GetCaret().MoveCursor( ptLayoutNew, bRedraw );
+			GetCaret().m_nCaretPosX_Prev = GetCaret().GetCaretLayoutPos().GetX2();
+		} else {
+			CLogicPoint logicTo;
+			m_pCommanderView->m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(
+				m_pCommanderView->m_compositionLayoutRange.GetTo(), &logicTo);
+
+			// IMEを使って入力中である場合、入力開始時点のキャレット位置を使う
+			CLayoutPoint insertPos = m_pCommanderView->m_compositionLayoutRange.GetFrom();
+			CLayoutPoint newPos;
+			m_pCommanderView->InsertData_CEditView(insertPos, pszText, nTextLen, &newPos, false);
+
+			// コンポジション文字列の位置を更新する
+			logicTo.Offset(nTextLen, 0);
+			CLayoutPoint layoutTo;
+			m_pCommanderView->m_pcEditDoc->m_cLayoutMgr.LogicToLayout(logicTo, &layoutTo);
+			m_pCommanderView->m_compositionLayoutRange.SetFrom(newPos);
+			m_pCommanderView->m_compositionLayoutRange.SetTo(layoutTo);
+
+			if (bRedraw) {
+				m_pCommanderView->Call_OnPaint(PAINT_LINENUMBER | PAINT_BODY, false);
+			}
+		}
 
 		if( bLinePaste ){	// 2007.10.04 ryoji
 			/* 元の位置へカーソルを移動 */
