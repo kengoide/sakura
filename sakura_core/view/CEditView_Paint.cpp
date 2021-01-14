@@ -1482,21 +1482,20 @@ CMyPoint DrawUnderline(DispPos& dispPos, const CTextMetrics& metrics, CGraphics&
 	const int nHeightMargin = metrics.GetCharHeightMarginByFontNo(0);
 
 	const int x1 = drawX + 1;
-	const int y1 = drawY + metrics.GetHankakuDy() + nHeightMargin;
+	const int y = drawY + metrics.GetHankakuDy() + nHeightMargin;
 	const int x2 = drawX + textWidth - 1;
-	const int y2 = y1;
 	if (attr == CompositionAttributeKind::INPUT) {
 		gr.PushPen(color, 2);
-		gr.DrawSquigglyLine(3, x1, x2, y1);
+		gr.DrawSquigglyLine(3, x1, x2, y);
 	} else if (attr == CompositionAttributeKind::CONVERTED) {
 		gr.PushPen(color, 1);
-		gr.DrawLine(x1, y1, x2, y2);
+		gr.DrawLine(x1, y, x2, y);
 	} else if (attr == CompositionAttributeKind::TARGET_CONVERTED) {
 		gr.PushPen(color, 2);
-		gr.DrawLine(x1, y1, x2, y2);
+		gr.DrawLine(x1, y, x2, y);
 	} else {
 		gr.PushPen(color, 1);
-		gr.DrawLine(x1, y1, x2, y2);
+		gr.DrawLine(x1, y, x2, y);
 	}
 	gr.PopPen();
 
