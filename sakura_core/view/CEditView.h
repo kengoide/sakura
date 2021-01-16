@@ -100,18 +100,18 @@ class CColor_Found;
 ///	@date 2006.05.19 genta
 const int CMD_FROM_MOUSE = 2;
 
-enum class CompositionAttributeKind : char {
+enum class ECompositionAttribute : char {
 	NONE = -1, INPUT, TARGET_CONVERTED, CONVERTED,
 	TARGET_NOTCONVERTED, INPUT_ERROR, FIXEDCONVERTED
 };
 
-struct CompositionAttribute {
-	CompositionAttributeKind kind;
+struct SCompositionAttributeInfo {
+	ECompositionAttribute kind;
 	CLogicInt start;
 	CLogicInt end;
 	POINT pos;  // 先頭の文字の左上のクライアント座標
 
-	CompositionAttribute(CompositionAttributeKind kind, CLogicInt start, CLogicInt end)
+	SCompositionAttributeInfo(ECompositionAttribute kind, CLogicInt start, CLogicInt end)
 		: kind(kind), start(start), end(end), pos() {}
 };
 
@@ -307,7 +307,7 @@ public:
 	bool IsImeON( void );	// IME ONか	// 2006.12.04 ryoji
 	void StartComposition();
 	void UpdateCompositionString(std::wstring_view text, int cursorPos,
-		const std::vector<CompositionAttributeKind>& attributes,
+		const std::vector<ECompositionAttribute>& attributes,
 		const std::vector<int>& clauses);
 	void CompleteComposition(std::wstring_view text);
 	void CancelComposition();
@@ -760,7 +760,7 @@ public:
 	// IME
 	WCHAR			m_szComposition[512]; // IMR_DOCUMENTFEED用入力中文字列データ
 	CLayoutRange	m_compositionLayoutRange;
-	std::vector<CompositionAttribute> m_compositionAttributes;
+	std::vector<SCompositionAttributeInfo> m_compositionAttributes;
 	std::optional<CViewSelect> m_savedSelectionStatus;
 	std::vector<wchar_t> m_overwrittenChars;
 

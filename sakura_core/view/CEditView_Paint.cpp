@@ -1469,7 +1469,7 @@ void CEditView::UseCompatibleDC(BOOL fCache)
 namespace {
 
 CMyPoint DrawUnderline(DispPos& dispPos, const CTextMetrics& metrics, CGraphics& gr,
-	                   COLORREF color, CompositionAttributeKind attr,
+	                   COLORREF color, ECompositionAttribute attr,
 	                   const wchar_t* text, int length)
 {
 	static std::vector<int> dxArray;
@@ -1484,13 +1484,13 @@ CMyPoint DrawUnderline(DispPos& dispPos, const CTextMetrics& metrics, CGraphics&
 	const int x1 = drawX + 1;
 	const int y = drawY + metrics.GetHankakuDy() + nHeightMargin;
 	const int x2 = drawX + textWidth - 1;
-	if (attr == CompositionAttributeKind::INPUT) {
+	if (attr == ECompositionAttribute::INPUT) {
 		gr.PushPen(color, 2);
 		gr.DrawSquigglyLine(3, x1, x2, y);
-	} else if (attr == CompositionAttributeKind::CONVERTED) {
+	} else if (attr == ECompositionAttribute::CONVERTED) {
 		gr.PushPen(color, 1);
 		gr.DrawLine(x1, y, x2, y);
-	} else if (attr == CompositionAttributeKind::TARGET_CONVERTED) {
+	} else if (attr == ECompositionAttribute::TARGET_CONVERTED) {
 		gr.PushPen(color, 2);
 		gr.DrawLine(x1, y, x2, y);
 	} else {
@@ -1551,7 +1551,7 @@ void CEditView::DrawCompositionAttributes(HDC hdc)
 	}
 
 	// 描画
-	for (CompositionAttribute& attr : m_compositionAttributes) {
+	for (SCompositionAttributeInfo& attr : m_compositionAttributes) {
 		CLogicInt start = attr.start;
 		for (;;) {
 			const CLayout* layout = dispPos.GetLayoutRef();

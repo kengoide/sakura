@@ -105,12 +105,12 @@ void CEditView::StartComposition()
 	m_compositionLayoutRange.Set(GetCaret().GetCaretLayoutPos());
 }
 
-static bool IsTargetAttribute(const CompositionAttribute& attr) {
-	return attr.kind == CompositionAttributeKind::TARGET_CONVERTED;
+static bool IsTargetAttribute(const SCompositionAttributeInfo& attr) {
+	return attr.kind == ECompositionAttribute::TARGET_CONVERTED;
 }
 
 void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
-	const std::vector<CompositionAttributeKind>& attrs, const std::vector<int>& clauses)
+	const std::vector<ECompositionAttribute>& attrs, const std::vector<int>& clauses)
 {
 	CLogicPoint logicFrom;
 	m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(m_compositionLayoutRange.GetFrom(), &logicFrom);
@@ -223,8 +223,8 @@ void CEditView::OnImeComposition(LPARAM lParam)
 	else if (lParam & GCS_COMPSTR) {  // 編集中文字列の変更通知
 		ImmContext imc(GetHwnd());
 		const std::wstring text = GetCompositionString(imc, GCS_COMPSTR);
-		const std::vector<CompositionAttributeKind> attrs =
-			GetCompositionAttributes<CompositionAttributeKind>(imc, GCS_COMPATTR);
+		const std::vector<ECompositionAttribute> attrs =
+			GetCompositionAttributes<ECompositionAttribute>(imc, GCS_COMPATTR);
 		const std::vector<int> clauses = GetCompositionAttributes<int>(imc, GCS_COMPCLAUSE);
 		const int cursorPos = ImmGetCompositionString(imc, GCS_CURSORPOS, nullptr, 0);
 		UpdateCompositionString(text, cursorPos, attrs, clauses);
@@ -280,7 +280,7 @@ LRESULT CEditView::OnImeRequest(WPARAM wParam, LPARAM lParam)
 			const auto end = m_compositionAttributes.end();
 			const auto it = std::find_if(
 				m_compositionAttributes.begin(), end,
-				[logicCharPos](const CompositionAttribute& attr) {
+				[logicCharPos](const SCompositionAttributeInfo& attr) {
 					return attr.start <= logicCharPos && logicCharPos < attr.end;
 				});
 			pos->pt = (it != end) ? it->pos : caretDrawPos;
