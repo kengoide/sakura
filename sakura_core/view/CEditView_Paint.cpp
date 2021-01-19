@@ -850,7 +850,7 @@ void CEditView::OnPaint2( HDC _hdc, PAINTSTRUCT *pPs, BOOL bDrawFromComptibleBmp
 	// From Here 2007.09.09 Moca 互換BMPによる画面バッファ
 	//     アンダーライン描画をメモリDCからのコピー前処理から後に移動
 	if ( m_pcEditWnd->GetActivePane() == m_nMyIndex &&
-		 m_compositionLayoutRange.IsOne() ) {
+		 m_compositionAttributes.empty()) {
 		/* アクティブペインは、アンダーライン描画 */
 		GetCaret().m_cUnderLine.CaretUnderLineON( true, false );
 	}
@@ -863,7 +863,7 @@ void CEditView::OnPaint2( HDC _hdc, PAINTSTRUCT *pPs, BOOL bDrawFromComptibleBmp
 	if( bCaretShowFlag_Old )	// 2008.06.09 ryoji
 		GetCaret().ShowCaret_( this->GetHwnd() ); // 2002/07/22 novice
 
-	if (!m_compositionLayoutRange.IsOne()) {
+	if (!m_compositionAttributes.empty()) {
 		HDC hdc = GetDC();
 		DrawCompositionAttributes(hdc);
 		ReleaseDC(hdc);

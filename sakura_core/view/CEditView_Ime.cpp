@@ -123,6 +123,7 @@ void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
 		const CLogicInt logicFromX = logicFrom.GetX();
 		logicToX = logicFromX + attrs.size();
 		m_compositionAttributes.emplace_back(attrs[0], logicFromX, logicToX);
+		cursorPos = attrs.size();
 	} else {
 		auto it = clauses.begin();
 		CLogicInt logicFromX = logicFrom.GetX() + *it;
@@ -186,9 +187,6 @@ void CEditView::CompleteComposition(std::wstring_view text)
 		ReplaceData_CEditView(m_compositionLayoutRange, L"", CLogicInt(0), false, nullptr);
 	}
 
-	const CLayoutInt redrawTopLine = m_compositionLayoutRange.GetFrom().GetY();
-	const CLayoutInt redrawBottomLine = m_compositionLayoutRange.GetTo().GetY();
-	m_compositionLayoutRange.Clear(0);
 	m_compositionAttributes.clear();
 
 	// 矩形選択中だった場合は状態の復旧が必要
@@ -204,6 +202,9 @@ void CEditView::CompleteComposition(std::wstring_view text)
 	}
 	BOOL bHokan = m_bHokan;
 	GetCommander().HandleCommand( F_INSTEXT_W, true, (LPARAM)text.data(), (LPARAM)text.size(), TRUE, 0 );
+
+	const CLayoutInt redrawTopLine = m_compositionLayoutRange.GetFrom().GetY();
+	const CLayoutInt redrawBottomLine = m_compositionLayoutRange.GetTo().GetY();
 	// 下線が消えないので追加で再描画
 	RedrawLines(redrawTopLine, redrawBottomLine + 2);
 	m_bHokan = bHokan;	// 消されても表示中であるかのように誤魔化して入力補完を動作させる
@@ -213,12 +214,14 @@ void CEditView::CompleteComposition(std::wstring_view text)
 void CEditView::CancelComposition()
 {
 	m_savedSelectionStatus.reset();
-	ReplaceData_CEditView(m_compositionLayoutRange, nullptr, CLogicInt(0), false, nullptr);
 	m_compositionAttributes.clear();
-	CLayoutPoint from = m_compositionLayoutRange.GetFrom();
-	m_compositionLayoutRange.Clear(0);
-	m_pcCaret->MoveCursor(from, true);
-	Call_OnPaint(PAINT_LINENUMBER | PAINT_BODY, false);
+	ReplaceData_CEditView(m_compositionLayoutRange, nullptr, CLogicInt(0), true, nullptr);
+	m_pcCaret->MoveCursor(m_compositionLayoutRange.GetFrom(), true);
+}
+
+void CEditView::OnImeStartComposition()
+{
+	StartComposition();
 }
 
 void CEditView::OnImeComposition(LPARAM lParam)
@@ -245,13 +248,28 @@ void CEditView::OnImeComposition(LPARAM lParam)
 	}
 	else if (lParam & GCS_RESULTSTR) {  // 文字列の確定通知
 		ImmContext imc(GetHwnd());
-		CompleteComposition(GetCompositionString(imc, GCS_RESULTSTR));
+		const std::wstring text = GetCompositionString(imc, GCS_RESULTSTR);
+		if (m_compositionAttributes.empty()) {
+			// 韓国語IME対策（OnImeEndCompositionのコメントを参照）
+			StartComposition();
+		}
+		CompleteComposition(text);
 		return;
 	}
 }
 
 void CEditView::OnImeEndComposition()
 {
+	if (!m_compositionAttributes.empty()) {
+		// 韓国語MS-IMEには不可解な仕様があり、コンポジション中にスペース・改行が入力されたときに
+		// WM_IME_ENDCOMPOSITION → WM_IME_COMPOSITION(GCS_RESULTSTR) の順で通知が送られてくる。
+		// 対策として未確定文字列がある状態でここに来た場合は空文字列を確定させ、
+		// 後の WM_IME_COMPOSITION で StartComposition を改めて実行することにする。
+		//
+		// 参考：https://d-toybox.com/studio/weblog/show.php?id=2012021002
+		CompleteComposition(L"");
+	}
+	m_compositionLayoutRange.Clear(0);
 	m_szComposition[0] = L'\0';
 }
 

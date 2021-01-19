@@ -573,11 +573,12 @@ void CViewCommander::Command_INSTEXT(
 			GetCaret().MoveCursor( ptLayoutNew, bRedraw );
 			GetCaret().m_nCaretPosX_Prev = GetCaret().GetCaretLayoutPos().GetX2();
 		} else {
+			// TODO: ややこしいので別コマンドにしましょう！
 			CLogicPoint logicTo;
 			m_pCommanderView->m_pcEditDoc->m_cLayoutMgr.LayoutToLogic(
 				m_pCommanderView->m_compositionLayoutRange.GetTo(), &logicTo);
 
-			// IMEを使って入力中である場合、入力開始時点のキャレット位置を使う
+			// IMEを使って入力中である場合、入力開始時点のキャレット位置に挿入する
 			CLayoutPoint insertPos = m_pCommanderView->m_compositionLayoutRange.GetFrom();
 			CLayoutPoint newPos;
 			m_pCommanderView->InsertData_CEditView(insertPos, pszText, nTextLen, &newPos, false);
@@ -589,9 +590,7 @@ void CViewCommander::Command_INSTEXT(
 			m_pCommanderView->m_compositionLayoutRange.SetFrom(newPos);
 			m_pCommanderView->m_compositionLayoutRange.SetTo(layoutTo);
 
-			if (bRedraw) {
-				m_pCommanderView->Call_OnPaint(PAINT_LINENUMBER | PAINT_BODY, false);
-			}
+			GetCaret().MoveCursor(newPos, bRedraw);
 		}
 
 		if( bLinePaste ){	// 2007.10.04 ryoji

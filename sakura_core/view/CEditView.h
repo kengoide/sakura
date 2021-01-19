@@ -312,6 +312,7 @@ public:
 	void CompleteComposition(std::wstring_view text);
 	void CancelComposition();
 
+	void OnImeStartComposition();
 	void OnImeComposition(LPARAM lParam);
 	void OnImeEndComposition();
 	LRESULT OnImeRequest(WPARAM wParam, LPARAM lParam);
