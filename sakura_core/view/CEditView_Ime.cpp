@@ -117,13 +117,20 @@ void CEditView::UpdateCompositionString(std::wstring_view text, int cursorPos,
 
 	// 属性データを内部形式に変換する
 	m_compositionAttributes.clear();
-	auto it = clauses.begin() + 1;  // 先頭は必ず0なので読み飛ばす
-	CLogicInt logicFromX = logicFrom.GetX();
 	CLogicInt logicToX(0);
-	for (; it != clauses.end(); ++it) {
-		logicToX = logicFrom.GetX() + *it;
-		m_compositionAttributes.emplace_back(attrs[*it - 1], logicFromX, logicToX);
-		logicFromX = logicToX;
+	if (clauses.empty()) {
+		// 韓国語MS-IMEは文節情報を通知しない
+		const CLogicInt logicFromX = logicFrom.GetX();
+		logicToX = logicFromX + attrs.size();
+		m_compositionAttributes.emplace_back(attrs[0], logicFromX, logicToX);
+	} else {
+		auto it = clauses.begin();
+		CLogicInt logicFromX = logicFrom.GetX() + *it;
+		for (++it; it != clauses.end(); ++it) {
+			logicToX = logicFrom.GetX() + *it;
+			m_compositionAttributes.emplace_back(attrs[*it - 1], logicFromX, logicToX);
+			logicFromX = logicToX;
+		}
 	}
 
 	// 行データ・レイアウト情報の更新
@@ -227,6 +234,12 @@ void CEditView::OnImeComposition(LPARAM lParam)
 			GetCompositionAttributes<ECompositionAttribute>(imc, GCS_COMPATTR);
 		const std::vector<int> clauses = GetCompositionAttributes<int>(imc, GCS_COMPCLAUSE);
 		const int cursorPos = ImmGetCompositionString(imc, GCS_CURSORPOS, nullptr, 0);
+
+		if (text.empty() && attrs.empty() && clauses.empty()) {
+			// 韓国語MS-IMEは空のGCS_COMPSTRを通知してくる
+			CancelComposition();
+			return;
+		}
 		UpdateCompositionString(text, cursorPos, attrs, clauses);
 		return;
 	}
