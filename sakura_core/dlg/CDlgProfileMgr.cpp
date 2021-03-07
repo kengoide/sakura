@@ -6,6 +6,7 @@
 */
 /*
 	Copyright (C) 2013, Moca
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This software is provided 'as-is', without any express or implied
 	warranty. In no event will the authors be held liable for any damages
@@ -93,36 +94,38 @@ int CDlgProfileMgr::DoModal( HINSTANCE hInstance, HWND hwndParent, LPARAM lParam
 	return (int)CDialog::DoModal( hInstance, hwndParent, IDD_PROFILEMGR, lParam );
 }
 
-static std::wstring GetProfileMgrFileName(LPCWSTR profName = NULL)
+/*!
+	@brief プロファイルマネージャ設定ファイルパスを取得する
+ */
+std::filesystem::path GetProfileMgrFileName()
 {
-	static WCHAR szPath[_MAX_PATH];
-	static WCHAR szPath2[_MAX_PATH];
-	static WCHAR* pszPath;
-	static bool bSet = false;
-	if( bSet == false ){
-		pszPath = szPath;
-		CFileNameManager::GetIniFileNameDirect( szPath, szPath2, L"" );
-		if( szPath[0] == L'\0' ){
-			pszPath = szPath2;
-		}
-		bSet = true;
+	auto privateIniPath = GetIniFileName();
+	if (const auto* pCommandLine = CCommandLine::getInstance(); pCommandLine->IsSetProfile() && *pCommandLine->GetProfileName()) {
+		auto filename = privateIniPath.filename();
+		privateIniPath = privateIniPath.parent_path().parent_path().append(filename.c_str());
 	}
-	
-	WCHAR	szDir[_MAX_PATH];
-	SplitPath_FolderAndFile( pszPath, szDir, NULL );
+	return privateIniPath.replace_extension().concat(L"_prof.ini");
+}
 
-	WCHAR szIniFile[_MAX_PATH];
-	if( profName == NULL ){
-		WCHAR szExePath[_MAX_PATH];
-		WCHAR szFname[_MAX_FNAME];
-		::GetModuleFileName( NULL, szExePath, _countof(szExePath) );
-		_wsplitpath( szExePath, NULL, NULL, szFname, NULL );
-		auto_snprintf_s( szIniFile, _MAX_PATH - 1, L"%s\\%s_prof%s", szDir, szFname, L".ini" );
-	}else{
-		auto_snprintf_s( szIniFile, _MAX_PATH - 1, L"%s\\%s", szDir, profName );
+/*!
+	指定したプロファイルの設定保存先ディレクトリを取得する
+ */
+std::filesystem::path GetProfileDirectory(const std::wstring& name)
+{
+	auto privateIniDir = GetIniFileName().parent_path();
+	if (const auto* pCommandLine = CCommandLine::getInstance(); pCommandLine->IsSetProfile() && *pCommandLine->GetProfileName()) {
+		privateIniDir = privateIniDir.parent_path();
 	}
+	return privateIniDir.append(name).append(L"a.txt").remove_filename();
+}
 
-	return szIniFile;
+/*!
+	既存コード互換用関数
+	指定したプロファイルの設定保存先ディレクトリを返す。
+ */
+[[nodiscard]] std::wstring GetProfileMgrFileName(const std::wstring_view& name)
+{
+	return GetProfileDirectory(name.data());
 }
 
 /*! ダイアログデータの設定 */
@@ -510,7 +513,7 @@ static bool IOProfSettings( SProfileSettings& settings, bool bWrite )
 	if( settings.m_nDefaultIndex < -1 ){
 		settings.m_nDefaultIndex = -1;
 	}
-	cProf.IOProfileData( pSection, L"szDllLanguage", StringBufferW(settings.m_szDllLanguage, _countof(settings.m_szDllLanguage)) );
+	cProf.IOProfileData(pSection, L"szDllLanguage", StringBufferW(settings.m_szDllLanguage));
 	cProf.IOProfileData( pSection, L"bDefaultSelect", settings.m_bDefaultSelect );
 
 	if( bWrite ){

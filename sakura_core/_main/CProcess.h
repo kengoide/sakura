@@ -7,6 +7,7 @@
 /*
 	Copyright (C) 2002, aroka 新規作成
 	Copyright (C) 2009, ryoji
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This source code is designed for sakura editor.
 	Please contact the copyright holder to use this code for other purpose.
@@ -16,7 +17,10 @@
 #define SAKURA_CPROCESS_FECC5450_9096_4EAD_A6DA_C8B12C3A31B5_H_
 #pragma once
 
+#include <filesystem>
+
 #include "global.h"
+#include "util/design_template.h"
 #include "env/CShareData.h"
 #include "env/DLLSHAREDATA.h"
 
@@ -36,6 +40,9 @@ public:
 	bool Run();
 	virtual ~CProcess(){}
 	virtual void RefreshString();
+
+	virtual std::filesystem::path GetIniFileName() const;
+
 protected:
 	CProcess();
 	virtual bool InitializeProcess();
@@ -51,6 +58,8 @@ public:
 	HINSTANCE		GetProcessInstance() const{ return m_hInstance; }
 	CShareData&		GetShareData()   { return *m_pcShareData; }
 	HWND			GetMainWindow() const{ return m_hWnd; }
+
+	[[nodiscard]] const CShareData* GetShareDataPtr() const { return m_pcShareData; }
 
 private:
 	HINSTANCE	m_hInstance;

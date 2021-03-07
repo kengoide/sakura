@@ -10,6 +10,7 @@
 	Copyright (C) 2004, genta, Moca
 	Copyright (C) 2005, D.S.Koba, Moca
 	Copyright (C) 2009, ryoji, nasukoji
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This source code is designed for sakura editor.
 	Please contact the copyright holder to use this code for other purpose.
@@ -1028,7 +1029,7 @@ void CLayoutMgr::LayoutToLogic( const CLayoutPoint& ptLayout, CLogicPoint* pptLo
 {
 	CLogicPointEx ptEx;
 	LayoutToLogicEx( ptLayout, &ptEx );
-	*pptLogic = ptEx;
+	*pptLogic = std::move(ptEx);
 }
 
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //

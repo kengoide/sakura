@@ -1,7 +1,31 @@
 ﻿/*! @file */
+/*
+	Copyright (C) 2018-2021, Sakura Editor Organization
+
+	This software is provided 'as-is', without any express or implied
+	warranty. In no event will the authors be held liable for any damages
+	arising from the use of this software.
+
+	Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+		1. The origin of this software must not be misrepresented;
+		   you must not claim that you wrote the original software.
+		   If you use this software in a product, an acknowledgment
+		   in the product documentation would be appreciated but is
+		   not required.
+
+		2. Altered source versions must be plainly marked as such,
+		   and must not be misrepresented as being the original software.
+
+		3. This notice may not be removed or altered from any source
+		   distribution.
+*/
 #include "StdAfx.h"
 #include "CWordParse.h"
 #include "charset/charcode.h"
+#include "charset/codechecker.h"
 
 //@@@ 2001.06.23 N.Nakatani
 /*!
@@ -93,7 +117,7 @@ inline bool isCSymbol(wchar_t c)
 	//	(c>=L'0' && c<=L'9') ||
 	//	(c>=L'A' && c<=L'Z') ||
 	//	(c>=L'a' && c<=L'z');
-	return (c<_countof(gm_keyword_char) && gm_keyword_char[c]==CK_CSYM);
+	return c < gm_keyword_char.size() && gm_keyword_char[c] == CK_CSYM;
 }
 
 //! 全角版、識別子に使用可能な文字かどうか
@@ -123,7 +147,7 @@ ECharKind CWordParse::WhatKindOfChar(
 		wchar_t c=pData[nIdx];
 
 		//今までの半角
-		if( c<_countof(gm_keyword_char) ) return (ECharKind)gm_keyword_char[c];
+		if( c<gm_keyword_char.size() ) return (ECharKind)gm_keyword_char[c];
 		//if( c == CR              )return CK_CR;
 		//if( c == LF              )return CK_LF;
 		//if( c == TAB             )return CK_TAB;	// タブ

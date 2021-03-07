@@ -5,7 +5,7 @@
 */
 
 /*
-	Copyright (C)
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This software is provided 'as-is', without any express or implied
 	warranty. In no event will the authors be held liable for any damages
@@ -31,6 +31,7 @@
 #define SAKURA_CONVERT_UTIL2_9F00219B_A2FC_4096_BB26_197A667DFD25_H_
 #pragma once
 
+#include "charset/charcode.h"
 #include "parse/CWordParse.h"
 #include "mem/CMemory.h"
 

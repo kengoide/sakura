@@ -16,6 +16,7 @@
 	Copyright (C) 2007, ryoji, maru
 	Copyright (C) 2008, ryoji, Uchi
 	Copyright (C) 2011, nasukoji
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This source code is designed for sakura editor.
 	Please contact the copyright holder to use this code for other purpose.
@@ -32,15 +33,17 @@
 #define SAKURA_CSHAREDATA_B25C0FA2_B810_4327_8EC6_0AF46D49593A_H_
 #pragma once
 
+#include <string>
 #include "CSelectLang.h"		// 2011.04.10 nasukoji
-
-class CShareData;
+#include "charset/charset.h"
+#include "util/design_template.h"
 
 // 2010.04.19 Moca DLLSHAREDATA関連はDLLSHAREDATA.h等最低限必要な場所へ移動
 // CShareData.hは、自分のInterfaceしか提供しません。別にDLLSHAREDATA.hをincludeすること。
-struct DLLSHAREDATA;
-struct STypeConfig;
 class CMutex;
+struct DLLSHAREDATA;
+struct SFileTree;
+struct STypeConfig;
 
 /*!	@brief 共有データの管理
 
@@ -74,12 +77,11 @@ public:
 	BOOL ActiveAlreadyOpenedWindow( const WCHAR* pszPath, HWND* phwndOwner, ECodeType nCharCode );/* 指定ファイルが開かれているか調べつつ、多重オープン時の文字コード衝突も確認 */	// 2007.03.16
 
 	//デバッグ  今は主にマクロ・外部コマンド実行用
-	void TraceOut( LPCWSTR lpFmt, ...);	/* アウトプットウィンドウに出力(printfフォーマット) */
 	void TraceOutString( const wchar_t* pszStr, int len = -1);	/* アウトプットウィンドウに出力(未加工文字列) */
 	void SetTraceOutSource( HWND hwnd ){ m_hwndTraceOutSource = hwnd; }	/* TraceOut起動元ウィンドウの設定 */
 	bool OpenDebugWindow( HWND hwnd, bool bAllwaysActive );	//!<  デバッグウィンドウを開く
 
-	BOOL IsPrivateSettings( void );
+	[[nodiscard]] bool IsPrivateSettings( void ) const noexcept;
 
 	//マクロ関連
 	int			GetMacroFilename( int idx, WCHAR* pszPath, int nBufLen ); // idxで指定したマクロファイル名（フルパス）を取得する	//	Jun. 14, 2003 genta 引数追加．書式変更

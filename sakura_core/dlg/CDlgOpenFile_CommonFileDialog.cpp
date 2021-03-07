@@ -12,6 +12,7 @@
 	Copyright (C) 2004, genta
 	Copyright (C) 2005, novice, ryoji
 	Copyright (C) 2006, ryoji, Moca
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This source code is designed for sakura editor.
 	Please contact the copyright holder to use this code for other purpose.
@@ -214,7 +215,7 @@ UINT_PTR CALLBACK OFNHookProc(
 	int						nIdx;
 	int						nIdxSel;
 	int						nWidth;
-	WPARAM					fCheck;	//	Jul. 26, 2003 ryoji BOM状態用
+	int						fCheck;	//	Jul. 26, 2003 ryoji BOM状態用
 
 	//	From Here	Feb. 9, 2001 genta
 	static const int		nEolValueArr[] = {

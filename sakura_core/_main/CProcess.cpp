@@ -9,6 +9,7 @@
 	Copyright (C) 2002, aroka 新規作成
 	Copyright (C) 2004, Moca
 	Copyright (C) 2009, ryoji
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This source code is designed for sakura editor.
 	Please contact the copyright holder to use this code for other purpose.
@@ -35,6 +36,18 @@ CProcess::CProcess(
 #endif
 {
 	m_pcShareData = CShareData::getInstance();
+}
+
+/*!
+	@brief iniファイルパスを取得する
+ */
+std::filesystem::path CProcess::GetIniFileName() const
+{
+	if (m_pcShareData->IsPrivateSettings()) {
+		const DLLSHAREDATA *pShareData = &GetDllShareData();
+		return pShareData->m_szPrivateIniFile.c_str();
+	}
+	return GetExeFileName().replace_extension(L".ini");
 }
 
 /*!

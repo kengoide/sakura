@@ -13,6 +13,7 @@
 	Copyright (C) 2004, Moca
 	Copyright (C) 2005, genta
 	Copyright (C) 2006, Moca
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This source code is designed for sakura editor.
 	Please contact the copyright holder to use this code for other purpose.
@@ -538,7 +539,7 @@ bool CUrlWnd::OnSetText( _In_opt_z_ LPCWSTR pchText, _In_opt_ size_t cchText ) c
 	// DrawText関数を使ってサイズを計測する
 	// ※この処理は実際には描かない
 	CMyRect rcText;
-	int retDrawText = ::DrawText( hDC, pchText, cchText, &rcText, DT_CALCRECT );
+	int retDrawText = ::DrawText( hDC, pchText, static_cast<int>(cchText), &rcText, DT_CALCRECT );
 
 	// DCの後始末
 	::SelectObject( hDC, hObj );

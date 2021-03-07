@@ -1,10 +1,34 @@
 ﻿/*! @file */
+/*
+	Copyright (C) 2018-2021, Sakura Editor Organization
+
+	This software is provided 'as-is', without any express or implied
+	warranty. In no event will the authors be held liable for any damages
+	arising from the use of this software.
+
+	Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+		1. The origin of this software must not be misrepresented;
+		   you must not claim that you wrote the original software.
+		   If you use this software in a product, an acknowledgment
+		   in the product documentation would be appreciated but is
+		   not required.
+
+		2. Altered source versions must be plainly marked as such,
+		   and must not be misrepresented as being the original software.
+
+		3. This notice may not be removed or altered from any source
+		   distribution.
+*/
 #include "StdAfx.h"
 #include "string_ex.h"
 
 #include <stdarg.h>
 
 #include "charset/charcode.h"
+#include "charset/codechecker.h"
 #include "util/std_macro.h"
 #include <limits.h>
 #include <locale.h>
@@ -216,6 +240,46 @@ const char* stristr_j( const char* s1, const char* s2 )
 
 /*!
 	@brief C-Styleのフォーマット文字列を使ってデータを文字列化する。
+	@param[in]  pszFormat	フォーマット文字列
+	@param[in]  argList		引数リスト
+	@returns フォーマットされた文字列
+*/
+std::wstring vstrprintf(const WCHAR* pszFormat, va_list& argList)
+{
+	// _vscwprintf() はフォーマットに必要な文字数を返す。
+	const int cchOut = ::_vscwprintf(pszFormat, argList);
+	if (cchOut == 0) {
+		// 出力文字数が0なら後続処理は要らない。
+		return std::wstring();
+	}
+
+	// 必要なバッファを確保してフォーマットする
+	std::wstring strOut(cchOut + 1, L'0');
+	::vswprintf_s(strOut.data(), strOut.capacity(), pszFormat, argList);
+	strOut.resize(cchOut);
+	return strOut;
+}
+
+/*!
+	@brief C-Styleのフォーマット文字列を使ってデータを文字列化する。
+	@param[in]  pszFormat	フォーマット文字列
+	@param[in]  ...			引数リスト
+	@returns フォーマットされた文字列
+*/
+std::wstring strprintf(const WCHAR* pszFormat, ...)
+{
+	va_list argList;
+	va_start(argList, pszFormat);
+
+	const auto strRet = vstrprintf(pszFormat, argList);
+
+	va_end(argList);
+
+	return strRet;
+}
+
+/*!
+	@brief C-Styleのフォーマット文字列を使ってデータを文字列化する。
 	@param[out] strOut		フォーマットされたテキストを受け取る変数
 	@param[in]  pszFormat	フォーマット文字列
 	@param[in]  argList		引数リスト
@@ -225,27 +289,9 @@ const char* stristr_j( const char* s1, const char* s2 )
 */
 int vstrprintf( std::wstring& strOut, const WCHAR* pszFormat, va_list& argList )
 {
-	// バッファをクリアしておく
-	strOut.clear();
-
-	// _vscwprintf() はフォーマットに必要な文字数を返す。
-	const int cchOut = ::_vscwprintf( pszFormat, argList );
-	if( cchOut <= 0 ){
-		// 出力文字数が0なら後続処理は要らない。また、エラー時は-1が返る。
-		return cchOut;
-	}
-
-	// フォーマットに必要なバッファを確保する
-	strOut.resize( cchOut );
-
-	// vswprintf_s() はコピーした文字数を返す。
-	const int actualCopied = ::vswprintf_s( strOut.data(), strOut.capacity(), pszFormat, argList );
-	if( actualCopied < 0 ){
-		// データサイズを反映する
-		strOut.assign( strOut.data(), cchOut );
-	}
-
-	return actualCopied;
+	// オーバーロードバージョンを呼び出す
+	strOut = vstrprintf(pszFormat, argList);
+	return static_cast<int>(strOut.length());
 }
 
 /*!

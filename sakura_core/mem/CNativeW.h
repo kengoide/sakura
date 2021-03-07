@@ -1,6 +1,7 @@
 ﻿/*! @file */
 /*
 	Copyright (C) 2008, kobake
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This software is provided 'as-is', without any express or implied
 	warranty. In no event will the authors be held liable for any damages
@@ -28,6 +29,7 @@
 
 #include "CNative.h"
 #include "basis/SakuraBasis.h"
+#include "charset/charcode.h"
 #include "debug/Debug2.h" //assert
 
 //! 文字列への参照を取得するインターフェース
@@ -72,9 +74,9 @@ class CNativeW final : public CNative{
 
 public:
 	//コンストラクタ・デストラクタ
-	CNativeW() noexcept;
-	CNativeW( const CNativeW& rhs );
-	CNativeW( CNativeW&& other ) noexcept;
+	CNativeW() noexcept = default;
+	CNativeW( const CNativeW& rhs ) = default;
+	CNativeW( CNativeW&& other ) noexcept = default;
 	CNativeW( const wchar_t* pData, int nDataLen ); //!< nDataLenは文字単位。
 	CNativeW( const wchar_t* pData);
 
@@ -98,7 +100,7 @@ public:
 
 	//演算子
 	CNativeW& operator = (const CNativeW& rhs)			{ CNative::operator=(rhs); return *this; }
-	CNativeW& operator = (CNativeW&& rhs) noexcept		{ CNative::operator=(std::forward<CNativeW>(rhs)); return *this; }
+	CNativeW& operator = (CNativeW&& rhs) noexcept		{ CNative::operator=(std::move(rhs)); return *this; }
 	CNativeW  operator + (const CNativeW& rhs) const	{ return (CNativeW(*this) += rhs); }
 	CNativeW& operator += (const CNativeW& rhs)			{ AppendNativeData(rhs); return *this; }
 	CNativeW& operator += (wchar_t ch)					{ return (*this += CNativeW(&ch, 1)); }
@@ -163,8 +165,11 @@ public:
 public:
 	// -- -- staticインターフェース -- -- //
 	static CLogicInt GetSizeOfChar( const wchar_t* pData, int nDataLen, int nIdx ); //!< 指定した位置の文字がwchar_t何個分かを返す
-	static CHabaXInt GetHabaOfChar( const wchar_t* pData, int nDataLen, int nIdx );
-	static CKetaXInt GetKetaOfChar( const wchar_t* pData, int nDataLen, int nIdx ); //!< 指定した位置の文字が半角何個分かを返す
+	static CHabaXInt GetHabaOfChar( const wchar_t* pData, int nDataLen, int nIdx,
+		bool bEnableExtEol, CCharWidthCache& cache = GetCharWidthCache() );
+	//! 指定した位置の文字が半角何個分かを返す
+	static CKetaXInt GetKetaOfChar( const wchar_t* pData, int nDataLen, int nIdx,
+		const CCharWidthCache& cache = GetCharWidthCache() );
 	static const wchar_t* GetCharNext( const wchar_t* pData, int nDataLen, const wchar_t* pDataCurrent ); //!< ポインタで示した文字の次にある文字の位置を返します
 	static const wchar_t* GetCharPrev( const wchar_t* pData, int nDataLen, const wchar_t* pDataCurrent ); //!< ポインタで示した文字の直前にある文字の位置を返します
 
@@ -172,10 +177,11 @@ public:
 	{
 		return GetKetaOfChar(cStr.GetPtr(), cStr.GetLength(), nIdx);
 	}
-	static CLayoutXInt GetColmOfChar( const wchar_t* pData, int nDataLen, int nIdx )
-		{ return GetHabaOfChar(pData,nDataLen,nIdx);}
-	static CLayoutXInt GetColmOfChar( const CStringRef& cStr, int nIdx )
-		{ return GetHabaOfChar(cStr.GetPtr(), cStr.GetLength(), nIdx);}
+	static CLayoutXInt GetColmOfChar( const wchar_t* pData,
+		int nDataLen, int nIdx, bool bEnableExtEol )
+		{ return GetHabaOfChar(pData,nDataLen,nIdx, bEnableExtEol); }
+	static CLayoutXInt GetColmOfChar( const CStringRef& cStr, int nIdx, bool bEnableExtEol )
+		{ return GetHabaOfChar(cStr.GetPtr(), cStr.GetLength(), nIdx, bEnableExtEol); }
 };
 
 // 派生クラスでメンバー追加禁止

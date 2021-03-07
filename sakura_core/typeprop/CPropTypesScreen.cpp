@@ -14,6 +14,7 @@
 	Copyright (C) 2007, ryoji, genta
 	Copyright (C) 2008, nasukoji
 	Copyright (C) 2009, ryoji, genta
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This source code is designed for sakura editor.
 	Please contact the copyright holder to use this code for other purpose.
@@ -685,7 +686,7 @@ int CPropTypesScreen::GetData( HWND hwndDlg )
 		::DlgItem_GetText( hwndDlg, IDC_EDIT_TABVIEWSTRING, szTab, _countof( szTab ) );
 		wcscpy( m_Types.m_szTabViewString, L"^       " );
 		for( int i = 0; i < 8; i++ ){
-			if( !TCODE::IsTabAvailableCode(szTab[i]) )break;
+			if( !WCODE::IsTabAvailableCode(szTab[i]) )break;
 			m_Types.m_szTabViewString[i] = szTab[i];
 		}
 

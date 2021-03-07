@@ -505,9 +505,6 @@
     <ClInclude Include="..\sakura_core\util\tchar_convert.h">
       <Filter>Cpp Source Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="..\sakura_core\util\tchar_printf.h">
-      <Filter>Cpp Source Files\util</Filter>
-    </ClInclude>
     <ClInclude Include="..\sakura_core\util\tchar_template.h">
       <Filter>Cpp Source Files\util</Filter>
     </ClInclude>
@@ -1097,6 +1094,15 @@
     <ClInclude Include="..\sakura_core\GrepInfo.h">
       <Filter>Cpp Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\sakura_core\util\zoom.h">
+      <Filter>Cpp Source Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sakura_core\basis\TComImpl.hpp">
+      <Filter>Cpp Source Files\basis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sakura_core\basis\CErrorInfo.h">
+      <Filter>Cpp Source Files\basis</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\resource\auto_scroll_center.cur">
@@ -1470,9 +1476,6 @@
       <Filter>Cpp Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="..\sakura_core\util\tchar_convert.cpp">
-      <Filter>Cpp Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\sakura_core\util\tchar_printf.cpp">
       <Filter>Cpp Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="..\sakura_core\util\tchar_template.cpp">
@@ -2278,6 +2281,12 @@
     </ClCompile>
     <ClCompile Include="..\sakura_core\GrepInfo.cpp">
       <Filter>Cpp Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sakura_core\util\zoom.cpp">
+      <Filter>Cpp Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sakura_core\basis\CErrorInfo.cpp">
+      <Filter>Cpp Source Files\basis</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

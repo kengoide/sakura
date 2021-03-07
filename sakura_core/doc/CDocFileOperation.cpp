@@ -1,6 +1,7 @@
 ﻿/*! @file */
 /*
 	Copyright (C) 2008, kobake
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This software is provided 'as-is', without any express or implied
 	warranty. In no event will the authors be held liable for any damages
@@ -118,7 +119,7 @@ bool CDocFileOperation::DoLoadFlow(SLoadInfo* pLoadInfo)
 		eLoadResult = m_pcDocRef->NotifyLoad(*pLoadInfo);	//本処理
 		m_pcDocRef->NotifyAfterLoad(*pLoadInfo);			//後処理
 	}
-	catch(CFlowInterruption){
+	catch(const CFlowInterruption&){
 		eLoadResult = LOADED_INTERRUPT;
 	}
 	catch(...){
@@ -354,7 +355,7 @@ bool CDocFileOperation::DoSaveFlow(SSaveInfo* pSaveInfo)
 		//結果
 		eSaveResult = SAVED_OK; //###仮
 	}
-	catch(CFlowInterruption){
+	catch(const CFlowInterruption&){
 		eSaveResult = SAVED_INTERRUPT;
 	}
 	catch(...){

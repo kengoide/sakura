@@ -1,6 +1,7 @@
 ﻿/*! @file */
 /*
 	Copyright (C) 2008, kobake
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This software is provided 'as-is', without any express or implied
 	warranty. In no event will the authors be held liable for any damages
@@ -119,7 +120,7 @@ public:
 	Me& operator = (const CHAR_TYPE* src){ Assign(src); return *this; }
 
 	//各種メソッド
-	int Length() const{ return auto_strlen(m_szData); }
+	int Length() const { return static_cast<int>(auto_strnlen(m_szData, BUFFER_COUNT)); }
 
 private:
 	CHAR_TYPE m_szData[N_BUFFER_COUNT];

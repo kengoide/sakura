@@ -8,6 +8,7 @@
 /*
 	Copyright (C) 2006
 	Copyright (C) 2007
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This software is provided 'as-is', without any express or implied
 	warranty. In no event will the authors be held liable for any damages
@@ -522,7 +523,7 @@ void CESI::GetEncodingInfo_meta( const char* pS, const int nLen )
 /*!
 	UTF-16 チェッカ内で使う改行コード確認関数
 */
-bool CESI::_CheckUtf16Eol( const char* pS, const int nLen, const bool bbig_endian )
+bool CESI::_CheckUtf16Eol( const char* pS, const size_t nLen, const bool bbig_endian )
 {
 	wchar_t wc0;
 	wchar_t wc1;

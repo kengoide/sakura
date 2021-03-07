@@ -6,6 +6,7 @@
 */
 /*
 	Copyright (C) 2010, Uchi
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This source code is designed for sakura editor.
 	Please contact the copyright holder to use this code for other purpose.
@@ -100,7 +101,7 @@ void CDlgSetCharSet::SetBOM( void )
 {
 	int 		nIdx;
 	LRESULT		lRes;
-	WPARAM		fCheck;
+	int			fCheck;
 
 	nIdx = Combo_GetCurSel( m_hwndCharSet );
 	lRes = Combo_GetItemData( m_hwndCharSet, nIdx );
@@ -126,7 +127,7 @@ BOOL CDlgSetCharSet::OnCbnSelChange( HWND hwndCtl, int wID )
 {
 	int 		nIdx;
 	LRESULT		lRes;
-	WPARAM		fCheck;
+	int			fCheck;
 
 	switch (wID) {
 	//	文字コードの変更をBOMチェックボックスに反映

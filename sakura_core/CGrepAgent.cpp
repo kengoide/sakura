@@ -1,4 +1,27 @@
 ﻿/*! @file */
+/*
+	Copyright (C) 2018-2021, Sakura Editor Organization
+
+	This software is provided 'as-is', without any express or implied
+	warranty. In no event will the authors be held liable for any damages
+	arising from the use of this software.
+
+	Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+		1. The origin of this software must not be misrepresented;
+		   you must not claim that you wrote the original software.
+		   If you use this software in a product, an acknowledgment
+		   in the product documentation would be appreciated but is
+		   not required.
+
+		2. Altered source versions must be plainly marked as such,
+		   and must not be misrepresented as being the original software.
+
+		3. This notice may not be removed or altered from any source
+		   distribution.
+*/
 #include "StdAfx.h"
 #include "CGrepAgent.h"
 #include "CGrepEnumKeys.h"
@@ -1478,13 +1501,13 @@ int CGrepAgent::DoGrepFile(
 	// ファイルを明示的に閉じるが、ここで閉じないときはデストラクタで閉じている
 	cfl.FileClose();
 	} // try
-	catch( CError_FileOpen ){
+	catch( const CError_FileOpen& ){
 		CNativeW str(LS(STR_GREP_ERR_FILEOPEN));
 		str.Replace(L"%s", pszFullPath);
 		cmemMessage.AppendNativeData( str );
 		return 0;
 	}
-	catch( CError_FileRead ){
+	catch( const CError_FileRead& ){
 		CNativeW str(LS(STR_GREP_ERR_FILEREAD));
 		str.Replace(L"%s", pszFullPath);
 		cmemMessage.AppendNativeData( str );
@@ -1532,7 +1555,7 @@ public:
 			name += L".skrnew";
 			try{
 				out = new CBinaryOutputStream(name.c_str(), true);
-			}catch( CError_FileOpen ){
+			}catch( const CError_FileOpen& ){
 				throw CError_WriteFileOpen();
 			}
 			if( bBom ){
@@ -1917,18 +1940,18 @@ int CGrepAgent::DoGrepReplaceFile(
 	cfl.FileClose();
 	output.Close();
 	} // try
-	catch( CError_FileOpen ){
+	catch( const CError_FileOpen& ){
 		CNativeW str(LS(STR_GREP_ERR_FILEOPEN));
 		str.Replace(L"%s", pszFullPath);
 		cmemMessage.AppendNativeData( str );
 		return 0;
 	}
-	catch( CError_FileRead ){
+	catch( const CError_FileRead& ){
 		CNativeW str(LS(STR_GREP_ERR_FILEREAD));
 		str.Replace(L"%s", pszFullPath);
 		cmemMessage.AppendNativeData( str );
 	}
-	catch( CError_WriteFileOpen ){
+	catch( const CError_WriteFileOpen& ){
 		std::wstring file = pszFullPath;
 		file += L".skrnew";
 		CNativeW str(LS(STR_GREP_ERR_FILEWRITE));

@@ -18,6 +18,7 @@
 	Copyright (C) 2010, ryoji, Moca、Uchi
 	Copyright (C) 2011, ryoji
 	Copyright (C) 2013, Uchi
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This software is provided 'as-is', without any express or implied
 	warranty. In no event will the authors be held liable for any damages
@@ -4855,6 +4856,19 @@ ECharWidthCacheMode CEditWnd::GetLogfontCacheMode()
 		return CWM_CACHE_LOCAL;
 	}
 	return CWM_CACHE_SHARE;
+}
+
+/*!
+	@brief 現在のズーム倍率を取得
+	@return 1.0を等倍とするズーム倍率
+*/
+double CEditWnd::GetFontZoom()
+{
+	if( GetDocument()->m_blfCurTemp ){
+		return GetDocument()->m_nCurrentZoom;
+	}else{
+		return 1.0;
+	}
 }
 
 void CEditWnd::ClearViewCaretPosInfo()

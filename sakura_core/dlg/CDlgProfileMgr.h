@@ -6,6 +6,7 @@
 */
 /*
 	Copyright (C) 2013, Moca
+	Copyright (C) 2018-2021, Sakura Editor Organization
 
 	This software is provided 'as-is', without any express or implied
 	warranty. In no event will the authors be held liable for any damages
@@ -33,7 +34,9 @@
 
 #include "dlg/CDialog.h"
 #include "_main/CCommandLine.h"
+#include <filesystem>
 #include <string>
+#include <string_view>
 #include <vector>
 
 struct SProfileSettings
@@ -82,4 +85,10 @@ public:
 	static bool ReadProfSettings(SProfileSettings& settings);
 	static bool WriteProfSettings(SProfileSettings& settings);
 };
+
+std::filesystem::path GetProfileMgrFileName();
+std::filesystem::path GetProfileDirectory(const std::wstring& name);
+
+[[nodiscard]] std::wstring GetProfileMgrFileName(const std::wstring_view& name);
+
 #endif /* SAKURA_CDLGPROFILEMGR_E77A329C_4D06_436A_84E3_01B4D8F34A9A_H_ */
