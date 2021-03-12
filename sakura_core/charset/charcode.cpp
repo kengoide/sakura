@@ -231,25 +231,17 @@ namespace WCODE {
 		}
 		void Select( ECharWidthFontMode fMode, ECharWidthCacheMode cMode )
 		{
-			ECharWidthCacheMode cmode = (cMode==CWM_CACHE_NEUTRAL)?m_eLastEditCacheMode:cMode;
-
 			pcache = &m_localcache[fMode];
-			if( cmode == CWM_CACHE_SHARE ){
-				pcache->SelectCache( &(GetDllShareData().m_sCharWidth) );
-			}else{
-				if( m_parCache[fMode] == 0 ){
-					m_parCache[fMode] = new SCharWidthCache;
-				}
-				pcache->SelectCache( m_parCache[fMode] );
+			if( m_parCache[fMode] == 0 ){
+				m_parCache[fMode] = new SCharWidthCache;
 			}
-			if( fMode==CWM_FONT_EDIT ){ m_eLastEditCacheMode = cmode; }
+			pcache->SelectCache( m_parCache[fMode] );
 			WCODE::s_MultiFont = pcache->GetMultiFont();
 		}
 		[[nodiscard]] CCharWidthCache* GetCache(){ return pcache; }
 	private:
 		std::array<CCharWidthCache, 3> m_localcache;
 		std::array<SCharWidthCache*, 3> m_parCache;
-		ECharWidthCacheMode m_eLastEditCacheMode = CWM_CACHE_NEUTRAL;
 		CCharWidthCache* pcache;
 		DISALLOW_COPY_AND_ASSIGN(CacheSelector);
 	};
