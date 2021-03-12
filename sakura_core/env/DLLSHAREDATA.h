@@ -41,8 +41,6 @@
 #include "types/CType.h" // STypeConfig
 #include "print/CPrint.h" //PRINTSETTING
 #include "recent/SShare_History.h"	//SShare_History
-#include "charset/charcode.h"
-
 
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 //                         アクセサ                            //
@@ -151,7 +149,6 @@ struct DLLSHAREDATA{
 	SFilePath					m_szIniFile;							//!< EXE基準のiniファイルパス
 	SFilePath					m_szPrivateIniFile;						//!< マルチユーザ用のiniファイルパス
 
-	SCharWidthCache				m_sCharWidth;							//!< 文字半角全角キャッシュ
 	DWORD						m_dwCustColors[16];						//!< フォントDialogカスタムパレット
 
 	// プラグイン
