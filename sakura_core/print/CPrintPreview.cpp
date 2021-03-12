@@ -106,7 +106,7 @@ CPrintPreview::~CPrintPreview()
 	delete m_pLayoutMgr_Print;
 	
 	/* フォント幅キャッシュを編集モードに戻す */
-	SelectCharWidthCache( CWM_FONT_EDIT, CWM_CACHE_NEUTRAL );
+	SelectCharWidthCache( CWM_FONT_EDIT );
 
 	// 2006.08.17 Moca CompatDC削除。CEditWndから移設
 	// 再描画用メモリBMP
@@ -710,7 +710,7 @@ void CPrintPreview::OnChangePrintSetting( void )
 		(FONTENUMPROC)CPrintPreview::MyEnumFontFamProc,
 		(LPARAM)this
 	);
-	SelectCharWidthCache( CWM_FONT_PRINT, CWM_CACHE_LOCAL );
+	SelectCharWidthCache( CWM_FONT_PRINT );
 	LOGFONT aLogFontArray[] = {m_lfPreviewHan, m_lfPreviewZen};
 	InitCharWidthCacheFromDC( aLogFontArray, CWM_FONT_PRINT, hdc );
 

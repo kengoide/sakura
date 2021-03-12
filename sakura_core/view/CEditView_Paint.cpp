@@ -569,11 +569,11 @@ void CEditView::OnPaint( HDC _hdc, PAINTSTRUCT *pPs, BOOL bDrawFromComptibleBmp 
 	}
 	bool bChangeFont = m_bMiniMap;
 	if( bChangeFont ){
-		SelectCharWidthCache( CWM_FONT_MINIMAP, CWM_CACHE_LOCAL );
+		SelectCharWidthCache( CWM_FONT_MINIMAP );
 	}
 	OnPaint2( _hdc, pPs, bDrawFromComptibleBmp );
 	if( bChangeFont ){
-		SelectCharWidthCache( CWM_FONT_EDIT, m_pcEditWnd->GetLogfontCacheMode() );
+		SelectCharWidthCache( CWM_FONT_EDIT );
 	}
 }
 

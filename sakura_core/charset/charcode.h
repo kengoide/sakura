@@ -224,11 +224,6 @@ enum ECharWidthFontMode {
 	CWM_FONT_MINIMAP,
 	CWM_FONT_MAX,
 };
-enum ECharWidthCacheMode {
-	CWM_CACHE_NEUTRAL,
-	CWM_CACHE_SHARE,
-	CWM_CACHE_LOCAL,
-};
 
 /*!
 	文字幅情報のキャッシュクラス。
@@ -273,7 +268,7 @@ private:
 };
 
 // キャッシュの初期化関数群
-void SelectCharWidthCache( ECharWidthFontMode fMode, ECharWidthCacheMode cMode );  //!< モードを変更したいとき
+void SelectCharWidthCache( ECharWidthFontMode fMode );  //!< モードを変更したいとき
 void InitCharWidthCache( const LOGFONT &lf, ECharWidthFontMode fMode=CWM_FONT_EDIT ); //!< フォントを変更したとき
 void InitCharWidthCacheFromDC(const LOGFONT* lfs, ECharWidthFontMode fMode, HDC hdcOrg );
 [[nodiscard]] CCharWidthCache& GetCharWidthCache();
