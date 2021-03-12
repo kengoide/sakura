@@ -74,7 +74,7 @@ TEST_F(CharWidthCache, IsHankaku)
 	}
 
 	// ここからは実行時のフォントを基に計算する文字。
-	SelectCharWidthCache(CWM_FONT_EDIT, CWM_CACHE_LOCAL);
+	SelectCharWidthCache(CWM_FONT_EDIT);
 	InitCharWidthCache(lf1);
 	CCharWidthCache& cache = GetCharWidthCache();
 
@@ -104,7 +104,7 @@ TEST_F(CharWidthCache, IsHankaku)
 }
 
 TEST_F(CharWidthCache, IsZenkaku) {
-	SelectCharWidthCache(CWM_FONT_EDIT, CWM_CACHE_LOCAL);
+	SelectCharWidthCache(CWM_FONT_EDIT);
 	InitCharWidthCache(lf1);
 
 	EXPECT_EQ(WCODE::IsZenkaku(L'a'), !WCODE::IsHankaku(L'a'));
@@ -113,7 +113,7 @@ TEST_F(CharWidthCache, IsZenkaku) {
 
 TEST_F(CharWidthCache, CalcHankakuByFont)
 {
-	SelectCharWidthCache(CWM_FONT_EDIT, CWM_CACHE_LOCAL);
+	SelectCharWidthCache(CWM_FONT_EDIT);
 	InitCharWidthCache(lf1);
 	CCharWidthCache& cache = GetCharWidthCache();
 
@@ -123,7 +123,7 @@ TEST_F(CharWidthCache, CalcHankakuByFont)
 
 TEST_F(CharWidthCache, CalcPxWidthByFont)
 {
-	SelectCharWidthCache(CWM_FONT_EDIT, CWM_CACHE_LOCAL);
+	SelectCharWidthCache(CWM_FONT_EDIT);
 	InitCharWidthCache(lf1);
 	CCharWidthCache& cache = GetCharWidthCache();
 
@@ -149,7 +149,7 @@ TEST_F(CharWidthCache, CalcPxWidthByFont)
 
 TEST_F(CharWidthCache, CalcPxWidthByFont2)
 {
-	SelectCharWidthCache(CWM_FONT_EDIT, CWM_CACHE_LOCAL);
+	SelectCharWidthCache(CWM_FONT_EDIT);
 	InitCharWidthCache(lf1);
 	CCharWidthCache& cache = GetCharWidthCache();
 
@@ -166,7 +166,7 @@ TEST_F(CharWidthCache, FontNo)
 
 	// InitCharWidthCache を使って初期化すると、
 	// すべての文字に対して同一フォントを使用することになる。
-	SelectCharWidthCache(CWM_FONT_EDIT, CWM_CACHE_LOCAL);
+	SelectCharWidthCache(CWM_FONT_EDIT);
 	InitCharWidthCache(lf1);
 
 	EXPECT_EQ(WCODE::GetFontNo(L'a'), 0);
@@ -175,7 +175,7 @@ TEST_F(CharWidthCache, FontNo)
 
 	// InitCharWidthCacheFromDC に2つの異なるLOGFONTを与えた場合、
 	// それぞれ半角用と全角用として設定される。
-	SelectCharWidthCache(CWM_FONT_PRINT, CWM_CACHE_LOCAL);
+	SelectCharWidthCache(CWM_FONT_PRINT);
 	LOGFONT lfs[] = {lf1, lf2};
 	InitCharWidthCacheFromDC(lfs, CWM_FONT_PRINT, dc);
 
@@ -187,15 +187,15 @@ TEST_F(CharWidthCache, FontNo)
 
 TEST_F(CharWidthCache, GetCharWidthCache)
 {
-	SelectCharWidthCache(CWM_FONT_EDIT, CWM_CACHE_LOCAL);
+	SelectCharWidthCache(CWM_FONT_EDIT);
 	CCharWidthCache& edit1 = GetCharWidthCache();
-	SelectCharWidthCache(CWM_FONT_MINIMAP, CWM_CACHE_LOCAL);
+	SelectCharWidthCache(CWM_FONT_MINIMAP);
 	CCharWidthCache& minimap = GetCharWidthCache();
 
 	// 違うキャッシュ
 	EXPECT_NE(&edit1, &minimap);
 
-	SelectCharWidthCache(CWM_FONT_EDIT, CWM_CACHE_LOCAL);
+	SelectCharWidthCache(CWM_FONT_EDIT);
 	CCharWidthCache& edit2 = GetCharWidthCache();
 
 	// 同じキャッシュ

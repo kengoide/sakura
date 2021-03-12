@@ -261,7 +261,7 @@ void CEditDoc::Clear()
 	m_blfCurTemp = false;
 	GetEditWnd().m_pcViewFontMiniMap->UpdateFont(&GetEditWnd().GetLogfont());
 	InitCharWidthCache( GetEditWnd().m_pcViewFontMiniMap->GetLogfont(), CWM_FONT_MINIMAP );
-	SelectCharWidthCache( CWM_FONT_EDIT, GetEditWnd().GetLogfontCacheMode() );
+	SelectCharWidthCache( CWM_FONT_EDIT );
 	InitCharWidthCache( GetEditWnd().GetLogfont() );
 	GetEditWnd().m_pcViewFont->UpdateFont(&GetEditWnd().GetLogfont());
 
@@ -706,7 +706,7 @@ void CEditDoc::OnChangeSetting(
 	}else{
 		if( GetEditWnd().m_pPrintPreview ){
 			// 一時的に設定を戻す
-			SelectCharWidthCache( CWM_FONT_EDIT, CWM_CACHE_NEUTRAL );
+			SelectCharWidthCache( CWM_FONT_EDIT );
 		}
 		if( bDoLayout ){
 			posSaveAry = GetEditWnd().SavePhysPosOfAllView();
@@ -757,7 +757,7 @@ void CEditDoc::OnChangeSetting(
 	GetEditWnd().m_pcViewFontMiniMap->UpdateFont(&GetEditWnd().GetLogfont());
 
 	InitCharWidthCache( GetEditWnd().m_pcViewFontMiniMap->GetLogfont(), CWM_FONT_MINIMAP );
-	SelectCharWidthCache( CWM_FONT_EDIT, GetEditWnd().GetLogfontCacheMode() );
+	SelectCharWidthCache( CWM_FONT_EDIT );
 	InitCharWidthCache( GetEditWnd().GetLogfont() );
 
 	CKetaXInt nMaxLineKetas = ref.m_nMaxLineKetas;
@@ -839,7 +839,7 @@ void CEditDoc::OnChangeSetting(
 	}
 	if( GetEditWnd().m_pPrintPreview ){
 		// 設定を戻す
-		SelectCharWidthCache( CWM_FONT_PRINT, CWM_CACHE_LOCAL );
+		SelectCharWidthCache( CWM_FONT_PRINT );
 	}
 
 	if(!bFromSetFontSize ){

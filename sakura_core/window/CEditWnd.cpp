@@ -674,9 +674,9 @@ HWND CEditWnd::Create(
 	// プラグインコマンドを登録する
 	RegisterPluginCommand();
 
-	SelectCharWidthCache( CWM_FONT_MINIMAP, CWM_CACHE_LOCAL ); // Init
+	SelectCharWidthCache( CWM_FONT_MINIMAP ); // Init
 	InitCharWidthCache( m_pcViewFontMiniMap->GetLogfont(), CWM_FONT_MINIMAP );
-	SelectCharWidthCache( CWM_FONT_EDIT, GetLogfontCacheMode() );
+	SelectCharWidthCache( CWM_FONT_EDIT );
 	InitCharWidthCache( GetLogfont() );
 
 	// -- -- -- -- 子ウィンドウ作成 -- -- -- -- //
@@ -1785,8 +1785,7 @@ LRESULT CEditWnd::DispatchEvent(
 			m_posSaveAry = NULL;
 			break;
 		case PM_CHANGESETTING_FONTSIZE:
-			if( (-1 == wParam && CWM_CACHE_SHARE == GetLogfontCacheMode())
-					|| GetDocument()->m_cDocType.GetDocumentType().GetIndex() == wParam ){
+			if( GetDocument()->m_cDocType.GetDocumentType().GetIndex() == wParam ){
 				// 文字幅で幅も変わるので再構築する
 				// 変更中にさらに変更されると困るのでBlockingHookは無効
 				GetDocument()->OnChangeSetting( true, false );
@@ -1845,13 +1844,13 @@ LRESULT CEditWnd::DispatchEvent(
 		{
 			if( m_pPrintPreview ){
 				// 一時的に設定を戻す
-				SelectCharWidthCache( CWM_FONT_EDIT, CWM_CACHE_NEUTRAL );
+				SelectCharWidthCache( CWM_FONT_EDIT );
 			}
 			// フォント変更前の座標の保存
 			m_posSaveAry = SavePhysPosOfAllView();
 			if( m_pPrintPreview ){
 				// 設定を戻す
-				SelectCharWidthCache( CWM_FONT_PRINT, CWM_CACHE_LOCAL );
+				SelectCharWidthCache( CWM_FONT_PRINT );
 			}
 		}
 		return 0L;
@@ -4868,17 +4867,6 @@ int CEditWnd::GetFontPointSize(bool bTempSetting)
 		return GetDocument()->m_cDocType.GetDocumentAttribute().m_nPointSize;
 	}
 	return m_pShareData->m_Common.m_sView.m_nPointSize;
-}
-ECharWidthCacheMode CEditWnd::GetLogfontCacheMode()
-{
-	if( GetDocument()->m_blfCurTemp ){
-		return CWM_CACHE_LOCAL;
-	}
-	bool bUseTypeFont = GetDocument()->m_cDocType.GetDocumentAttribute().m_bUseTypeFont;
-	if( bUseTypeFont ){
-		return CWM_CACHE_LOCAL;
-	}
-	return CWM_CACHE_SHARE;
 }
 
 /*!

@@ -229,7 +229,7 @@ namespace WCODE {
 			// サイズやHDCが変わってもクリアする必要がある
 			m_localcache[fMode].Clear();
 		}
-		void Select( ECharWidthFontMode fMode, ECharWidthCacheMode cMode )
+		void Select( ECharWidthFontMode fMode )
 		{
 			pcache = &m_localcache[fMode];
 			if( m_parCache[fMode] == 0 ){
@@ -278,11 +278,9 @@ void InitCharWidthCacheFromDC( const LOGFONT* lfs, ECharWidthFontMode fMode, HDC
 }
 
  //	文字幅の動的計算用キャッシュの選択	2013.04.08 aroka
-void SelectCharWidthCache( ECharWidthFontMode fMode, ECharWidthCacheMode cMode  )
+void SelectCharWidthCache( ECharWidthFontMode fMode )
 {
-	assert( fMode==CWM_FONT_EDIT || cMode==CWM_CACHE_LOCAL );
-
-	WCODE::selector.Select( fMode, cMode );
+	WCODE::selector.Select( fMode );
 }
 
 [[nodiscard]] CCharWidthCache& GetCharWidthCache()

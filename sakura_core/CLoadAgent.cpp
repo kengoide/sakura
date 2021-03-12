@@ -209,7 +209,7 @@ ELoadResult CLoadAgent::OnLoad(const SLoadInfo& sLoadInfo)
 	pcDoc->m_cDocType.SetDocumentType( sLoadInfo.nType, true );
 	GetEditWnd().m_pcViewFontMiniMap->UpdateFont(&GetEditWnd().GetLogfont());
 	InitCharWidthCache( GetEditWnd().m_pcViewFontMiniMap->GetLogfont(), CWM_FONT_MINIMAP );
-	SelectCharWidthCache( CWM_FONT_EDIT, GetEditWnd().GetLogfontCacheMode() );
+	SelectCharWidthCache( CWM_FONT_EDIT );
 	InitCharWidthCache( GetEditWnd().GetLogfont() );
 	GetEditWnd().m_pcViewFont->UpdateFont(&GetEditWnd().GetLogfont());
 
