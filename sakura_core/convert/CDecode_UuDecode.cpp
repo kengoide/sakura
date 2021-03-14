@@ -23,6 +23,7 @@
 		   distribution.
 */
 #include "StdAfx.h"
+#include <array>
 #include "CDecode_UuDecode.h"
 #include "charset/charcode.h"
 #include "convert/convert_util2.h"
@@ -65,12 +66,12 @@ end
 	・行末の空白を削除するゲートウェイに対処するため、空白は、"~"(0x7E)または"`"(0x60)を換わりに使う。
 */
 
-inline BYTE _UUDECODE_CHAR(WCHAR c) {
+[[nodiscard]] inline BYTE _UUDECODE_CHAR(WCHAR c) {
 	BYTE c_ = (c & 0xff);
 	if (c_ == L'`' || c_ == L'~') {
 		c_ = L' ';
 	}
-	return static_cast<BYTE>((static_cast<BYTE>(c_) - 0x20) & 0x3f);
+	return static_cast<BYTE>((c_ - 0x20) & 0x3f);
 }
 
 /*
@@ -83,19 +84,16 @@ inline BYTE _UUDECODE_CHAR(WCHAR c) {
 			書き込んだデータが戻り値よりも大きいときがあるので注意。
 */
 int _DecodeUU_line(const wchar_t* pSrc, const int nSrcLen, char* pDest) {
-	unsigned long lDataDes;
-	const wchar_t* pr;
-
 	if (nSrcLen < 1) {
 		return 0;
 	}
 
-	pr = pSrc + 1;  // 先頭の文字（M(0x20+45)など）を飛ばす
+	const wchar_t* pr = pSrc + 1;  // 先頭の文字（M(0x20+45)など）を飛ばす
 	int i = 0;
 	int j = 0;
 	int k = 0;
 	for (; i < nSrcLen; i += 4) {
-		lDataDes = 0;
+		unsigned long lDataDes = 0;
 		for (j = 0; j < 4; ++j) {
 			lDataDes |= _UUDECODE_CHAR(pr[i + j]) << ((4 - j - 1) * 6);
 		}
@@ -112,12 +110,8 @@ int _DecodeUU_line(const wchar_t* pSrc, const int nSrcLen, char* pDest) {
 	UUエンコードのヘッダー部分を解析
 */
 bool CheckUUHeader(const wchar_t* pSrc, const int nLen, WCHAR* pszFilename) {
-	const wchar_t* pr, * pr_end;
-	wchar_t* pwstart;
-	int nwlen, nstartidx;
-	wchar_t pszSplitChars[16];
-
 	// スペースまたはタブが区切り文字
+	std::array<wchar_t, 16> pszSplitChars;
 	pszSplitChars[0] = L' ';
 	pszSplitChars[1] = L'\t';
 	pszSplitChars[2] = L'\0';
@@ -130,6 +124,7 @@ bool CheckUUHeader(const wchar_t* pSrc, const int nLen, WCHAR* pszFilename) {
 	}
 
 	// 先頭の空白・改行文字をスキップ
+	int nstartidx;
 	for (nstartidx = 0; nstartidx < nLen; ++nstartidx) {
 		wchar_t c = pSrc[nstartidx];
 		if (c != L'\r' && c != L'\n' && c != L' ' && c != L'\t') {
@@ -137,15 +132,17 @@ bool CheckUUHeader(const wchar_t* pSrc, const int nLen, WCHAR* pszFilename) {
 		}
 	}
 
-	pr = pSrc + nstartidx;
-	pr_end = pSrc + nLen;
+	const wchar_t* pr = pSrc + nstartidx;
+	const wchar_t* pr_end = pSrc + nLen;
 
 	// ヘッダーの構成
 	// begin  755  <filename>
 
 	/* begin を取得 */
 
-	pr += CWordParse::GetWord(pr, pr_end - pr, pszSplitChars, &pwstart, &nwlen);
+	wchar_t* pwstart;
+	int nwlen;
+	pr += CWordParse::GetWord(pr, pr_end - pr, pszSplitChars.data(), &pwstart, &nwlen);
 	if (nwlen != 5) {
 		// error.
 		return false;
@@ -157,7 +154,7 @@ bool CheckUUHeader(const wchar_t* pSrc, const int nLen, WCHAR* pszFilename) {
 
 	/* 3桁の8進数（Unix システムのパーミッション）を取得 */
 
-	pr += CWordParse::GetWord(pr, pr_end - pr, pszSplitChars, &pwstart, &nwlen);
+	pr += CWordParse::GetWord(pr, pr_end - pr, pszSplitChars.data(), &pwstart, &nwlen);
 	if (nwlen != 3) {
 		// error.
 		return false;
@@ -171,7 +168,7 @@ bool CheckUUHeader(const wchar_t* pSrc, const int nLen, WCHAR* pszFilename) {
 
 	/* 書き出し用のファイル名を取得 */
 
-	pr += CWordParse::GetWord(pr, pr_end - pr, pszSplitChars, &pwstart, &nwlen);
+	pr += CWordParse::GetWord(pr, pr_end - pr, pszSplitChars.data(), &pwstart, &nwlen);
 	// 末尾の空白・改行文字をスキップ
 	for (; nwlen > 0; --nwlen) {
 		wchar_t c = pwstart[nwlen - 1];
@@ -196,16 +193,12 @@ bool CheckUUHeader(const wchar_t* pSrc, const int nLen, WCHAR* pszFilename) {
 	UU フッターを確認
 */
 bool CheckUUFooter(const wchar_t* pS, const int nLen) {
-	int nstartidx;
-	const wchar_t* psrc;
-	int nsrclen;
-	int i;
-
 	// フッターの構成
 	// end
 	// ※ 空行はフッターに含めない。
 
 	// 先頭の改行・空白文字をスキップ
+	int nstartidx;
 	for (nstartidx = 0; nstartidx < nLen; ++nstartidx) {
 		wchar_t c = pS[nstartidx];
 		if (c != L'\r' && c != L'\n' && c != L' ' && c != L'\t') {
@@ -213,9 +206,9 @@ bool CheckUUFooter(const wchar_t* pS, const int nLen) {
 		}
 	}
 
-	psrc = pS + nstartidx;
-	nsrclen = nLen - nstartidx;
-	i = 0;
+	const wchar_t* psrc = pS + nstartidx;
+	int nsrclen = nLen - nstartidx;
+	int i = 0;
 
 	if (nsrclen < 3) {
 		return false;
@@ -240,25 +233,20 @@ bool CheckUUFooter(const wchar_t* pS, const int nLen) {
 /* Uudecode (デコード）*/
 bool CDecode_UuDecode::DoDecode( const CNativeW& pcSrc, CMemory* pcDst )
 {
-	const WCHAR *psrc, *pline;
-	int nsrclen;
-	char *pw, *pw_base;
-	int nlinelen, ncuridx;
-	CEol ceol;
-	bool bsuccess = false;
-
 	pcDst->Clear();
-	psrc = pcSrc.GetStringPtr();
-	nsrclen = pcSrc.GetStringLength();
+	const wchar_t* psrc = pcSrc.GetStringPtr();
+	int nsrclen = pcSrc.GetStringLength();
 
 	if( nsrclen < 1 ){
 		pcDst->_AppendSz("");
 		return false;
 	}
 	pcDst->AllocBuffer( (nsrclen / 4) * 3 + 10 );
-	pw_base = pw = static_cast<char *>( pcDst->GetRawPtr() );
+	char *pw;
+	char* pw_base = pw = static_cast<char *>( pcDst->GetRawPtr() );
 
 	// 先頭の改行・空白文字をスキップ
+	int ncuridx;
 	for( ncuridx = 0; ncuridx < nsrclen; ++ncuridx ){
 		WCHAR c = psrc[ncuridx];
 		if( !WCODE::IsLineDelimiterBasic(c) && c != L' ' && c != L'\t' ){
@@ -267,13 +255,16 @@ bool CDecode_UuDecode::DoDecode( const CNativeW& pcSrc, CMemory* pcDst )
 	}
 
 	// ヘッダーを解析
-	pline = GetNextLineW( psrc, nsrclen, &nlinelen, &ncuridx, &ceol, false );
+	int nlinelen;
+	CEol ceol;
+	const wchar_t* pline = GetNextLineW( psrc, nsrclen, &nlinelen, &ncuridx, &ceol, false );
 	if( !CheckUUHeader(pline, nlinelen, m_aFilename) ){
 		pcDst->_AppendSz("");
 		return false;
 	}
 
 	// ボディーを処理
+	bool bsuccess = false;
 	while( (pline = GetNextLineW(psrc, nsrclen, &nlinelen, &ncuridx, &ceol, false)) != NULL ){
 		if( ceol.GetType() != EOL_CRLF ){
 			pcDst->_AppendSz("");
