@@ -65,12 +65,6 @@ inline BYTE _UUDECODE_CHAR(WCHAR c) {
 	}
 	return static_cast<BYTE>((static_cast<BYTE>(c_) - 0x20) & 0x3f);
 }
-inline BYTE _UUDECODE_CHAR(ACHAR c) {
-	if (c == '`' || c == '~') {
-		c = ' ';
-	}
-	return static_cast<BYTE>((static_cast<BYTE>(c) - 0x20) & 0x3f);
-}
 
 /*
 	UU デコーダー（一行だけ実行するバージョン）
@@ -81,10 +75,9 @@ inline BYTE _UUDECODE_CHAR(ACHAR c) {
 	@return 一行分をデコードした結果得られた生データのバイト長
 			書き込んだデータが戻り値よりも大きいときがあるので注意。
 */
-template< class CHAR_TYPE >
-int _DecodeUU_line(const CHAR_TYPE* pSrc, const int nSrcLen, char* pDest) {
+int _DecodeUU_line(const wchar_t* pSrc, const int nSrcLen, char* pDest) {
 	unsigned long lDataDes;
-	const CHAR_TYPE* pr;
+	const wchar_t* pr;
 
 	if (nSrcLen < 1) {
 		return 0;
@@ -111,16 +104,15 @@ int _DecodeUU_line(const CHAR_TYPE* pSrc, const int nSrcLen, char* pDest) {
 /*!
 	UUエンコードのヘッダー部分を解析
 */
-template< class CHAR_TYPE >
-bool CheckUUHeader(const CHAR_TYPE* pSrc, const int nLen, WCHAR* pszFilename) {
+bool CheckUUHeader(const wchar_t* pSrc, const int nLen, WCHAR* pszFilename) {
 	//	using namespace WCODE;
 
-	const CHAR_TYPE* pr, * pr_end;
-	CHAR_TYPE* pwstart;
+	const wchar_t* pr, * pr_end;
+	wchar_t* pwstart;
 	int nwlen, nstartidx;
-	CHAR_TYPE pszSplitChars[16];
+	wchar_t pszSplitChars[16];
 
-	if (sizeof(CHAR_TYPE) == 2) {
+	if (sizeof(wchar_t) == 2) {
 		// スペースまたはタブが区切り文字
 		pszSplitChars[0] = L' ';
 		pszSplitChars[1] = L'\t';
@@ -142,8 +134,8 @@ bool CheckUUHeader(const CHAR_TYPE* pSrc, const int nLen, WCHAR* pszFilename) {
 
 	// 先頭の空白・改行文字をスキップ
 	for (nstartidx = 0; nstartidx < nLen; ++nstartidx) {
-		CHAR_TYPE c = pSrc[nstartidx];
-		if (sizeof(CHAR_TYPE) == 2) {
+		wchar_t c = pSrc[nstartidx];
+		if (sizeof(wchar_t) == 2) {
 			if (c != L'\r' && c != L'\n' && c != L' ' && c != L'\t') {
 				break;
 			}
@@ -168,7 +160,7 @@ bool CheckUUHeader(const CHAR_TYPE* pSrc, const int nLen, WCHAR* pszFilename) {
 		// error.
 		return false;
 	}
-	if (sizeof(CHAR_TYPE) == 2) {
+	if (sizeof(wchar_t) == 2) {
 		if (wcsncmp_literal(pwstart, L"begin") != 0) {
 			// error.
 			return false;
@@ -189,7 +181,7 @@ bool CheckUUHeader(const CHAR_TYPE* pSrc, const int nLen, WCHAR* pszFilename) {
 		return false;
 	}
 	for (int i = 0; i < nwlen; i++) {
-		if (sizeof(CHAR_TYPE) == 2) {
+		if (sizeof(wchar_t) == 2) {
 			// WCHAR の場合の処理
 			if (!iswdigit(pwstart[i]) || (pwstart[i] == L'8' || pwstart[i] == L'9')) {
 				// error.
@@ -210,8 +202,8 @@ bool CheckUUHeader(const CHAR_TYPE* pSrc, const int nLen, WCHAR* pszFilename) {
 	pr += CWordParse::GetWord(pr, pr_end - pr, pszSplitChars, &pwstart, &nwlen);
 	// 末尾の空白・改行文字をスキップ
 	for (; nwlen > 0; --nwlen) {
-		CHAR_TYPE c = pwstart[nwlen - 1];
-		if (sizeof(CHAR_TYPE) == 2) {
+		wchar_t c = pwstart[nwlen - 1];
+		if (sizeof(wchar_t) == 2) {
 			if (!WCODE::IsLineDelimiterBasic(c) && c != L' ' && c != L'\t') {
 				break;
 			}
@@ -238,10 +230,9 @@ bool CheckUUHeader(const CHAR_TYPE* pSrc, const int nLen, WCHAR* pszFilename) {
 /*!
 	UU フッターを確認
 */
-template< class CHAR_TYPE >
-bool CheckUUFooter(const CHAR_TYPE* pS, const int nLen) {
+bool CheckUUFooter(const wchar_t* pS, const int nLen) {
 	int nstartidx;
-	const CHAR_TYPE* psrc;
+	const wchar_t* psrc;
 	int nsrclen;
 	int i;
 
@@ -251,8 +242,8 @@ bool CheckUUFooter(const CHAR_TYPE* pS, const int nLen) {
 
 	// 先頭の改行・空白文字をスキップ
 	for (nstartidx = 0; nstartidx < nLen; ++nstartidx) {
-		CHAR_TYPE c = pS[nstartidx];
-		if (sizeof(CHAR_TYPE) == 2) {
+		wchar_t c = pS[nstartidx];
+		if (sizeof(wchar_t) == 2) {
 			// WCHAR の場合の処理
 			if (c != L'\r' && c != L'\n' && c != L' ' && c != L'\t') {
 				break;
@@ -273,7 +264,7 @@ bool CheckUUFooter(const CHAR_TYPE* pS, const int nLen) {
 	if (nsrclen < 3) {
 		return false;
 	}
-	if (sizeof(CHAR_TYPE) == 2) {
+	if (sizeof(wchar_t) == 2) {
 		if (wcsncmp_literal(&pS[nstartidx], L"end") != 0) {
 			// error.
 			return false;
@@ -289,8 +280,8 @@ bool CheckUUFooter(const CHAR_TYPE* pS, const int nLen) {
 
 	// end の後が空白文字ばかりであることを確認
 	for (; i < nsrclen; ++i) {
-		CHAR_TYPE c = psrc[i];
-		if (sizeof(CHAR_TYPE) == 2) {
+		wchar_t c = psrc[i];
+		if (sizeof(wchar_t) == 2) {
 			// WCHAR の場合の処理
 			if (!WCODE::IsLineDelimiterBasic(c) && c != L' ' && c != L'\t') {
 				return false;

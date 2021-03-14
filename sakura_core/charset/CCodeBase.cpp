@@ -82,18 +82,6 @@ inline ACHAR _GetHexChar(ACHAR c) {
 	}
 }
 
-inline WCHAR _GetHexChar(WCHAR c) {
-	if ((c >= L'0' && c <= L'9') || (c >= L'A' && c <= L'F')) {
-		return c;
-	}
-	else if (c >= L'a' && c <= L'f') {
-		return  c - (L'a' - L'A');
-	}
-	else {
-		return L'\0';
-	}
-}
-
 /*
 	c の入力値： 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F
 */
@@ -106,18 +94,8 @@ inline int _HexToInt(ACHAR c) {
 	}
 }
 
-inline int _HexToInt(WCHAR c) {
-	if (c <= L'9') {
-		return c - L'0';
-	}
-	else {
-		return c - L'A' + 10;
-	}
-}
-
-template< class CHAR_TYPE >
-int _DecodeQP(const CHAR_TYPE* pS, const int nLen, char* pDst) {
-	const CHAR_TYPE* pr;
+int _DecodeQP(const char* pS, const int nLen, char* pDst) {
+	const char* pr;
 	char* pw;
 	int ninc_len;
 
@@ -126,7 +104,7 @@ int _DecodeQP(const CHAR_TYPE* pS, const int nLen, char* pDst) {
 
 	while (pr < pS + nLen) {
 		/* =XX の形式でない部分をデコード */
-		if (sizeof(CHAR_TYPE) == 2) {
+		if (sizeof(char) == 2) {
 			if (*pr != L'=') {
 				*pw = static_cast<char>(*pr);
 				pw += 1;
@@ -147,7 +125,7 @@ int _DecodeQP(const CHAR_TYPE* pS, const int nLen, char* pDst) {
 		ninc_len = 1;   // '=' の部分のインクリメント。
 		if (pr + 2 < pS + nLen) {
 			// デコード実行部分
-			CHAR_TYPE c1, c2;
+			char c1, c2;
 			c1 = _GetHexChar(pr[1]);
 			c2 = _GetHexChar(pr[2]);
 			if (c1 != 0 && c2 != 0) {
@@ -180,14 +158,13 @@ enum EEncodingMethod {
 
 	@return  CMemory と置き換えられる入力文字列長 (nSkipLen)
 */
-template< class CHAR_TYPE >
-int _DecodeMimeHeader(const CHAR_TYPE* pSrc, const int nSrcLen, CMemory* pcMem_alt, ECodeType* peCodetype) {
+int _DecodeMimeHeader(const char* pSrc, const int nSrcLen, CMemory* pcMem_alt, ECodeType* peCodetype) {
 	ECodeType ecode = CODE_NONE;
 	EEncodingMethod emethod = EM_NONE;
 	int nLen_part1, nLen_part2, nskipped_len;
 	int ncmpresult1, ncmpresult2, ncmpresult;
 
-	const CHAR_TYPE* pr, * pr_base;
+	const char* pr, * pr_base;
 	char* pdst;
 	int ndecoded_len;
 
@@ -201,7 +178,7 @@ int _DecodeMimeHeader(const CHAR_TYPE* pSrc, const int nSrcLen, CMemory* pcMem_a
 
 	if (pSrc + 14 < pSrc + nSrcLen) {
 		// JIS の場合
-		if (sizeof(CHAR_TYPE) == 2) {
+		if (sizeof(char) == 2) {
 			ncmpresult = wcsnicmp_literal(reinterpret_cast<const wchar_t*>(&pSrc[0]), L"=?ISO-2022-JP?");
 		}
 		else {
@@ -215,7 +192,7 @@ int _DecodeMimeHeader(const CHAR_TYPE* pSrc, const int nSrcLen, CMemory* pcMem_a
 	}
 	if (pSrc + 8 < pSrc + nSrcLen) {
 		// UTF-8 の場合
-		if (sizeof(CHAR_TYPE) == 2) {
+		if (sizeof(char) == 2) {
 			ncmpresult = wcsnicmp_literal(reinterpret_cast<const wchar_t*>(&pSrc[0]), L"=?UTF-8?");
 		}
 		else {
@@ -250,7 +227,7 @@ finish_first_detect:;
 		pcMem_alt->SetRawData("", 0);
 		return 0;
 	}
-	if (sizeof(CHAR_TYPE) == 2) {
+	if (sizeof(char) == 2) {
 		ncmpresult1 = wcsnicmp_literal(reinterpret_cast<const wchar_t*>(&pSrc[nLen_part1]), L"B?");
 		ncmpresult2 = wcsnicmp_literal(reinterpret_cast<const wchar_t*>(&pSrc[nLen_part1]), L"Q?");
 	}
@@ -277,7 +254,7 @@ finish_first_detect:;
 	pr_base = pSrc + nLen_part1 + nLen_part2;
 	pr = pSrc + nLen_part1 + nLen_part2;
 	for (; pr < pSrc + nSrcLen - 1; ++pr) {
-		if (sizeof(CHAR_TYPE) == 2) {
+		if (sizeof(char) == 2) {
 			ncmpresult = wcsncmp_literal(reinterpret_cast<const wchar_t*>(pr), L"?=");
 		}
 		else {
