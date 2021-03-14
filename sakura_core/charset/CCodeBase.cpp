@@ -104,21 +104,11 @@ int _DecodeQP(const char* pS, const int nLen, char* pDst) {
 
 	while (pr < pS + nLen) {
 		/* =XX の形式でない部分をデコード */
-		if (sizeof(char) == 2) {
-			if (*pr != L'=') {
-				*pw = static_cast<char>(*pr);
-				pw += 1;
-				pr += 1;
-				continue;
-			}
-		}
-		else {
-			if (*pr != '=') {
-				*pw = static_cast<char>(*pr);
-				pw += 1;
-				pr += 1;
-				continue;
-			}
+		if (*pr != '=') {
+			*pw = static_cast<char>(*pr);
+			pw += 1;
+			pr += 1;
+			continue;
 		}
 
 		/* =XX の部分をデコード */
@@ -178,12 +168,7 @@ int _DecodeMimeHeader(const char* pSrc, const int nSrcLen, CMemory* pcMem_alt, E
 
 	if (pSrc + 14 < pSrc + nSrcLen) {
 		// JIS の場合
-		if (sizeof(char) == 2) {
-			ncmpresult = wcsnicmp_literal(reinterpret_cast<const wchar_t*>(&pSrc[0]), L"=?ISO-2022-JP?");
-		}
-		else {
-			ncmpresult = strnicmp_literal(&pSrc[0], "=?ISO-2022-JP?");
-		}
+		ncmpresult = strnicmp_literal(&pSrc[0], "=?ISO-2022-JP?");
 		if (ncmpresult == 0) {  // 
 			ecode = CODE_JIS;
 			nLen_part1 = 14;
@@ -192,12 +177,7 @@ int _DecodeMimeHeader(const char* pSrc, const int nSrcLen, CMemory* pcMem_alt, E
 	}
 	if (pSrc + 8 < pSrc + nSrcLen) {
 		// UTF-8 の場合
-		if (sizeof(char) == 2) {
-			ncmpresult = wcsnicmp_literal(reinterpret_cast<const wchar_t*>(&pSrc[0]), L"=?UTF-8?");
-		}
-		else {
-			ncmpresult = strnicmp_literal(&pSrc[0], "=?UTF-8?");
-		}
+		ncmpresult = strnicmp_literal(&pSrc[0], "=?UTF-8?");
 		if (ncmpresult == 0) {
 			ecode = CODE_UTF8;
 			nLen_part1 = 8;
@@ -227,14 +207,8 @@ finish_first_detect:;
 		pcMem_alt->SetRawData("", 0);
 		return 0;
 	}
-	if (sizeof(char) == 2) {
-		ncmpresult1 = wcsnicmp_literal(reinterpret_cast<const wchar_t*>(&pSrc[nLen_part1]), L"B?");
-		ncmpresult2 = wcsnicmp_literal(reinterpret_cast<const wchar_t*>(&pSrc[nLen_part1]), L"Q?");
-	}
-	else {
-		ncmpresult1 = strnicmp_literal(&pSrc[nLen_part1], "B?");
-		ncmpresult2 = strnicmp_literal(&pSrc[nLen_part1], "Q?");
-	}
+	ncmpresult1 = strnicmp_literal(&pSrc[nLen_part1], "B?");
+	ncmpresult2 = strnicmp_literal(&pSrc[nLen_part1], "Q?");
 	if (ncmpresult1 == 0) {
 		emethod = EM_BASE64;
 	}
@@ -254,12 +228,7 @@ finish_first_detect:;
 	pr_base = pSrc + nLen_part1 + nLen_part2;
 	pr = pSrc + nLen_part1 + nLen_part2;
 	for (; pr < pSrc + nSrcLen - 1; ++pr) {
-		if (sizeof(char) == 2) {
-			ncmpresult = wcsncmp_literal(reinterpret_cast<const wchar_t*>(pr), L"?=");
-		}
-		else {
-			ncmpresult = strncmp_literal(pr, "?=");
-		}
+		ncmpresult = strncmp_literal(pr, "?=");
 		if (ncmpresult == 0) {
 			break;
 		}
