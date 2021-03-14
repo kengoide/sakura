@@ -66,7 +66,7 @@ end
 	・行末の空白を削除するゲートウェイに対処するため、空白は、"~"(0x7E)または"`"(0x60)を換わりに使う。
 */
 
-[[nodiscard]] inline BYTE _UUDECODE_CHAR(WCHAR c) {
+[[nodiscard]] inline BYTE UUDECODE_CHAR(WCHAR c) {
 	BYTE c_ = (c & 0xff);
 	if (c_ == L'`' || c_ == L'~') {
 		c_ = L' ';
@@ -83,7 +83,7 @@ end
 	@return 一行分をデコードした結果得られた生データのバイト長
 			書き込んだデータが戻り値よりも大きいときがあるので注意。
 */
-int _DecodeUU_line(const wchar_t* pSrc, const int nSrcLen, char* pDest) {
+int DecodeUU_line(const wchar_t* pSrc, const int nSrcLen, char* pDest) {
 	if (nSrcLen < 1) {
 		return 0;
 	}
@@ -95,7 +95,7 @@ int _DecodeUU_line(const wchar_t* pSrc, const int nSrcLen, char* pDest) {
 	for (; i < nSrcLen; i += 4) {
 		unsigned long lDataDes = 0;
 		for (j = 0; j < 4; ++j) {
-			lDataDes |= _UUDECODE_CHAR(pr[i + j]) << ((4 - j - 1) * 6);
+			lDataDes |= UUDECODE_CHAR(pr[i + j]) << ((4 - j - 1) * 6);
 		}
 		for (j = 0; j < 3; ++j) {
 			pDest[k + j] = (char)((lDataDes >> ((3 - j - 1) * 8)) & 0x000000ff);
@@ -103,7 +103,7 @@ int _DecodeUU_line(const wchar_t* pSrc, const int nSrcLen, char* pDest) {
 		k += 3;
 	}
 
-	return _UUDECODE_CHAR(pSrc[0]); // 1行分をデコードしたときに得られる生データのバイト長を取得
+	return UUDECODE_CHAR(pSrc[0]); // 1行分をデコードしたときに得られる生データのバイト長を取得
 }
 
 /*!
@@ -281,7 +281,7 @@ bool CDecode_UuDecode::DoDecode( const CNativeW& pcSrc, CMemory* pcDst )
 				break;
 			}
 		}
-		pw += _DecodeUU_line( pline, nlinelen, pw );
+		pw += DecodeUU_line( pline, nlinelen, pw );
 	}
 	if( bsuccess == false ){
 		return false;
