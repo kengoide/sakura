@@ -142,7 +142,7 @@ bool CheckUUHeader(const wchar_t* pSrc, const int nLen, WCHAR* pszFilename) {
 
 	wchar_t* pwstart;
 	int nwlen;
-	pr += CWordParse::GetWord(pr, pr_end - pr, pszSplitChars.data(), &pwstart, &nwlen);
+	pr += CWordParse::GetWord(pr, static_cast<int>(pr_end - pr), pszSplitChars.data(), &pwstart, &nwlen);
 	if (nwlen != 5) {
 		// error.
 		return false;
@@ -154,7 +154,7 @@ bool CheckUUHeader(const wchar_t* pSrc, const int nLen, WCHAR* pszFilename) {
 
 	/* 3桁の8進数（Unix システムのパーミッション）を取得 */
 
-	pr += CWordParse::GetWord(pr, pr_end - pr, pszSplitChars.data(), &pwstart, &nwlen);
+	pr += CWordParse::GetWord(pr, static_cast<int>(pr_end - pr), pszSplitChars.data(), &pwstart, &nwlen);
 	if (nwlen != 3) {
 		// error.
 		return false;
@@ -167,8 +167,7 @@ bool CheckUUHeader(const wchar_t* pSrc, const int nLen, WCHAR* pszFilename) {
 	}
 
 	/* 書き出し用のファイル名を取得 */
-
-	pr += CWordParse::GetWord(pr, pr_end - pr, pszSplitChars.data(), &pwstart, &nwlen);
+	CWordParse::GetWord(pr, static_cast<int>(pr_end - pr), pszSplitChars.data(), &pwstart, &nwlen);
 	// 末尾の空白・改行文字をスキップ
 	for (; nwlen > 0; --nwlen) {
 		wchar_t c = pwstart[nwlen - 1];
@@ -242,8 +241,8 @@ bool CDecode_UuDecode::DoDecode( const CNativeW& pcSrc, CMemory* pcDst )
 		return false;
 	}
 	pcDst->AllocBuffer( (nsrclen / 4) * 3 + 10 );
-	char *pw;
-	char* pw_base = pw = static_cast<char *>( pcDst->GetRawPtr() );
+	char* pw = static_cast<char *>( pcDst->GetRawPtr() );
+	const char* pw_base = pw;
 
 	// 先頭の改行・空白文字をスキップ
 	int ncuridx;
@@ -265,7 +264,7 @@ bool CDecode_UuDecode::DoDecode( const CNativeW& pcSrc, CMemory* pcDst )
 
 	// ボディーを処理
 	bool bsuccess = false;
-	while( (pline = GetNextLineW(psrc, nsrclen, &nlinelen, &ncuridx, &ceol, false)) != NULL ){
+	while( (pline = GetNextLineW(psrc, nsrclen, &nlinelen, &ncuridx, &ceol, false)) != nullptr ){
 		if( ceol.GetType() != EOL_CRLF ){
 			pcDst->_AppendSz("");
 			return false;
@@ -274,12 +273,10 @@ bool CDecode_UuDecode::DoDecode( const CNativeW& pcSrc, CMemory* pcDst )
 			pcDst->_AppendSz("");
 			return false;
 		}
-		if( nlinelen == 1 ){
+		if( nlinelen == 1 && pline[0] == L' ' || pline[0] == L'`' || pline[0] == L'~' ){
 			// データの最後である場合
-			if( pline[0] == L' ' || pline[0] == L'`' || pline[0] == L'~' ){
-				bsuccess = true;
-				break;
-			}
+			bsuccess = true;
+			break;
 		}
 		pw += DecodeUU_line( pline, nlinelen, pw );
 	}
@@ -295,6 +292,6 @@ bool CDecode_UuDecode::DoDecode( const CNativeW& pcSrc, CMemory* pcDst )
 		return false;
 	}
 
-	pcDst->_SetRawLength( pw - pw_base );
+	pcDst->_SetRawLength(static_cast<int>(pw - pw_base));
 	return true;
 }
