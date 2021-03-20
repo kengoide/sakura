@@ -28,7 +28,8 @@
 #include "CUtf7.h"
 #include "charset/charcode.h"
 #include "charset/codechecker.h"
-#include "convert/convert_util2.h"
+#include "charset/Base64.h"
+#include "CEol.h"
 
 /*!
 	UTF-7 Set D 部分の読み込み。

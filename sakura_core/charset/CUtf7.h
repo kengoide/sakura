@@ -39,7 +39,6 @@ public:
 	//実装
 	static EConvertResult UTF7ToUnicode(const CMemory& cSrc, CNativeW* pDstMem);		// UTF-7     → Unicodeコード変換 //2007.08.13 kobake 追加
 	static EConvertResult UnicodeToUTF7(const CNativeW& cSrc, CMemory* pDstMem);		// Unicode   → UTF-7コード変換
-//	static int MemBASE64_Encode( const char*, int, char**, int, int );/* Base64エンコード */  // convert/convert_util2.h へ移動
 
 protected:
 

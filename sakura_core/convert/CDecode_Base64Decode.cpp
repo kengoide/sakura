@@ -31,7 +31,7 @@
 #include "StdAfx.h"
 #include "convert/CDecode_Base64Decode.h"
 #include "charset/charcode.h"
-#include "convert/convert_util2.h"
+#include "charset/Base64.h"
 #include "charset/codechecker.h"
 #include "mem/CNativeW.h"
 

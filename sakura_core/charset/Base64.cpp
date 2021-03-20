@@ -1,9 +1,6 @@
 ﻿/*!	@file
-	@brief 変換ユーティリティ2 - BASE64 Ecode/Decode, UUDecode, Q-printable decode
-
-	@author 
+	@brief Base64 エンコーダー・デコーダー
 */
-
 /*
 	Copyright (C) 2018-2021, Sakura Editor Organization
 
@@ -29,7 +26,7 @@
 */
 
 #include "StdAfx.h"
-#include "convert/convert_util2.h"
+#include "charset/Base64.h"
 
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 //                     デコーダーの実装                        //

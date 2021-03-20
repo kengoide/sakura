@@ -286,6 +286,7 @@
     <ClInclude Include="..\sakura_core\CGrepEnumFilterFolders.h" />
     <ClInclude Include="..\sakura_core\CGrepEnumFolders.h" />
     <ClInclude Include="..\sakura_core\CGrepEnumKeys.h" />
+    <ClInclude Include="..\sakura_core\charset\Base64.h" />
     <ClInclude Include="..\sakura_core\charset\CCesu8.h" />
     <ClInclude Include="..\sakura_core\charset\CCodeBase.h" />
     <ClInclude Include="..\sakura_core\charset\CCodeFactory.h" />
@@ -337,7 +338,6 @@
     <ClInclude Include="..\sakura_core\convert\CDecode_Base64Decode.h" />
     <ClInclude Include="..\sakura_core\convert\CDecode_UuDecode.h" />
     <ClInclude Include="..\sakura_core\convert\convert_util.h" />
-    <ClInclude Include="..\sakura_core\convert\convert_util2.h" />
     <ClInclude Include="..\sakura_core\COpe.h" />
     <ClInclude Include="..\sakura_core\COpeBlk.h" />
     <ClInclude Include="..\sakura_core\COpeBuf.h" />
@@ -634,6 +634,7 @@
     <ClCompile Include="..\sakura_core\CEol.cpp" />
     <ClCompile Include="..\sakura_core\CFileExt.cpp" />
     <ClCompile Include="..\sakura_core\CGrepAgent.cpp" />
+    <ClCompile Include="..\sakura_core\charset\Base64.cpp" />
     <ClCompile Include="..\sakura_core\charset\CCesu8.cpp" />
     <ClCompile Include="..\sakura_core\charset\CCodeBase.cpp" />
     <ClCompile Include="..\sakura_core\charset\CCodeFactory.cpp" />
@@ -700,7 +701,6 @@
     <ClCompile Include="..\sakura_core\convert\CDecode_Base64Decode.cpp" />
     <ClCompile Include="..\sakura_core\convert\CDecode_UuDecode.cpp" />
     <ClCompile Include="..\sakura_core\convert\convert_util.cpp" />
-    <ClCompile Include="..\sakura_core\convert\convert_util2.cpp" />
     <ClCompile Include="..\sakura_core\COpe.cpp" />
     <ClCompile Include="..\sakura_core\COpeBlk.cpp" />
     <ClCompile Include="..\sakura_core\COpeBuf.cpp" />

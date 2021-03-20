@@ -373,9 +373,6 @@
     <ClInclude Include="..\sakura_core\convert\convert_util.h">
       <Filter>Cpp Source Files\convert</Filter>
     </ClInclude>
-    <ClInclude Include="..\sakura_core\convert\convert_util2.h">
-      <Filter>Cpp Source Files\convert</Filter>
-    </ClInclude>
     <ClInclude Include="..\sakura_core\io\CBinaryStream.h">
       <Filter>Cpp Source Files\io</Filter>
     </ClInclude>
@@ -1112,6 +1109,9 @@
     <ClInclude Include="..\sakura_core\convert\CConvert_CodeToSjis.h">
       <Filter>Cpp Source Files\convert</Filter>
     </ClInclude>
+    <ClInclude Include="..\sakura_core\charset\Base64.h">
+      <Filter>Cpp Source Files\charset</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\resource\auto_scroll_center.cur">
@@ -1371,9 +1371,6 @@
       <Filter>Cpp Source Files\convert</Filter>
     </ClCompile>
     <ClCompile Include="..\sakura_core\convert\convert_util.cpp">
-      <Filter>Cpp Source Files\convert</Filter>
-    </ClCompile>
-    <ClCompile Include="..\sakura_core\convert\convert_util2.cpp">
       <Filter>Cpp Source Files\convert</Filter>
     </ClCompile>
     <ClCompile Include="..\sakura_core\io\CBinaryStream.cpp">
@@ -2305,6 +2302,9 @@
     </ClCompile>
     <ClCompile Include="..\sakura_core\convert\CConvert_CodeToSjis.cpp">
       <Filter>Cpp Source Files\convert</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sakura_core\charset\Base64.cpp">
+      <Filter>Cpp Source Files\charset</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

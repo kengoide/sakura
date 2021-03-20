@@ -37,8 +37,8 @@
 #pragma once
 
 #include "_main/global.h"
-#include "convert/convert_util2.h"
 #include "basis/primitive.h"
+#include "charset/Base64.h"
 
 /*!
 	認識する文字コード種別
