@@ -242,7 +242,7 @@ void SelectCharWidthCache( ECharWidthFontMode fMode )
 	WCODE::s_MultiFont = currentCache[fMode].GetMultiFont();
 }
 
-[[nodiscard]] CCharWidthCache& GetCharWidthCache()
+[[nodiscard]] CCharWidthCache& GetCharWidthCache(ECharWidthFontMode fMode)
 {
 	return currentCache[currentMode];
 }
