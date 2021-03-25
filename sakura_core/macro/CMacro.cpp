@@ -2181,7 +2181,7 @@ bool CMacro::HandleFunction(CEditView *View, EFunctionCode ID, const VARIANT *Ar
 					if( pLine[i] == WCODE::TAB ){
 						nPosX += nTabWidth - (nPosX % nTabWidth);
 					}else{
-						nPosX += (Int)CNativeW::GetKetaOfChar(pLine, nLen, i);
+						nPosX += (Int)CNativeW::GetKetaOfChar(pLine, nLen, i, GetCharWidthCache());
 					}
 					i += t_max(1, (int)(Int)CNativeW::GetSizeOfChar(pLine, nLen, i));
 				}

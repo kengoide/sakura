@@ -74,22 +74,22 @@ public:
 		std::vector<int>* vResultArray, //!< [out] 文字間隔配列の受け取りコンテナ
 		const wchar_t* pText,           //!< [in]  文字列
 		int nLength,                    //!< [in]  文字列長
-		CCharWidthCache& cache = GetCharWidthCache()
+		CCharWidthCache& cache
 	) const {
-		return GenerateDxArray(vResultArray, pText, nLength,
-			m_nDxBasis, 8, 0, m_nDxBasis - m_nCharWidth, cache);
+		return GenerateDxArray(cache, vResultArray, pText, nLength,
+			m_nDxBasis, 8, 0, m_nDxBasis - m_nCharWidth);
 	}
 
 	//! 指定した文字列により文字間隔配列を生成する。
 	static const int* GenerateDxArray(
+		CCharWidthCache& cache,
 		std::vector<int>* vResultArray, //!< [out] 文字間隔配列の受け取りコンテナ
 		const wchar_t* pText,           //!< [in]  文字列
 		int nLength,                    //!< [in]  文字列長
 		int	nHankakuDx,					//!< [in]  半角文字の文字間隔
 		int	nTabSpace = 8,				//   [in]  TAB幅
 		int	nIndent = 0,				//   [in]  インデント
-		int nCharSpacing = 0,			//   [in]  文字の間隔
-		CCharWidthCache& cache = GetCharWidthCache()
+		int nCharSpacing = 0			//   [in]  文字の間隔
 	);
 
 	//!文字列のピクセル幅を返す。
@@ -106,13 +106,13 @@ public:
 		int nHankakuDx,       //!< 半角文字の文字間隔
 		int nCharSpacing,     //!< 文字の隙間
 		std::vector<int>& vDxArray, //!< [out] 文字間隔配列
-		CCharWidthCache& cache = GetCharWidthCache()
+		CCharWidthCache& cache
 	);
 
 	int CalcTextWidth3(
 		const wchar_t* pText, //!< 文字列
 		int nLength,          //!< 文字列長
-		CCharWidthCache& cache = GetCharWidthCache()
+		CCharWidthCache& cache
 	) const;
 
 private:

@@ -72,7 +72,7 @@ CLayoutInt CLayout::CalcLayoutOffset(const CLayoutMgr& cLayoutMgr, CLogicInt nSt
 				nRet+=cLayoutMgr.GetActualTsvSpace(nRet, pLine[i]);
 			}
 			else{
-				nRet+=CNativeW::GetKetaOfChar(pLine,nLineLen,i);
+				nRet+=CNativeW::GetKetaOfChar(pLine, nLineLen, i, GetCharWidthCache());
 			}
 		}
 	}

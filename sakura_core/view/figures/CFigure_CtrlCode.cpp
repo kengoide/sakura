@@ -46,7 +46,8 @@ bool CFigure_CtrlCode::DrawImp(SColorStrategyInfo* pInfo)
 {
 	bool bTrans = DrawImp_StyleSelect(pInfo);
 	DispPos sPos(*pInfo->m_pDispPos);	// 現在位置を覚えておく
-	int width = pInfo->m_pcView->GetTextMetrics().CalcTextWidth3(&pInfo->m_pLineOfLogic[pInfo->GetPosInLogic()], 1);
+	int width = pInfo->m_pcView->GetTextMetrics().CalcTextWidth3(
+		&pInfo->m_pLineOfLogic[pInfo->GetPosInLogic()], 1, GetCharWidthCache());
 	DispSpaceEx(pInfo->m_gr, pInfo->m_pDispPos,pInfo->m_pcView, bTrans, width);	// 空白描画
 	DrawImp_StylePop(pInfo);
 	DrawImp_DrawUnderline(pInfo, sPos);

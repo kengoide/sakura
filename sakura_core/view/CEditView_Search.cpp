@@ -250,7 +250,7 @@ bool CEditView::MiniMapCursorLineTip( POINT* po, RECT* rc, bool* pbHide )
 				int i = 0;
 				int k = 0;
 				int charSize = CNativeW::GetSizeOfChar( pszData, nLineLen, i );
-				int charWidth = t_max(1, (int)(Int)CNativeW::GetKetaOfChar( pszData, nLineLen, i ));
+				int charWidth = t_max(1, (int)(Int)CNativeW::GetKetaOfChar( pszData, nLineLen, i, GetCharWidthCache()));
 				int charType = 0;
 				// 連続する"\t" " " を " "1つにする
 				// 左からnLimitLengthまでの幅を切り取り
@@ -269,7 +269,7 @@ bool CEditView::MiniMapCursorLineTip( POINT* po, RECT* rc, bool* pbHide )
 					}
 					i += charSize;
 					charSize = CNativeW::GetSizeOfChar( pszData, nLineLen, i );
-					charWidth = t_max(1, (int)(Int)CNativeW::GetKetaOfChar( pszData, nLineLen, i ));
+					charWidth = t_max(1, (int)(Int)CNativeW::GetKetaOfChar( pszData, nLineLen, i, GetCharWidthCache()));
 				}
 				cmemCurLine.AppendString( pszData + pre , i - pre );
 			}

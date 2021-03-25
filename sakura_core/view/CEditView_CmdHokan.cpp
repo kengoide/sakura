@@ -103,7 +103,7 @@ void CEditView::ShowHokanMgr( CNativeW& cmemData, BOOL bAutoDecided )
 	}
 	this->ClientToScreen( &poWin );
 	// 2010.09.05 Moca 全角幅の考慮ぬけを修正
-	poWin.x -= GetTextMetrics().CalcTextWidth3(cmemData.GetStringPtr(), cmemData.GetStringLength());
+	poWin.x -= GetTextMetrics().CalcTextWidth3(cmemData.GetStringPtr(), cmemData.GetStringLength(), GetCharWidthCache());
 
 	/*	補完ウィンドウを表示
 		ただし、bAutoDecided == TRUEの場合は、補完候補が1つのときは、ウィンドウを表示しない。

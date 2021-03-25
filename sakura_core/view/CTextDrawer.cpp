@@ -63,7 +63,7 @@ void CTextDrawer::DispText( HDC hdc, DispPos* pDispPos, int marginy, const wchar
 
 	//文字間隔配列を生成
 	static vector<int> vDxArray(1);
-	const int* pDxArray = pMetrics->GenerateDxArray2(&vDxArray, pData, nLength);
+	const int* pDxArray = pMetrics->GenerateDxArray2(&vDxArray, pData, nLength, GetCharWidthCache());
 
 	//文字列のピクセル幅
 	int nTextWidth=pMetrics->CalcTextWidth(pData,nLength,pDxArray);

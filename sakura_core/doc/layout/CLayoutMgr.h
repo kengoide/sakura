@@ -261,7 +261,7 @@ public:
 		CKetaXInt		nMaxLineKetas,
 		CLayoutXInt		nCharLayoutXPerKeta,
 		const LOGFONT*	pLogfont,
-		CCharWidthCache& cache = GetCharWidthCache()
+		CCharWidthCache& cache
 	);
 
 	/* 文字列置換 */
@@ -274,10 +274,10 @@ public:
 	CLayoutXInt GetLayoutXOfChar( const wchar_t* pData, int nDataLen, int i ) const {
 		CLayoutXInt nSpace = CLayoutXInt(0);
 		if( m_nSpacing ){
-			nSpace = CLayoutXInt(CNativeW::GetKetaOfChar(pData, nDataLen, i)) * m_nSpacing;
+			nSpace = CLayoutXInt(CNativeW::GetKetaOfChar(pData, nDataLen, i, GetCharWidthCache())) * m_nSpacing;
 		}
 		return CNativeW::GetColmOfChar( pData, nDataLen, i,
-			GetDllShareData().m_Common.m_sEdit.m_bEnableExtEol) + nSpace;
+			GetDllShareData().m_Common.m_sEdit.m_bEnableExtEol, GetCharWidthCache()) + nSpace;
 	}
 	CLayoutXInt GetLayoutXOfChar( const CStringRef& str, int i ) const {
 		return GetLayoutXOfChar(str.GetPtr(), str.GetLength(), i);

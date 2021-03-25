@@ -106,9 +106,9 @@ public:
 			m_nColumn_Delta = m_tsvInfo.GetActualTabLength(m_nColumn, m_tsvInfo.m_nMaxCharLayoutX);
 		}else{
 			m_nColumn_Delta = CNativeW::GetColmOfChar( m_pLine, m_nLineLen, m_nIndex,
-				GetDllShareData().m_Common.m_sEdit.m_bEnableExtEol );
+				GetDllShareData().m_Common.m_sEdit.m_bEnableExtEol, GetCharWidthCache() );
 			if( m_nSpacing ){
-				m_nColumn_Delta += CLayoutXInt(CNativeW::GetKetaOfChar(m_pLine, m_nLineLen, m_nIndex) * m_nSpacing);
+				m_nColumn_Delta += CLayoutXInt(CNativeW::GetKetaOfChar(m_pLine, m_nLineLen, m_nIndex, GetCharWidthCache()) * m_nSpacing);
 			}
 //			if( 0 == m_nColumn_Delta )				// 削除 サロゲートペア対策	2008/7/5 Uchi
 //				m_nColumn_Delta = CLayoutInt(1);

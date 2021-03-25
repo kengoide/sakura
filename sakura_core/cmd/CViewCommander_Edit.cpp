@@ -892,8 +892,8 @@ void CViewCommander::DelCharForOverwrite( const wchar_t* pszInput, int nLen )
 				const CStringRef line = pcLayout->GetDocLineRef()->GetStringRefWithEOL();
 				CLogicInt nPos = GetCaret().GetCaretLogicPos().GetX();
 				if( line.At(nPos) != WCODE::TAB ){
-					CKetaXInt nKetaBefore = CNativeW::GetKetaOfChar(line, nPos);
-					CKetaXInt nKetaAfter = CNativeW::GetKetaOfChar(pszInput, nLen, 0);
+					CKetaXInt nKetaBefore = CNativeW::GetKetaOfChar(line, nPos, GetCharWidthCache());
+					CKetaXInt nKetaAfter = CNativeW::GetKetaOfChar(pszInput, nLen, 0, GetCharWidthCache());
 					nKetaDiff = nKetaBefore - nKetaAfter;
 					nPos += CNativeW::GetSizeOfChar(line.GetPtr(), line.GetLength(), nPos);
 					nDelLen = 1;
@@ -902,7 +902,7 @@ void CViewCommander::DelCharForOverwrite( const wchar_t* pszInput, int nLen )
 						if( c != WCODE::TAB && !WCODE::IsLineDelimiter(c,
 								GetDllShareData().m_Common.m_sEdit.m_bEnableExtEol) ){
 							nDelLen = 2;
-							CKetaXInt nKetaBefore2 = CNativeW::GetKetaOfChar(line, nPos);
+							CKetaXInt nKetaBefore2 = CNativeW::GetKetaOfChar(line, nPos, GetCharWidthCache());
 							nKetaAfterIns = nKetaBefore + nKetaBefore2 - nKetaAfter;
 						}
 					}

@@ -64,7 +64,7 @@ void CTsvModeInfo::CalcTabLength(CDocLineMgr* cDocLineMgr)
 				continue;
 			}
 			if( pcLine[i] != WCODE::TAB ){
-				CKetaXInt nKeta = CNativeW::GetKetaOfChar(pcLine, nLineLen, i);
+				CKetaXInt nKeta = CNativeW::GetKetaOfChar(pcLine, nLineLen, i, GetCharWidthCache());
 				nFieldWidth += Int(nKeta);
 			} else {
 				nFieldWidth++;

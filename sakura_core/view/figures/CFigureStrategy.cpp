@@ -72,7 +72,7 @@ int CFigure_Text::FowardChars(SColorStrategyInfo* pInfo)
 						nIdx
 					);
 	pInfo->m_nPosInLogic += nLength;
-	return pInfo->m_pcView->GetTextMetrics().CalcTextWidth3(pInfo->m_pLineOfLogic + nIdx, nLength);
+	return pInfo->m_pcView->GetTextMetrics().CalcTextWidth3(pInfo->m_pLineOfLogic + nIdx, nLength, GetCharWidthCache());
 }
 
 bool CFigure_Text::DrawImpBlock(SColorStrategyInfo* pInfo, int nPos, int nLength)
@@ -238,7 +238,7 @@ void CFigureSpace::DrawImp_DrawUnderline(SColorStrategyInfo* pInfo, DispPos& sPo
 
 		int nHeightMargin = pInfo->m_pcView->GetTextMetrics().GetCharHeightMarginByFontNo(fontNo);
 		CLayoutXInt nColLength = CLayoutXInt(pInfo->m_pDispPos->GetDrawCol() - sPos.GetDrawCol());
-		int nSpWidth = pcView->GetTextMetrics().CalcTextWidth3(L" ", 1);
+		int nSpWidth = pcView->GetTextMetrics().CalcTextWidth3(L" ", 1, GetCharWidthCache());
 		int nLength = (Int)(nColLength + nSpWidth - 1) / nSpWidth;
 		wchar_t* pszText = new wchar_t[nLength];
 		std::vector<int> vDxArray(nLength);

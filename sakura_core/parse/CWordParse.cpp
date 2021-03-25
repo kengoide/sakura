@@ -172,7 +172,7 @@ ECharKind CWordParse::WhatKindOfChar(
 		if( IsBoxDrawing(c)      )return CK_ZEN_SKIGO;	// 全角の特殊記号
 
 		//未分類
-		if( IsHankaku(c) )return CK_ETC;	// 半角のその他
+		if( IsHankaku(c, GetCharWidthCache()) )return CK_ETC;	// 半角のその他
 		else return CK_ZEN_ETC;				// 全角のその他(漢字など)
 	}
 	else if( nCharChars == 2 ){

@@ -53,13 +53,13 @@ void CFigure_ZenSpace::DispSpace(CGraphics& gr, DispPos* pDispPos, CEditView* pc
 	CTypeSupport cZenSpace(pcView, COLORIDX_ZENSPACE);
 
 	int dx[1];
-	dx[0] = pcView->GetTextMetrics().CalcTextWidth3(L"　", 1);
+	dx[0] = pcView->GetTextMetrics().CalcTextWidth3(L"　", 1, GetCharWidthCache());
 
 	RECT rc;
 	//クリッピング矩形を計算。画面外なら描画しない
 	if(pcView->GetTextArea().GenerateClipRect(&rc, *pDispPos, CHabaXInt(dx[0])))
 	{
-		int u25a1Dx = pcView->GetTextMetrics().CalcTextWidth3(L"□", 1);
+		int u25a1Dx = pcView->GetTextMetrics().CalcTextWidth3(L"□", 1, GetCharWidthCache());
 		bool bDrawMySelf = dx[0] != u25a1Dx;
 		const wchar_t* pZenSp = (bDrawMySelf ? L"　" : L"□");
 		int fontNo = WCODE::GetFontNo(*pZenSp);

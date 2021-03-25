@@ -1592,7 +1592,7 @@ void CEditView::SmartIndent_CPP( wchar_t wcChar )
 					i = 0;
 					while( i < nDataLen ){
 						nCharChars = CNativeW::GetSizeOfChar( pszData, nDataLen, i );
-						CKetaXInt nCharKetas = CNativeW::GetKetaOfChar( pszData, nDataLen, i );
+						CKetaXInt nCharKetas = CNativeW::GetKetaOfChar( pszData, nDataLen, i, GetCharWidthCache() );
 						if( nCharChars == 1 && WCODE::TAB == pszData[i] )
 							m += m_pcEditDoc->m_cLayoutMgr.GetActualTabSpaceKetas(m);
 						else

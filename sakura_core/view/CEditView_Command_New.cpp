@@ -135,7 +135,7 @@ void CEditView::InsertData_CEditView(
 
 		// 行終端より右に挿入しようとした
 		if( nLineAllColLen > 0 ){
-			int nSpWidth = GetTextMetrics().CalcTextWidth3(L" ", 1);
+			int nSpWidth = GetTextMetrics().CalcTextWidth3(L" ", 1, GetCharWidthCache());
 			// 終端直前から挿入位置まで空白を埋める為の処理
 			// 行終端が何らかの改行コードか?
 			if( EOL_NONE != pcLayout->GetLayoutEol() ){
@@ -171,7 +171,7 @@ void CEditView::InsertData_CEditView(
 			bHintPrev = true;	// 更新が前行からになる可能性がある
 		}
 		if( 0 < ptInsertPos.GetX2() ){
-			int nSpWidth = GetTextMetrics().CalcTextWidth3(L" ", 1);
+			int nSpWidth = GetTextMetrics().CalcTextWidth3(L" ", 1, GetCharWidthCache());
 			cMem.AllocStringBuffer( (Int)ptInsertPos.GetX2() / nSpWidth + nDataLen );
 			for( CLayoutInt i = CLayoutInt(0); i < ptInsertPos.GetX2(); i+=nSpWidth ){
 				cMem += L' ';

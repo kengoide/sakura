@@ -49,7 +49,7 @@ void CFigure_HanSpace::DispSpace(CGraphics& gr, DispPos* pDispPos, CEditView* pc
 {
 	//クリッピング矩形を計算。画面外なら描画しない
 	CMyRect rcClip;
-	const int Dx = pcView->GetTextMetrics().CalcTextWidth3(L" ", 1);
+	const int Dx = pcView->GetTextMetrics().CalcTextWidth3(L" ", 1, GetCharWidthCache());
 	const CLayoutXInt nCol = CLayoutXInt(Dx);
 	if(pcView->GetTextArea().GenerateClipRect(&rcClip,*pDispPos,nCol))
 	{

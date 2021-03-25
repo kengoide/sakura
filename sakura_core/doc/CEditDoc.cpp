@@ -186,7 +186,8 @@ CEditDoc::CEditDoc(CEditApp* pcApp)
 	if( ref.m_nTextWrapMethod != WRAP_SETTING_WIDTH ){
 		nMaxLineKetas = CKetaXInt(MAXLINEKETAS);
 	}
-	m_cLayoutMgr.SetLayoutInfo( true, false, ref, ref.m_nTabSpace, ref.m_nTsvMode, nMaxLineKetas, CLayoutXInt(1), NULL );
+	m_cLayoutMgr.SetLayoutInfo( true, false, ref, ref.m_nTabSpace,
+		ref.m_nTsvMode, nMaxLineKetas, CLayoutXInt(1), NULL, GetCharWidthCache());
 
 	//	自動保存の設定	//	Aug, 21, 2000 genta
 	m_cAutoSaveAgent.ReloadAutoSaveParam();
@@ -269,7 +270,8 @@ void CEditDoc::Clear()
 	if( ref.m_nTextWrapMethod != WRAP_SETTING_WIDTH ){
 		nMaxLineKetas = CKetaXInt(MAXLINEKETAS);
 	}
-	m_cLayoutMgr.SetLayoutInfo( true, false, ref, ref.m_nTabSpace, ref.m_nTsvMode, nMaxLineKetas, CLayoutXInt(-1), &m_pcEditWnd->GetLogfont() );
+	m_cLayoutMgr.SetLayoutInfo( true, false, ref, ref.m_nTabSpace, ref.m_nTsvMode,
+		nMaxLineKetas, CLayoutXInt(-1), &m_pcEditWnd->GetLogfont(), GetCharWidthCache());
 	m_pcEditWnd->ClearViewCaretPosInfo();
 }
 
@@ -811,7 +813,8 @@ void CEditDoc::OnChangeSetting(
 		nTabSpace = m_cLayoutMgr.GetTabSpaceKetas();	// 現在のタブ幅
 	}
 	CProgressSubject* pOld = CEditApp::getInstance()->m_pcVisualProgress->CProgressListener::Listen(&m_cLayoutMgr);
-	m_cLayoutMgr.SetLayoutInfo( bDoLayout, bBlockingHook, ref, nTabSpace, nTsvMode, nMaxLineKetas, CLayoutXInt(-1), &m_pcEditWnd->GetLogfont() );
+	m_cLayoutMgr.SetLayoutInfo( bDoLayout, bBlockingHook, ref, nTabSpace, nTsvMode,
+		nMaxLineKetas, CLayoutXInt(-1), &m_pcEditWnd->GetLogfont(), GetCharWidthCache() );
 	CEditApp::getInstance()->m_pcVisualProgress->CProgressListener::Listen(pOld);
 	m_pcEditWnd->ClearViewCaretPosInfo();
 

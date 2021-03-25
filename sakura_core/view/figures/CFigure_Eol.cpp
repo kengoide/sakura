@@ -151,7 +151,7 @@ void _DispWrap(CGraphics& gr, DispPos* pDispPos, const CEditView* pcView, CLayou
 	}else{
 		szText = L" ";
 	}
-	CLayoutXInt width = CLayoutXInt(pcView->GetTextMetrics().CalcTextWidth3(szText, 1));
+	CLayoutXInt width = CLayoutXInt(pcView->GetTextMetrics().CalcTextWidth3(szText, 1, GetCharWidthCache()));
 	RECT rcClip2;
 	if(pcView->GetTextArea().GenerateClipRect(&rcClip2, *pDispPos, width))
 	{

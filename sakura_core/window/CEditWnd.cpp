@@ -589,7 +589,7 @@ HWND CEditWnd::Create(
 
 	m_pcEditDoc->m_cLayoutMgr.SetLayoutInfo( true, false, m_pcEditDoc->m_cDocType.GetDocumentAttribute(),
 		m_pcEditDoc->m_cLayoutMgr.GetTabSpaceKetas(), m_pcEditDoc->m_cLayoutMgr.m_tsvInfo.m_nTsvMode,
-		m_pcEditDoc->m_cLayoutMgr.GetMaxLineKetas(), CLayoutXInt(-1), &GetLogfont() );
+		m_pcEditDoc->m_cLayoutMgr.GetMaxLineKetas(), CLayoutXInt(-1), &GetLogfont(), GetCharWidthCache());
 
 	for( int i = 0; i < _countof(m_pcEditViewArr); i++ ){
 		m_pcEditViewArr[i] = NULL;

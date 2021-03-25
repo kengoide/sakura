@@ -71,14 +71,14 @@ void CTextMetrics::Update(HDC hdc, HFONT hFont, int nLineSpace, int nColmSpace)
 
 //! 指定した文字列により文字間隔配列を生成する。
 const int* CTextMetrics::GenerateDxArray(
+	CCharWidthCache& cache,
 	std::vector<int>* pvResultArray, //!< [out] 文字間隔配列の受け取りコンテナ
 	const wchar_t* pText,           //!< [in]  文字列
 	int nLength,                    //!< [in]  文字列長
 	int	nHankakuDx,					//!< [in]  半角文字の文字間隔
 	int	nTabSpace,					//   [in]  TAB幅(CLayoutXInt)
 	int	nIndent,					//   [in]  インデント(TAB対応用)(CLayoutXInt)
-	int nCharSpacing,				//!< [in]  文字隙間
-	CCharWidthCache& cache
+	int nCharSpacing				//!< [in]  文字隙間
 )
 {
 	if(!pText || nLength<=0)return nullptr;
@@ -136,14 +136,14 @@ int CTextMetrics::CalcTextWidth2(
 )
 {
 	const int* pDxArray = CTextMetrics::GenerateDxArray(
+		cache,
 		&vDxArray,
 		pText,
 		nLength,
 		nHankakuDx,
 		8,
 		0,
-		nCharSpacing,
-		cache
+		nCharSpacing
 	);
 
 	//ピクセル幅を計算
