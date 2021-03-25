@@ -209,15 +209,6 @@ namespace WCODE
 	}
 }
 
-// 文字幅の動的計算用キャッシュ関連
-struct SCharWidthCache {
-	// 文字半角全角キャッシュ
-	std::array<WCHAR, LF_FACESIZE> m_lfFaceName;
-	std::array<WCHAR, LF_FACESIZE> m_lfFaceName2;
-	std::array<short, 0x10000> m_nCharPxWidthCache;
-	int			m_nCharWidthCacheTest;				//cache溢れ検出
-};
-
 enum ECharWidthFontMode {
 	CWM_FONT_EDIT,
 	CWM_FONT_PRINT,
@@ -237,8 +228,7 @@ public:
 	~CCharWidthCache() { DeleteLocalData(); }
 
 	// 再初期化
-	void Init(const LOGFONT& lf, const LOGFONT& lfFull, HDC hdcOrg);
-	void Clear();
+	void Reset(const LOGFONT& lf, const LOGFONT& lfFull, HDC hdcOrg);
 	[[nodiscard]] bool GetMultiFont() const { return m_bMultiFont; }
 
 	//!文字が半角かどうかを取得(DLLSHARE/フォント依存)
@@ -263,7 +253,9 @@ private:
 	SIZE m_han_size;
 	LOGFONT m_lf{};				// 2008/5/15 Uchi
 	LOGFONT m_lf2{};
-	SCharWidthCache m_cache;
+	std::array<wchar_t, LF_FACESIZE> m_lfFaceName;
+	std::array<wchar_t, LF_FACESIZE> m_lfFaceName2;
+	std::array<short, 0x10000> m_nCharPxWidthCache;
 };
 
 // キャッシュの初期化関数群

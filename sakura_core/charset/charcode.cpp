@@ -26,8 +26,8 @@
 
 #include "StdAfx.h"
 #include "charset/charcode.h"
+#include <algorithm>
 #include <array>
-#include "env/DLLSHAREDATA.h"
 
 /*! キーワードキャラクタ */
 const std::array<unsigned char, 128> gm_keyword_char = {
@@ -110,7 +110,7 @@ void CCharWidthCache::DeleteLocalData()
 	if(m_hdcFull){ DeleteDC(m_hdcFull);  m_hdcFull = nullptr;}
 }
 
-void CCharWidthCache::Init(const LOGFONT &lf, const LOGFONT &lfFull, HDC hdcOrg)
+void CCharWidthCache::Reset(const LOGFONT &lf, const LOGFONT &lfFull, HDC hdcOrg)
 {
 	DeleteLocalData();
 
@@ -153,14 +153,10 @@ void CCharWidthCache::Init(const LOGFONT &lf, const LOGFONT &lfFull, HDC hdcOrg)
 			m_han_size.cy = sz.cy;
 		}
 	}
-}
 
-void CCharWidthCache::Clear()
-{
-	memcpy(m_cache.m_lfFaceName.data(), m_lf.lfFaceName, sizeof(m_lf.lfFaceName));
-	memcpy(m_cache.m_lfFaceName2.data(), m_lf2.lfFaceName, sizeof(m_lf2.lfFaceName));
-	memset(m_cache.m_nCharPxWidthCache.data(), 0, sizeof(m_cache.m_nCharPxWidthCache));
-	m_cache.m_nCharWidthCacheTest=0x12345678;
+	std::copy(m_lf.lfFaceName, m_lf.lfFaceName + LF_FACESIZE, m_lfFaceName.begin());
+	std::copy(m_lf2.lfFaceName, m_lf2.lfFaceName + LF_FACESIZE, m_lfFaceName2.begin());
+	m_nCharPxWidthCache.fill(0);
 }
 
 bool CCharWidthCache::CalcHankakuByFont(wchar_t c)
@@ -185,10 +181,10 @@ int CCharWidthCache::QueryPixelWidth(wchar_t c) const
 
 int CCharWidthCache::CalcPxWidthByFont(wchar_t c) {
 	// キャッシュから文字の情報を取得する。情報がなければ、計算して登録する。
-	if (!m_cache.m_nCharPxWidthCache[c]) {
-		m_cache.m_nCharPxWidthCache[c] = static_cast<short>(QueryPixelWidth(c));
+	if (!m_nCharPxWidthCache[c]) {
+		m_nCharPxWidthCache[c] = static_cast<short>(QueryPixelWidth(c));
 	}
-	return m_cache.m_nCharPxWidthCache[c];
+	return m_nCharPxWidthCache[c];
 }
 
 int CCharWidthCache::CalcPxWidthByFont2(const wchar_t* pc2) const
@@ -230,15 +226,13 @@ ECharWidthFontMode currentMode = CWM_FONT_EDIT;
 void InitCharWidthCache( const LOGFONT &lf, ECharWidthFontMode fMode )
 {
 	HDC hdc = GetDC(nullptr);
-	currentCache[fMode].Init(lf, lf, hdc);
-	currentCache[fMode].Clear();
+	currentCache[fMode].Reset(lf, lf, hdc);
 	ReleaseDC(nullptr, hdc);
 }
 
 void InitCharWidthCacheFromDC( const LOGFONT* lfs, ECharWidthFontMode fMode, HDC hdcOrg )
 {
-	currentCache[fMode].Init(lfs[0], lfs[1], hdcOrg);
-	currentCache[fMode].Clear();
+	currentCache[fMode].Reset(lfs[0], lfs[1], hdcOrg);
 }
 
  //	文字幅の動的計算用キャッシュの選択	2013.04.08 aroka
