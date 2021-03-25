@@ -157,12 +157,10 @@ void CCharWidthCache::Init(const LOGFONT &lf, const LOGFONT &lfFull, HDC hdcOrg)
 
 void CCharWidthCache::Clear()
 {
-	assert(m_pCache!=0);
-	// キャッシュのクリア
-	memcpy(m_pCache->m_lfFaceName.data(), m_lf.lfFaceName, sizeof(m_lf.lfFaceName));
-	memcpy(m_pCache->m_lfFaceName2.data(), m_lf2.lfFaceName, sizeof(m_lf2.lfFaceName));
-	memset(m_pCache->m_nCharPxWidthCache.data(), 0, sizeof(m_pCache->m_nCharPxWidthCache));
-	m_pCache->m_nCharWidthCacheTest=0x12345678;
+	memcpy(m_cache.m_lfFaceName.data(), m_lf.lfFaceName, sizeof(m_lf.lfFaceName));
+	memcpy(m_cache.m_lfFaceName2.data(), m_lf2.lfFaceName, sizeof(m_lf2.lfFaceName));
+	memset(m_cache.m_nCharPxWidthCache.data(), 0, sizeof(m_cache.m_nCharPxWidthCache));
+	m_cache.m_nCharWidthCacheTest=0x12345678;
 }
 
 bool CCharWidthCache::CalcHankakuByFont(wchar_t c)
@@ -187,10 +185,10 @@ int CCharWidthCache::QueryPixelWidth(wchar_t c) const
 
 int CCharWidthCache::CalcPxWidthByFont(wchar_t c) {
 	// キャッシュから文字の情報を取得する。情報がなければ、計算して登録する。
-	if (!m_pCache->m_nCharPxWidthCache[c]) {
-		m_pCache->m_nCharPxWidthCache[c] = static_cast<short>(QueryPixelWidth(c));
+	if (!m_cache.m_nCharPxWidthCache[c]) {
+		m_cache.m_nCharPxWidthCache[c] = static_cast<short>(QueryPixelWidth(c));
 	}
-	return m_pCache->m_nCharPxWidthCache[c];
+	return m_cache.m_nCharPxWidthCache[c];
 }
 
 int CCharWidthCache::CalcPxWidthByFont2(const wchar_t* pc2) const
@@ -211,16 +209,6 @@ namespace WCODE {
 	public:
 		CacheSelector() : pcache(m_localcache.data())
 		{
-			for( int i=0; i<CWM_FONT_MAX; i++ ){
-				m_parCache[i] = 0;
-			}
-		}
-		~CacheSelector()
-		{
-			for( int i=0; i<CWM_FONT_MAX; i++ ){
-				delete m_parCache[i];
-				m_parCache[i] = 0;
-			}
 		}
 		void Init( const LOGFONT &lf1, const LOGFONT &lf2, ECharWidthFontMode fMode, HDC hdc )
 	 	{
@@ -232,16 +220,11 @@ namespace WCODE {
 		void Select( ECharWidthFontMode fMode )
 		{
 			pcache = &m_localcache[fMode];
-			if( m_parCache[fMode] == 0 ){
-				m_parCache[fMode] = new SCharWidthCache;
-			}
-			pcache->SelectCache( m_parCache[fMode] );
 			WCODE::s_MultiFont = pcache->GetMultiFont();
 		}
 		[[nodiscard]] CCharWidthCache* GetCache(){ return pcache; }
 	private:
 		std::array<CCharWidthCache, 3> m_localcache;
-		std::array<SCharWidthCache*, 3> m_parCache;
 		CCharWidthCache* pcache;
 		DISALLOW_COPY_AND_ASSIGN(CacheSelector);
 	};

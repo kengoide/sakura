@@ -238,7 +238,6 @@ public:
 
 	// 再初期化
 	void Init(const LOGFONT& lf, const LOGFONT& lfFull, HDC hdcOrg);
-	void SelectCache(SCharWidthCache* pCache) { m_pCache = pCache; }
 	void Clear();
 	[[nodiscard]] bool GetMultiFont() const { return m_bMultiFont; }
 
@@ -264,7 +263,7 @@ private:
 	SIZE m_han_size;
 	LOGFONT m_lf{};				// 2008/5/15 Uchi
 	LOGFONT m_lf2{};
-	SCharWidthCache* m_pCache = nullptr;
+	SCharWidthCache m_cache;
 };
 
 // キャッシュの初期化関数群
