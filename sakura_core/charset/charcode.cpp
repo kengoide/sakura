@@ -205,32 +205,6 @@ int CCharWidthCache::CalcPxWidthByFont2(const wchar_t* pc2) const
 }
 
 namespace WCODE {
-	class CacheSelector{
-	public:
-		CacheSelector() : pcache(m_localcache.data())
-		{
-		}
-		void Init( const LOGFONT &lf1, const LOGFONT &lf2, ECharWidthFontMode fMode, HDC hdc )
-	 	{
-			//	Fontfaceが変更されていたらキャッシュをクリアする	2013.04.08 aroka
-			m_localcache[fMode].Init(lf1, lf2, hdc);
-			// サイズやHDCが変わってもクリアする必要がある
-			m_localcache[fMode].Clear();
-		}
-		void Select( ECharWidthFontMode fMode )
-		{
-			pcache = &m_localcache[fMode];
-			WCODE::s_MultiFont = pcache->GetMultiFont();
-		}
-		[[nodiscard]] CCharWidthCache* GetCache(){ return pcache; }
-	private:
-		std::array<CCharWidthCache, 3> m_localcache;
-		CCharWidthCache* pcache;
-		DISALLOW_COPY_AND_ASSIGN(CacheSelector);
-	};
-
-	static CacheSelector selector;
-
 	// 文字の使用フォントを返す
 	// @return 0:半角用 / 1:全角用
 	[[nodiscard]] int GetFontNo( wchar_t c ){
@@ -247,26 +221,34 @@ namespace WCODE {
 	}
 }
 
+namespace {
+std::array<CCharWidthCache, 3> currentCache;
+ECharWidthFontMode currentMode = CWM_FONT_EDIT;
+}
+
 //	文字幅の動的計算用キャッシュの初期化。	2007/5/18 Uchi
 void InitCharWidthCache( const LOGFONT &lf, ECharWidthFontMode fMode )
 {
 	HDC hdc = GetDC(nullptr);
-	WCODE::selector.Init( lf, lf, fMode, hdc );
+	currentCache[fMode].Init(lf, lf, hdc);
+	currentCache[fMode].Clear();
 	ReleaseDC(nullptr, hdc);
 }
 
 void InitCharWidthCacheFromDC( const LOGFONT* lfs, ECharWidthFontMode fMode, HDC hdcOrg )
 {
-	WCODE::selector.Init(lfs[0], lfs[1], fMode, hdcOrg);
+	currentCache[fMode].Init(lfs[0], lfs[1], hdcOrg);
+	currentCache[fMode].Clear();
 }
 
  //	文字幅の動的計算用キャッシュの選択	2013.04.08 aroka
 void SelectCharWidthCache( ECharWidthFontMode fMode )
 {
-	WCODE::selector.Select( fMode );
+	currentMode = fMode;
+	WCODE::s_MultiFont = currentCache[fMode].GetMultiFont();
 }
 
 [[nodiscard]] CCharWidthCache& GetCharWidthCache()
 {
-	return *WCODE::selector.GetCache();
+	return currentCache[currentMode];
 }
