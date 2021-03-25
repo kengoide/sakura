@@ -262,7 +262,7 @@ private:
 void SelectCharWidthCache( ECharWidthFontMode fMode );  //!< モードを変更したいとき
 void InitCharWidthCache( const LOGFONT &lf, ECharWidthFontMode fMode=CWM_FONT_EDIT ); //!< フォントを変更したとき
 void InitCharWidthCacheFromDC(const LOGFONT* lfs, ECharWidthFontMode fMode, HDC hdcOrg );
-[[nodiscard]] CCharWidthCache& GetCharWidthCache();
+[[nodiscard]] CCharWidthCache& GetCharWidthCache(ECharWidthFontMode fMode);
 
 namespace WCODE {
 	//!半角文字(縦長長方形)かどうか判定
