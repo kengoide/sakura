@@ -28,6 +28,7 @@
 #include "charset/charcode.h"
 #include <algorithm>
 #include <array>
+#include <stdexcept>
 
 /*! キーワードキャラクタ */
 const std::array<unsigned char, 128> gm_keyword_char = {
@@ -244,5 +245,7 @@ void SelectCharWidthCache( ECharWidthFontMode fMode )
 
 [[nodiscard]] CCharWidthCache& GetCharWidthCache(ECharWidthFontMode fMode)
 {
+	if (fMode != currentMode)
+		throw std::invalid_argument("GetCharWidthCache: Wrong font mode.");
 	return currentCache[currentMode];
 }

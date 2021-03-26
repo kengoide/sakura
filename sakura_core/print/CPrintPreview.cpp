@@ -835,7 +835,7 @@ void CPrintPreview::OnChangePrintSetting( void )
 	ref.m_bKinsokuRet = m_pPrintSetting->m_bPrintKinsokuRet,	/* 改行文字をぶら下げる */	//@@@ 2002.04.13 MIK
 	ref.m_bKinsokuKuto = m_pPrintSetting->m_bPrintKinsokuKuto,	/* 句読点をぶら下げる */	//@@@ 2002.04.17 MIK
 	m_pLayoutMgr_Print->SetLayoutInfo( true, false, ref, ref.m_nTabSpace, ref.m_nTsvMode,
-		ref.m_nMaxLineKetas, CLayoutXInt(m_pPrintSetting->m_nPrintFontWidth), NULL, GetCharWidthCache() );
+		ref.m_nMaxLineKetas, CLayoutXInt(m_pPrintSetting->m_nPrintFontWidth), NULL, GetCharWidthCache(CWM_FONT_PRINT) );
 	m_nAllPageNum = (WORD)((Int)m_pLayoutMgr_Print->GetLineCount() / ( m_bPreview_EnableLines * m_pPrintSetting->m_nPrintDansuu ));		/* 全ページ数 */
 	if( 0 < m_pLayoutMgr_Print->GetLineCount() % ( m_bPreview_EnableLines * m_pPrintSetting->m_nPrintDansuu ) ){
 		m_nAllPageNum++;
@@ -1348,7 +1348,7 @@ void CPrintPreview::DrawHeaderFooter( HDC hdc, const CMyRect& rect, bool bHeader
 			szWork, nWorkLen);
 		nLen = wcslen( szWork );
 		std::vector<int> vDxArray;
-		nTextWidth = CTextMetrics::CalcTextWidth2(szWork, nLen, nDx, spaceing, vDxArray, GetCharWidthCache()); //テキスト幅
+		nTextWidth = CTextMetrics::CalcTextWidth2(szWork, nLen, nDx, spaceing, vDxArray, GetCharWidthCache(CWM_FONT_PRINT)); //テキスト幅
 		Print_DrawLine(
 			hdc,
 			CMyPoint(
@@ -1367,7 +1367,7 @@ void CPrintPreview::DrawHeaderFooter( HDC hdc, const CMyRect& rect, bool bHeader
 			bHeader ? m_pPrintSetting->m_szHeaderForm[POS_RIGHT] : m_pPrintSetting->m_szFooterForm[POS_RIGHT],
 			szWork, nWorkLen);
 		nLen = wcslen( szWork );
-		nTextWidth = CTextMetrics::CalcTextWidth2(szWork, nLen, nDx, spaceing, vDxArray, GetCharWidthCache()); //テキスト幅
+		nTextWidth = CTextMetrics::CalcTextWidth2(szWork, nLen, nDx, spaceing, vDxArray, GetCharWidthCache(CWM_FONT_PRINT)); //テキスト幅
 		Print_DrawLine(
 			hdc,
 			CMyPoint(
@@ -1514,7 +1514,7 @@ CColorStrategy* CPrintPreview::DrawPageText(
 				//文字間隔配列を生成
 				vector<int> vDxArray;
 				int spacing = 0;
-				const int* pDxArray = CTextMetrics::GenerateDxArray(GetCharWidthCache(),
+				const int* pDxArray = CTextMetrics::GenerateDxArray(GetCharWidthCache(CWM_FONT_PRINT),
 					&vDxArray, szLineNum, nLineCols, m_pPrintSetting->m_nPrintFontWidth, spacing);
 
 				::ExtTextOut(
