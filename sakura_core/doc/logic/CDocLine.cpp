@@ -43,12 +43,7 @@ void CDocLine::SetEol(bool bEnableExtEol)
 	const wchar_t* p = &pData[nLength] - 1;
 	while(p>=pData && WCODE::IsLineDelimiter(*p, bEnableExtEol))p--;
 	p++;
-	if(p>=pData){
-		m_cEol.SetTypeByString(p, static_cast<int>(&pData[nLength] - p));
-	}
-	else{
-		m_cEol = EEolType::none;
-	}
+	m_cEol.SetTypeByString(p, static_cast<int>(&pData[nLength] - p));
 }
 
 void CDocLine::SetDocLineString(const wchar_t* pData, int nLength, bool bEnableExtEol)
