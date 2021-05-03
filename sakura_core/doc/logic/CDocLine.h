@@ -20,7 +20,6 @@
 #define SAKURA_CDOCLINE_B592082C_24CC_41A6_A931_774BE9675F42_H_
 #pragma once
 
-#include "util/design_template.h"
 #include "CEol.h"
 #include "mem/CMemory.h"
 #include "mem/CNativeW.h"
@@ -30,19 +29,16 @@
 #include "docplus/CModifyManager.h"
 #include "docplus/CFuncListManager.h"
 
-class CDocLine;
-class COpeBlk;
-
 #pragma pack(push,1)
 
 //!	文書データ1行
 class CDocLine{
-protected:
 	friend class CDocLineMgr; //######仮
+
 public:
-	//コンストラクタ・デストラクタ
-	CDocLine();
-	~CDocLine();
+	CDocLine() = default;
+	CDocLine(const CDocLine&) = delete;
+	CDocLine& operator=(const CDocLine&) = delete;
 
 	//判定
 	bool			IsEmptyLine() const;		//	このCDocLineが空行（スペース、タブ、改行記号のみの行）かどうか。
@@ -66,7 +62,7 @@ public:
 			*pnLen = GetLengthWithEOL(); return GetPtr();
 		}
 		else{
-			*pnLen = 0; return NULL;
+			*pnLen = 0; return nullptr;
 		}
 	}
 	static const wchar_t* GetDocLineStrWithEOL_Safe(const CDocLine* docline, CLogicInt* pnLen) //###仮の名前、仮の対処
@@ -75,7 +71,7 @@ public:
 			return docline->GetDocLineStrWithEOL(pnLen);
 		}
 		else{
-			*pnLen = 0; return NULL;
+			*pnLen = 0; return nullptr;
 		}
 	}
 	CStringRef GetStringRefWithEOL() const //###仮の名前、仮の対処
@@ -84,7 +80,7 @@ public:
 			return CStringRef(GetPtr(),GetLengthWithEOL());
 		}
 		else{
-			return CStringRef(NULL,0);
+			return CStringRef(nullptr,0);
 		}
 	}
 	static CStringRef GetStringRefWithEOL_Safe(const CDocLine* docline) //###仮の名前、仮の対処
@@ -93,11 +89,10 @@ public:
 			return docline->GetStringRefWithEOL();
 		}
 		else{
-			return CStringRef(NULL, 0);
+			return CStringRef(nullptr, 0);
 		}
 	}
 	const CEol& GetEol() const{ return m_cEol; }
-	void SetEol(const CEol& cEol, COpeBlk* pcOpeBlk);
 	void SetEol(bool bEnableExtEol); // 現在のバッファから設定
 
 	const CNativeW& _GetDocLineDataWithEOL() const { return m_cLine; } //###仮
@@ -116,11 +111,11 @@ public:
 	void _SetPrevLine(CDocLine* pcDocLine){ m_pPrev = pcDocLine; }
 	void _SetNextLine(CDocLine* pcDocLine){ m_pNext = pcDocLine; }
 
-private: //####
-	CDocLine*	m_pPrev;	//!< 一つ前の要素
-	CDocLine*	m_pNext;	//!< 一つ後の要素
 private:
+	CDocLine* m_pPrev = nullptr;	//!< 一つ前の要素
+	CDocLine* m_pNext = nullptr;	//!< 一つ後の要素
 	CNativeW	m_cLine;	//!< データ  2007.10.11 kobake ポインタではなく、実体を持つように変更
+
 public:
 	//拡張情報 $$分離中
 	struct MarkType{
@@ -130,10 +125,9 @@ public:
 		CLineDiffed		m_cDiffmarked;	//DIFF差分情報
 	};
 	MarkType m_sMark;
+
 private:
 	CEol		m_cEol;		//!< 行末コード
-
-	DISALLOW_COPY_AND_ASSIGN(CDocLine);
 };
 
 #pragma pack(pop)

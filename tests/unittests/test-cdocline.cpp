@@ -186,23 +186,6 @@ TEST(CDocLine, GetEol)
 	}
 }
 
-TEST(CDocLine, SetEol)
-{
-	// 改行コードを再設定するテスト
-	CDocLine line;
-	line.SetDocLineString(L"てすと", 3, false);
-	EXPECT_STREQ(line.GetPtr(), L"てすと");
-
-	line.SetEol(CEol(EEolType::cr_and_lf), nullptr);
-	EXPECT_STREQ(line.GetPtr(), L"てすと\r\n");
-
-	line.SetEol(CEol(EEolType::line_feed), nullptr);
-	EXPECT_STREQ(line.GetPtr(), L"てすと\n");
-
-	line.SetEol(CEol(EEolType::none), nullptr);
-	EXPECT_STREQ(line.GetPtr(), L"てすと");
-}
-
 TEST(CDocLine, GetDocLineData)
 {
 	const CNativeW data(L"データ\n");

@@ -17,15 +17,6 @@
 #include "CDocLine.h"
 #include "mem/CMemory.h"
 
-CDocLine::CDocLine()
-: m_pPrev( NULL ), m_pNext( NULL )
-{
-}
-
-CDocLine::~CDocLine()
-{
-}
-
 /* 空行（スペース、タブ、改行記号のみの行）かどうかを取得する
 	true：空行だ。
 	false：空行じゃないぞ。
@@ -36,8 +27,7 @@ bool CDocLine::IsEmptyLine() const
 {
 	const wchar_t* pLine = GetPtr();
 	int nLineLen = GetLengthWithoutEOL();
-	int i;
-	for ( i = 0; i < nLineLen; i++ ){
+	for ( int i = 0; i < nLineLen; i++ ){
 		if (pLine[i] != L' ' && pLine[i] != L'\t'){
 			return false;	//	スペースでもタブでもない文字があったらfalse。
 		}
@@ -54,7 +44,7 @@ void CDocLine::SetEol(bool bEnableExtEol)
 	while(p>=pData && WCODE::IsLineDelimiter(*p, bEnableExtEol))p--;
 	p++;
 	if(p>=pData){
-		m_cEol.SetTypeByString(p, &pData[nLength]-p);
+		m_cEol.SetTypeByString(p, static_cast<int>(&pData[nLength] - p));
 	}
 	else{
 		m_cEol = EEolType::none;
@@ -76,16 +66,4 @@ void CDocLine::SetDocLineStringMove(CNativeW* pcDataFrom, bool bEnableExtEol)
 {
 	m_cLine.swap(*pcDataFrom);
 	SetEol(bEnableExtEol);
-}
-
-void CDocLine::SetEol(const CEol& cEol, COpeBlk* pcOpeBlk)
-{
-	//改行コードを削除
-	for(int i=0;i<(Int)m_cEol.GetLen();i++){
-		m_cLine.Chop();
-	}
-
-	//改行コードを挿入
-	m_cEol = cEol;
-	m_cLine += cEol.GetValue2();
 }

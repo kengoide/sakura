@@ -28,9 +28,8 @@
 #include "basis/SakuraBasis.h"
 #include "util/design_template.h"
 #include "COpe.h"
-#include "CDocLine.h"
 
-class CBregexp; // 2002/2/10 aroka
+class CDocLine;
 
 struct DocLineReplaceArg {
 	CLogicRange		sDelRange;			//!< [in] 削除範囲。ロジック単位。
