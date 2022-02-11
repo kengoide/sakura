@@ -42,7 +42,7 @@
 CClipboard::CClipboard(HWND hwnd)
 {
 	m_hwnd = hwnd;
-	m_bOpenResult = ::OpenClipboard(hwnd);
+	m_bOpenResult = OpenClipboard(hwnd);
 }
 
 CClipboard::~CClipboard()
@@ -62,7 +62,7 @@ void CClipboard::Empty()
 void CClipboard::Close()
 {
 	if(m_bOpenResult){
-		::CloseClipboard();
+		CloseClipboard();
 		m_bOpenResult=FALSE;
 	}
 }
@@ -112,7 +112,7 @@ bool CClipboard::SetText(
 		::GlobalUnlock( hgClipText );
 
 		//クリップボードに設定
-		::SetClipboardData( CF_UNICODETEXT, hgClipText );
+		SetClipboardData( CF_UNICODETEXT, hgClipText );
 		bUnicodeText = false;
 	}
 	//	1回しか通らない. breakでここまで飛ぶ
@@ -142,7 +142,7 @@ bool CClipboard::SetText(
 		::GlobalUnlock( hgClipSakura );
 
 		//クリップボードに設定
-		::SetClipboardData( uFormatSakuraClip, hgClipSakura );
+		SetClipboardData( uFormatSakuraClip, hgClipSakura );
 		bSakuraText = false;
 	}
 	//	1回しか通らない. breakでここまで飛ぶ
@@ -160,7 +160,7 @@ bool CClipboard::SetText(
 				BYTE* pClip = GlobalLockBYTE( hgClipMSDEVColumn );
 				pClip[0] = 0;
 				::GlobalUnlock( hgClipMSDEVColumn );
-				::SetClipboardData( uFormat, hgClipMSDEVColumn );
+				SetClipboardData( uFormat, hgClipMSDEVColumn );
 			}
 		}
 	}
@@ -178,7 +178,7 @@ bool CClipboard::SetText(
 				BYTE* pClip = (BYTE*)::GlobalLock( hgClipMSDEVLine );
 				pClip[0] = 0x01;
 				::GlobalUnlock( hgClipMSDEVLine );
-				::SetClipboardData( uFormat, hgClipMSDEVLine );
+				SetClipboardData( uFormat, hgClipMSDEVLine );
 			}
 		}
 	}
@@ -194,7 +194,7 @@ bool CClipboard::SetText(
 				BYTE* pClip = (BYTE*)::GlobalLock( hgClipMSDEVLine2 );
 				pClip[0] = 0x01;	// ※ ClipSpy で調べるとデータはこれとは違うが内容には無関係に動くっぽい
 				::GlobalUnlock( hgClipMSDEVLine2 );
-				::SetClipboardData( uFormat, hgClipMSDEVLine2 );
+				SetClipboardData( uFormat, hgClipMSDEVLine2 );
 			}
 		}
 	}
@@ -672,4 +672,16 @@ int CClipboard::GetDataType()
 	if(::IsClipboardFormatAvailable(CF_OEMTEXT))return CF_OEMTEXT;
 	if(::IsClipboardFormatAvailable(CF_HDROP))return CF_HDROP;
 	return -1;
+}
+
+BOOL CClipboard::OpenClipboard(HWND hWndNewOwner) {
+	return ::OpenClipboard(hWndNewOwner);
+}
+
+BOOL CClipboard::CloseClipboard() {
+	return ::CloseClipboard();
+}
+
+HANDLE CClipboard::SetClipboardData(UINT uFormat, HANDLE hMem) {
+	return ::SetClipboardData(uFormat, hMem);
 }

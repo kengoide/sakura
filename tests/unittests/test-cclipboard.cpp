@@ -23,6 +23,7 @@
 		   distribution.
 */
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -109,6 +110,23 @@ TEST(CClipboard, SetHtmlText)
 	}
 }
 
+class MockCClipboard : public CClipboard {
+public:
+	using CClipboard::CClipboard;
+	MOCK_METHOD1(OpenClipboard, BOOL (HWND));
+	MOCK_METHOD0(CloseClipboard, BOOL ());
+	MOCK_METHOD2(SetClipboardData, HANDLE (UINT, HANDLE));
+};
+
+TEST(CClipboard, SetText) {
+	using ::testing::_;
+	const std::wstring_view text = L"てすと";
+	MockCClipboard clipboard((HWND)0xc0ffee);
+	EXPECT_CALL(clipboard, SetClipboardData(_, _)).Times(2);
+	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
+
+}
+
 class CClipboardTestFixture : public testing::Test {
 protected:
 	void SetUp() override {
@@ -133,9 +151,6 @@ TEST_F(CClipboardTestFixture, SetTextAndGetText)
 	bool column;
 	bool line;
 	CEol eol(EEolType::cr_and_lf);
-
-	// テストを実行する前にクリップボードの内容を破棄しておく。
-	clipboard.Empty();
 
 	// テキストを設定する（矩形選択フラグなし・行選択フラグなし）
 	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
