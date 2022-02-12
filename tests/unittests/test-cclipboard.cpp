@@ -150,6 +150,9 @@ TEST_F(CClipboardTestFixture, SetTextAndGetText)
 	bool line;
 	CEol eol(EEolType::cr_and_lf);
 
+	// テストを実行する前にクリップボードの内容を破棄しておく。
+	clipboard.Empty();
+
 	// テキストを設定する（矩形選択フラグなし・行選択フラグなし）
 	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
 	EXPECT_TRUE(CClipboard::HasValidData());

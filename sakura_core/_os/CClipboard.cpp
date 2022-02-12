@@ -45,7 +45,7 @@ CClipboard::CClipboard(HWND hwnd, bool pretendSuccess) : m_hwnd(hwnd)
 		m_bOpenResult = TRUE;
 		return;
 	}
-	m_bOpenResult = OpenClipboard(hwnd);
+	m_bOpenResult = ::OpenClipboard(hwnd);
 }
 
 CClipboard::~CClipboard()
@@ -64,8 +64,8 @@ void CClipboard::Empty()
 
 void CClipboard::Close()
 {
-	if(m_bOpenResult){
-		CloseClipboard();
+	if(m_bOpenResult && m_hwnd){
+		::CloseClipboard();
 		m_bOpenResult=FALSE;
 	}
 }
