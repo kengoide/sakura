@@ -131,6 +131,14 @@ MATCHER_P(SakuraFormatInGlobalMemory, expected_string, "") {
 	return match;
 }
 
+MATCHER_P(ByteValueInGlobalMemory, value, "") {
+	unsigned char* p = (unsigned char*)::GlobalLock(arg);
+	if (!p) return false;
+	bool match = *p == value;
+	::GlobalUnlock(arg);
+	return match;
+}
+
 class MockCClipboard : public CClipboard {
 public:
 	MockCClipboard() : CClipboard(nullptr, true) {}
@@ -140,10 +148,29 @@ public:
 TEST(CClipboard, SetText) {
 	using ::testing::_;
 	const std::wstring_view text = L"てすと";
-	MockCClipboard clipboard;
-	EXPECT_CALL(clipboard, SetClipboardData(CF_UNICODETEXT, WideStringInGlobalMemory(text)));
-	EXPECT_CALL(clipboard, SetClipboardData(CClipboard::GetSakuraFormat(), SakuraFormatInGlobalMemory(text)));
-	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
+	const CLIPFORMAT sakuraFormat = CClipboard::GetSakuraFormat();
+	{
+		// テキストを設定する（フォーマット指定なし・矩形選択なし・行選択なし）
+		MockCClipboard clipboard;
+		EXPECT_CALL(clipboard, SetClipboardData(CF_UNICODETEXT, WideStringInGlobalMemory(text)));
+		EXPECT_CALL(clipboard, SetClipboardData(sakuraFormat, SakuraFormatInGlobalMemory(text)));
+		EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
+	}
+	{
+		// テキストを設定する（CF_UNICODETEXTのみ・矩形選択あり・行選択なし）
+		MockCClipboard clipboard;
+		EXPECT_CALL(clipboard, SetClipboardData(CF_UNICODETEXT, WideStringInGlobalMemory(text)));
+		EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"MSDEVColumnSelect"), ByteValueInGlobalMemory(0)));
+		EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), true, false, CF_UNICODETEXT));
+	}
+	{
+		// テキストを設定する（サクラ独自形式のみ・矩形選択なし・行選択あり）
+		MockCClipboard clipboard;
+		EXPECT_CALL(clipboard, SetClipboardData(sakuraFormat, SakuraFormatInGlobalMemory(text)));
+		EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"MSDEVLineSelect"), ByteValueInGlobalMemory(1)));
+		EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"VisualStudioEditorOperationsLineCutCopyClipboardTag"), ByteValueInGlobalMemory(1)));
+		EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), false, true, sakuraFormat));
+	}
 }
 
 class CClipboardTestFixture : public testing::Test {
