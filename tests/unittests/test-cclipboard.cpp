@@ -43,6 +43,9 @@
 #include "mem/CNativeW.h"
 #include "_os/CClipboard.h"
 
+using ::testing::_;
+using ::testing::Return;
+
 /*!
  * HWND型のスマートポインタを実現するためのdeleterクラス
  */
@@ -112,11 +115,70 @@ TEST(CClipboard, SetHtmlText)
 	}
 }
 
+class CClipboardTestFixture : public testing::Test {
+protected:
+	void SetUp() override {
+		hInstance = ::GetModuleHandle(nullptr);
+		hWnd = ::CreateWindowExW(0, WC_STATICW, L"test", 0, 1, 1, 1, 1, nullptr, nullptr, hInstance, nullptr);
+		if (!hWnd) FAIL();
+	}
+	void TearDown() override {
+		if (hWnd)
+			::DestroyWindow(hWnd);
+	}
+
+	HINSTANCE hInstance = nullptr;
+	HWND hWnd = nullptr;
+};
+
+TEST_F(CClipboardTestFixture, SetTextAndGetText)
+{
+	const std::wstring_view text = L"てすと";
+	CClipboard clipboard(hWnd);
+	CNativeW buffer;
+	bool column;
+	bool line;
+	CEol eol(EEolType::cr_and_lf);
+
+	// テストを実行する前にクリップボードの内容を破棄しておく。
+	clipboard.Empty();
+
+	// テキストを設定する（矩形選択フラグなし・行選択フラグなし）
+	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
+	EXPECT_TRUE(CClipboard::HasValidData());
+	// Unicode文字列を取得する
+	EXPECT_TRUE(clipboard.GetText(&buffer, &column, &line, eol, CF_UNICODETEXT));
+	EXPECT_STREQ(buffer.GetStringPtr(), text.data());
+	EXPECT_FALSE(column);
+	EXPECT_FALSE(line);
+
+	clipboard.Empty();
+
+	// テキストを設定する（矩形選択あり・行選択あり）
+	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), true, true, -1));
+	EXPECT_TRUE(CClipboard::HasValidData());
+	// サクラエディタ独自形式データを取得する
+	EXPECT_TRUE(clipboard.GetText(&buffer, &column, nullptr, eol, CClipboard::GetSakuraFormat()));
+	EXPECT_STREQ(buffer.GetStringPtr(), text.data());
+	EXPECT_TRUE(column);
+	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, &line, eol, CClipboard::GetSakuraFormat()));
+	EXPECT_STREQ(buffer.GetStringPtr(), text.data());
+	EXPECT_TRUE(line);
+}
 
 MATCHER_P(WideStringInGlobalMemory, expected_string, "") {
 	const wchar_t* s = (const wchar_t*)::GlobalLock(arg);
 	if (!s) return false;
 	std::wstring_view actual(s);
+	bool match = actual == expected_string;
+	::GlobalUnlock(arg);
+	return match;
+}
+
+MATCHER_P(AnsiStringInGlobalMemory, expected_string, "") {
+	const char* s = (const char*)::GlobalLock(arg);
+	if (!s) return false;
+	std::string_view actual(s);
 	bool match = actual == expected_string;
 	::GlobalUnlock(arg);
 	return match;
@@ -140,9 +202,6 @@ MATCHER_P(ByteValueInGlobalMemory, value, "") {
 	::GlobalUnlock(arg);
 	return match;
 }
-
-using ::testing::_;
-using ::testing::Return;
 
 class MockCClipboard : public CClipboard {
 public:
@@ -181,16 +240,6 @@ TEST(CClipboard, SetText) {
 }
 
 class GlobalMemory {
-	template <typename T> class LockObject {
-	public:
-		LockObject(HANDLE handle) : handle_(handle), p_(::GlobalLock(handle)) {}
-		LockObject(const LockObject&) = delete;
-		~LockObject() { ::GlobalUnlock(handle_); }
-		T* GetPtr() { return p_; }
-	private:
-		HANDLE handle_;
-		T* p_;
-	};
 public:
 	GlobalMemory(UINT flags, SIZE_T bytes) : handle_(::GlobalAlloc(flags, bytes)) {}
 	GlobalMemory(const GlobalMemory&) = delete;
@@ -370,53 +419,26 @@ TEST(CClipboard, GetText) {
 	}
 }
 
-class CClipboardTestFixture : public testing::Test {
-protected:
-	void SetUp() override {
-		hInstance = ::GetModuleHandle(nullptr);
-		hWnd = ::CreateWindowExW(0, WC_STATICW, L"test", 0, 1, 1, 1, 1, nullptr, nullptr, hInstance, nullptr);
-		if (!hWnd) FAIL();
-	}
-	void TearDown() override {
-		if (hWnd)
-			::DestroyWindow(hWnd);
-	}
-
-	HINSTANCE hInstance = nullptr;
-	HWND hWnd = nullptr;
-};
-
-TEST_F(CClipboardTestFixture, SetTextAndGetText)
+/*!
+ * @brief SetHtmlTextのテスト
+ */
+TEST(CClipboard, SetHtmlTextMock)
 {
-	const std::wstring_view text = L"てすと";
-	CClipboard clipboard(hWnd);
-	CNativeW buffer;
-	bool column;
-	bool line;
-	CEol eol(EEolType::cr_and_lf);
+	constexpr const wchar_t inputData[] = L"test 109";
+	constexpr const char expected[] =
+		"Version:0.9\r\n"
+		"StartHTML:00000097\r\n"
+		"EndHTML:00000178\r\n"
+		"StartFragment:00000134\r\n"
+		"EndFragment:00000142\r\n"
+		"<html><body>\r\n"
+		"<!--StartFragment -->\r\n"
+		"test 109\r\n"
+		"<!--EndFragment-->\r\n"
+		"</body></html>\r\n";
+	const UINT uHtmlFormat = ::RegisterClipboardFormat(L"HTML Format");
 
-	// テストを実行する前にクリップボードの内容を破棄しておく。
-	clipboard.Empty();
-
-	// テキストを設定する（矩形選択フラグなし・行選択フラグなし）
-	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
-	EXPECT_TRUE(CClipboard::HasValidData());
-	// Unicode文字列を取得する
-	EXPECT_TRUE(clipboard.GetText(&buffer, &column, &line, eol, CF_UNICODETEXT));
-	EXPECT_STREQ(buffer.GetStringPtr(), text.data());
-	EXPECT_FALSE(column);
-	EXPECT_FALSE(line);
-
-	clipboard.Empty();
-
-	// テキストを設定する（矩形選択あり・行選択あり）
-	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), true, true, -1));
-	EXPECT_TRUE(CClipboard::HasValidData());
-	// サクラエディタ独自形式データを取得する
-	EXPECT_TRUE(clipboard.GetText(&buffer, &column, nullptr, eol, CClipboard::GetSakuraFormat()));
-	EXPECT_STREQ(buffer.GetStringPtr(), text.data());
-	EXPECT_TRUE(column);
-	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, &line, eol, CClipboard::GetSakuraFormat()));
-	EXPECT_STREQ(buffer.GetStringPtr(), text.data());
-	EXPECT_TRUE(line);
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, SetClipboardData(uHtmlFormat, AnsiStringInGlobalMemory(expected)));
+	EXPECT_TRUE(clipboard.SetHtmlText(inputData));
 }

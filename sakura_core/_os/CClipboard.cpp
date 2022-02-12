@@ -250,7 +250,7 @@ bool CClipboard::SetHtmlText(const CNativeW& cmemBUf)
 
 	//クリップボードに設定
 	UINT uFormat = ::RegisterClipboardFormat( L"HTML Format" );
-	::SetClipboardData( uFormat, hgClipText );
+	SetClipboardData( uFormat, hgClipText );
 	return true;
 }
 
