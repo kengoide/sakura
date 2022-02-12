@@ -299,7 +299,7 @@ bool CClipboard::GetText(CNativeW* cmemBuf, bool* pbColumnSelect, bool* pbLineSe
 	//サクラ形式のデータがあれば取得
 	CLIPFORMAT uFormatSakuraClip = CClipboard::GetSakuraFormat();
 	if( (uGetFormat == -1 || uGetFormat == uFormatSakuraClip)
-		&& ::IsClipboardFormatAvailable( uFormatSakuraClip ) ){
+		&& IsClipboardFormatAvailable( uFormatSakuraClip ) ){
 		HGLOBAL hSakura = GetClipboardData( uFormatSakuraClip );
 		if (hSakura != NULL) {
 			BYTE* pData = (BYTE*)::GlobalLock(hSakura);
@@ -348,7 +348,7 @@ bool CClipboard::GetText(CNativeW* cmemBuf, bool* pbColumnSelect, bool* pbLineSe
 	/* 2008.09.10 bosagami パス貼り付け対応 */
 	//HDROP形式のデータがあれば取得
 	if( (uGetFormat == -1 || uGetFormat == CF_HDROP)
-		&& ::IsClipboardFormatAvailable(CF_HDROP) ){
+		&& IsClipboardFormatAvailable(CF_HDROP) ){
 		HDROP hDrop = (HDROP)GetClipboardData(CF_HDROP);
 		if(hDrop != NULL){
 			WCHAR sTmpPath[_MAX_PATH + 1] = {0};
@@ -680,4 +680,8 @@ HANDLE CClipboard::SetClipboardData(UINT uFormat, HANDLE hMem) {
 
 HANDLE CClipboard::GetClipboardData(UINT uFormat) {
 	return ::GetClipboardData(uFormat);
+}
+
+BOOL CClipboard::IsClipboardFormatAvailable(UINT format) {
+	return ::IsClipboardFormatAvailable(format);
 }

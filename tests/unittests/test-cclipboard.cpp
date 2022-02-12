@@ -150,6 +150,7 @@ public:
 	~MockCClipboard() override {}
 	MOCK_METHOD2(SetClipboardData, HANDLE (UINT, HANDLE));
 	MOCK_METHOD1(GetClipboardData, HANDLE (UINT));
+	MOCK_METHOD1(IsClipboardFormatAvailable, BOOL (UINT));
 };
 
 TEST(CClipboard, SetText) {
@@ -207,18 +208,33 @@ private:
 };
 
 TEST(CClipboard, GetText) {
-	const std::wstring_view text = L"テスト";
+	const CLIPFORMAT sakuraFormat = CClipboard::GetSakuraFormat();
+
+	const std::wstring_view unicodeText = L"UNICODE形式";
+	GlobalMemory unicodeMemory(GMEM_MOVEABLE | GMEM_DDESHARE, (unicodeText.size() + 1) * sizeof(wchar_t));
+	unicodeMemory.Lock<wchar_t>([=](wchar_t* p) {
+		std::wcscpy(p, unicodeText.data());
+	});
+
+	const std::wstring_view sakuraText = L"サクラ形式";
+	GlobalMemory sakuraMemory(GMEM_MOVEABLE | GMEM_DDESHARE,
+		sizeof(int) + (sakuraText.size() + 1) * sizeof(wchar_t));
+	sakuraMemory.Lock<unsigned char>([=](unsigned char* p) {
+		*(int*)p = sakuraText.size();
+		std::wcscpy((wchar_t*)(p + sizeof(int)), sakuraText.data());
+	});
+
 	{
-		GlobalMemory m(GMEM_MOVEABLE | GMEM_DDESHARE, (text.size() + 1) * sizeof(wchar_t));
-		m.Lock<wchar_t>([=](wchar_t* p) {
-			std::wcscpy(p, text.data());
-		});
+		// UNICODE形式とサクラ形式の両方がクリップボードに存在しているとき、
+		// 取得したいデータ形式が特に指定されていなければ、サクラ形式を優先して取得する。
 		MockCClipboard clipboard;
 		CNativeW buffer;
 		CEol eol(EEolType::cr_and_lf);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillOnce(Return(m.Get()));
-		EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_UNICODETEXT));
-		EXPECT_STREQ(buffer.GetStringPtr(), text.data());
+		EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillRepeatedly(Return(TRUE));
+		EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).WillRepeatedly(Return(sakuraMemory.Get()));
+		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).Times(0);
+		EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
+		EXPECT_STREQ(buffer.GetStringPtr(), sakuraText.data());
 	}
 }
 
