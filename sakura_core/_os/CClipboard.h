@@ -71,5 +71,6 @@ protected:
 	// 単体テスト用
 	CClipboard() : m_bOpenResult(TRUE) {};
 	virtual HANDLE SetClipboardData(UINT uFormat, HANDLE hMem);
+	virtual HANDLE GetClipboardData(UINT uFormat);
 };
 #endif /* SAKURA_CCLIPBOARD_4E783022_214C_4E51_A2E0_54EC343500F6_H_ */

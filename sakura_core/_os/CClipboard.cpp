@@ -300,7 +300,7 @@ bool CClipboard::GetText(CNativeW* cmemBuf, bool* pbColumnSelect, bool* pbLineSe
 	CLIPFORMAT uFormatSakuraClip = CClipboard::GetSakuraFormat();
 	if( (uGetFormat == -1 || uGetFormat == uFormatSakuraClip)
 		&& ::IsClipboardFormatAvailable( uFormatSakuraClip ) ){
-		HGLOBAL hSakura = ::GetClipboardData( uFormatSakuraClip );
+		HGLOBAL hSakura = GetClipboardData( uFormatSakuraClip );
 		if (hSakura != NULL) {
 			BYTE* pData = (BYTE*)::GlobalLock(hSakura);
 			size_t nLength        = *((int*)pData);
@@ -315,7 +315,7 @@ bool CClipboard::GetText(CNativeW* cmemBuf, bool* pbColumnSelect, bool* pbLineSe
 	// From Here 2005/05/29 novice UNICODE TEXT 対応処理を追加
 	HGLOBAL hUnicode = NULL;
 	if( uGetFormat == -1 || uGetFormat == CF_UNICODETEXT ){
-		hUnicode = ::GetClipboardData( CF_UNICODETEXT );
+		hUnicode = GetClipboardData( CF_UNICODETEXT );
 	}
 	if( hUnicode != NULL ){
 		//DWORD nLen = GlobalSize(hUnicode);
@@ -329,7 +329,7 @@ bool CClipboard::GetText(CNativeW* cmemBuf, bool* pbColumnSelect, bool* pbLineSe
 	//OEMTEXT形式のデータがあれば取得
 	HGLOBAL hText = NULL;
 	if( uGetFormat == -1 || uGetFormat == CF_OEMTEXT ){
-		hText = ::GetClipboardData( CF_OEMTEXT );
+		hText = GetClipboardData( CF_OEMTEXT );
 	}
 	if( hText != NULL ){
 		char* szData = GlobalLockChar(hText);
@@ -349,7 +349,7 @@ bool CClipboard::GetText(CNativeW* cmemBuf, bool* pbColumnSelect, bool* pbLineSe
 	//HDROP形式のデータがあれば取得
 	if( (uGetFormat == -1 || uGetFormat == CF_HDROP)
 		&& ::IsClipboardFormatAvailable(CF_HDROP) ){
-		HDROP hDrop = (HDROP)::GetClipboardData(CF_HDROP);
+		HDROP hDrop = (HDROP)GetClipboardData(CF_HDROP);
 		if(hDrop != NULL){
 			WCHAR sTmpPath[_MAX_PATH + 1] = {0};
 			const int nMaxCnt = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
@@ -676,4 +676,8 @@ int CClipboard::GetDataType()
 
 HANDLE CClipboard::SetClipboardData(UINT uFormat, HANDLE hMem) {
 	return ::SetClipboardData(uFormat, hMem);
+}
+
+HANDLE CClipboard::GetClipboardData(UINT uFormat) {
+	return ::GetClipboardData(uFormat);
 }

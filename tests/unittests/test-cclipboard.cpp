@@ -29,6 +29,8 @@
 #define NOMINMAX
 #endif /* #ifndef NOMINMAX */
 
+#include <cstring>
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -139,15 +141,18 @@ MATCHER_P(ByteValueInGlobalMemory, value, "") {
 	return match;
 }
 
+using ::testing::_;
+using ::testing::Return;
+
 class MockCClipboard : public CClipboard {
 public:
 	MockCClipboard() : CClipboard() {}
 	~MockCClipboard() override {}
 	MOCK_METHOD2(SetClipboardData, HANDLE (UINT, HANDLE));
+	MOCK_METHOD1(GetClipboardData, HANDLE (UINT));
 };
 
 TEST(CClipboard, SetText) {
-	using ::testing::_;
 	const std::wstring_view text = L"てすと";
 	const CLIPFORMAT sakuraFormat = CClipboard::GetSakuraFormat();
 	{
@@ -171,6 +176,49 @@ TEST(CClipboard, SetText) {
 		EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"MSDEVLineSelect"), ByteValueInGlobalMemory(1)));
 		EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"VisualStudioEditorOperationsLineCutCopyClipboardTag"), ByteValueInGlobalMemory(1)));
 		EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), false, true, sakuraFormat));
+	}
+}
+
+class GlobalMemory {
+	template <typename T> class LockObject {
+	public:
+		LockObject(HANDLE handle) : handle_(handle), p_(::GlobalLock(handle)) {}
+		LockObject(const LockObject&) = delete;
+		~LockObject() { ::GlobalUnlock(handle_); }
+		T* GetPtr() { return p_; }
+	private:
+		HANDLE handle_;
+		T* p_;
+	};
+public:
+	GlobalMemory(UINT flags, SIZE_T bytes) : handle_(::GlobalAlloc(flags, bytes)) {}
+	GlobalMemory(const GlobalMemory&) = delete;
+	~GlobalMemory() {
+		if (handle_)
+			::GlobalFree(handle_);
+	}
+	HGLOBAL Get() { return handle_; }
+	template <typename T> void Lock(std::function<void (T*)> f) {
+		f(reinterpret_cast<T*>(::GlobalLock(handle_)));
+		::GlobalUnlock(handle_);
+	}
+private:
+	HGLOBAL handle_;
+};
+
+TEST(CClipboard, GetText) {
+	const std::wstring_view text = L"テスト";
+	{
+		GlobalMemory m(GMEM_MOVEABLE | GMEM_DDESHARE, (text.size() + 1) * sizeof(wchar_t));
+		m.Lock<wchar_t>([=](wchar_t* p) {
+			std::wcscpy(p, text.data());
+		});
+		MockCClipboard clipboard;
+		CNativeW buffer;
+		CEol eol(EEolType::cr_and_lf);
+		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillOnce(Return(m.Get()));
+		EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_UNICODETEXT));
+		EXPECT_STREQ(buffer.GetStringPtr(), text.data());
 	}
 }
 
