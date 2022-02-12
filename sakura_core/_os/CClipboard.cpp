@@ -39,12 +39,9 @@
 //               コンストラクタ・デストラクタ                  //
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 
-CClipboard::CClipboard(HWND hwnd, bool pretendSuccess) : m_hwnd(hwnd)
+CClipboard::CClipboard(HWND hwnd)
 {
-	if (pretendSuccess) {
-		m_bOpenResult = TRUE;
-		return;
-	}
+	m_hwnd = hwnd;
 	m_bOpenResult = ::OpenClipboard(hwnd);
 }
 

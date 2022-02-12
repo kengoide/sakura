@@ -141,7 +141,8 @@ MATCHER_P(ByteValueInGlobalMemory, value, "") {
 
 class MockCClipboard : public CClipboard {
 public:
-	MockCClipboard() : CClipboard(nullptr, true) {}
+	MockCClipboard() : CClipboard() {}
+	~MockCClipboard() override {}
 	MOCK_METHOD2(SetClipboardData, HANDLE (UINT, HANDLE));
 };
 
