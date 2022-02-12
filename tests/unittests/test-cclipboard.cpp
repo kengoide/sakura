@@ -112,16 +112,14 @@ TEST(CClipboard, SetHtmlText)
 
 class MockCClipboard : public CClipboard {
 public:
-	using CClipboard::CClipboard;
-	MOCK_METHOD1(OpenClipboard, BOOL (HWND));
-	MOCK_METHOD0(CloseClipboard, BOOL ());
+	MockCClipboard() : CClipboard(nullptr, true) {}
 	MOCK_METHOD2(SetClipboardData, HANDLE (UINT, HANDLE));
 };
 
 TEST(CClipboard, SetText) {
 	using ::testing::_;
 	const std::wstring_view text = L"てすと";
-	MockCClipboard clipboard((HWND)0xc0ffee);
+	MockCClipboard clipboard;
 	EXPECT_CALL(clipboard, SetClipboardData(_, _)).Times(2);
 	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
 

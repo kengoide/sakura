@@ -37,7 +37,7 @@ class CClipboard{
 
 public:
 	//コンストラクタ・デストラクタ
-	CClipboard(HWND hwnd); //!< コンストラクタ内でクリップボードが開かれる
+	CClipboard(HWND hwnd, bool pretendSuccess = false); //!< コンストラクタ内でクリップボードが開かれる
 	CClipboard(const Me&) = delete;
 	Me& operator = (const Me&) = delete;
 	CClipboard(Me&&) noexcept = delete;
@@ -68,8 +68,6 @@ public:
 	static int GetDataType();      //!< クリップボードデータ形式(CF_UNICODETEXT等)の取得
 
 protected:
-	virtual BOOL OpenClipboard(HWND hWndNewOwner);
-	virtual BOOL CloseClipboard();
 	virtual HANDLE SetClipboardData(UINT uFormat, HANDLE hMem);
 };
 #endif /* SAKURA_CCLIPBOARD_4E783022_214C_4E51_A2E0_54EC343500F6_H_ */

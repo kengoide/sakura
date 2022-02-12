@@ -39,9 +39,12 @@
 //               コンストラクタ・デストラクタ                  //
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 
-CClipboard::CClipboard(HWND hwnd)
+CClipboard::CClipboard(HWND hwnd, bool pretendSuccess) : m_hwnd(hwnd)
 {
-	m_hwnd = hwnd;
+	if (pretendSuccess) {
+		m_bOpenResult = TRUE;
+		return;
+	}
 	m_bOpenResult = OpenClipboard(hwnd);
 }
 
@@ -672,14 +675,6 @@ int CClipboard::GetDataType()
 	if(::IsClipboardFormatAvailable(CF_OEMTEXT))return CF_OEMTEXT;
 	if(::IsClipboardFormatAvailable(CF_HDROP))return CF_HDROP;
 	return -1;
-}
-
-BOOL CClipboard::OpenClipboard(HWND hWndNewOwner) {
-	return ::OpenClipboard(hWndNewOwner);
-}
-
-BOOL CClipboard::CloseClipboard() {
-	return ::CloseClipboard();
 }
 
 HANDLE CClipboard::SetClipboardData(UINT uFormat, HANDLE hMem) {
