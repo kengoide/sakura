@@ -110,6 +110,14 @@ TEST(CClipboard, SetHtmlText)
 	}
 }
 
+
+MATCHER_P(GlobalMemoryIs, expected_string, "") {
+	std::wstring_view actual((const wchar_t*)::GlobalLock(arg));
+	bool match = actual == expected_string;
+	::GlobalUnlock(arg);
+	return match;
+}
+
 class MockCClipboard : public CClipboard {
 public:
 	MockCClipboard() : CClipboard(nullptr, true) {}
@@ -120,7 +128,8 @@ TEST(CClipboard, SetText) {
 	using ::testing::_;
 	const std::wstring_view text = L"てすと";
 	MockCClipboard clipboard;
-	EXPECT_CALL(clipboard, SetClipboardData(_, _)).Times(2);
+//	EXPECT_CALL(clipboard, SetClipboardData(_, _)).Times(2);
+	EXPECT_CALL(clipboard, SetClipboardData(_, GlobalMemoryIs(text))).Times(2);
 	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
 
 }
