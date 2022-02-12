@@ -111,7 +111,7 @@ TEST(CClipboard, SetHtmlText)
 }
 
 
-MATCHER_P(GlobalMemoryHasWideString, expected_string, "") {
+MATCHER_P(WideStringInGlobalMemory, expected_string, "") {
 	const wchar_t* s = (const wchar_t*)::GlobalLock(arg);
 	if (!s) return false;
 	std::wstring_view actual(s);
@@ -120,7 +120,7 @@ MATCHER_P(GlobalMemoryHasWideString, expected_string, "") {
 	return match;
 }
 
-MATCHER_P(GlobalMemoryHasSakuraFormat, expected_string, "") {
+MATCHER_P(SakuraFormatInGlobalMemory, expected_string, "") {
 	char* p = (char*)::GlobalLock(arg);
 	if (!p) return false;
 	int length = *(int*)p;
@@ -141,8 +141,8 @@ TEST(CClipboard, SetText) {
 	using ::testing::_;
 	const std::wstring_view text = L"てすと";
 	MockCClipboard clipboard;
-	EXPECT_CALL(clipboard, SetClipboardData(CF_UNICODETEXT, GlobalMemoryHasWideString(text)));
-	EXPECT_CALL(clipboard, SetClipboardData(CClipboard::GetSakuraFormat(), GlobalMemoryHasSakuraFormat(text)));
+	EXPECT_CALL(clipboard, SetClipboardData(CF_UNICODETEXT, WideStringInGlobalMemory(text)));
+	EXPECT_CALL(clipboard, SetClipboardData(CClipboard::GetSakuraFormat(), SakuraFormatInGlobalMemory(text)));
 	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
 }
 
