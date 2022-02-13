@@ -56,7 +56,7 @@ CClipboard::~CClipboard()
 
 void CClipboard::Empty()
 {
-	::EmptyClipboard();
+	EmptyClipboard();
 }
 
 void CClipboard::Close()
@@ -680,6 +680,10 @@ HANDLE CClipboard::SetClipboardData(UINT uFormat, HANDLE hMem) {
 
 HANDLE CClipboard::GetClipboardData(UINT uFormat) {
 	return ::GetClipboardData(uFormat);
+}
+
+BOOL CClipboard::EmptyClipboard() {
+	return ::EmptyClipboard();
 }
 
 BOOL CClipboard::IsClipboardFormatAvailable(UINT format) {

@@ -209,34 +209,44 @@ public:
 	~MockCClipboard() override {}
 	MOCK_METHOD2(SetClipboardData, HANDLE (UINT, HANDLE));
 	MOCK_METHOD1(GetClipboardData, HANDLE (UINT));
+	MOCK_METHOD0(EmptyClipboard, BOOL ());
 	MOCK_METHOD1(IsClipboardFormatAvailable, BOOL (UINT));
 };
 
-TEST(CClipboard, SetText) {
-	const std::wstring_view text = L"てすと";
+TEST(CClipboard, Empty) {
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, EmptyClipboard()).WillOnce(Return(TRUE));
+	clipboard.Empty();
+}
+
+// SetText のテスト（フォーマット指定なし・矩形選択なし・行選択なし）
+TEST(CClipboard, SetText1) {
+	constexpr std::wstring_view text = L"てすと";
 	const CLIPFORMAT sakuraFormat = CClipboard::GetSakuraFormat();
-	{
-		// テキストを設定する（フォーマット指定なし・矩形選択なし・行選択なし）
-		MockCClipboard clipboard;
-		EXPECT_CALL(clipboard, SetClipboardData(CF_UNICODETEXT, WideStringInGlobalMemory(text)));
-		EXPECT_CALL(clipboard, SetClipboardData(sakuraFormat, SakuraFormatInGlobalMemory(text)));
-		EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
-	}
-	{
-		// テキストを設定する（CF_UNICODETEXTのみ・矩形選択あり・行選択なし）
-		MockCClipboard clipboard;
-		EXPECT_CALL(clipboard, SetClipboardData(CF_UNICODETEXT, WideStringInGlobalMemory(text)));
-		EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"MSDEVColumnSelect"), ByteValueInGlobalMemory(0)));
-		EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), true, false, CF_UNICODETEXT));
-	}
-	{
-		// テキストを設定する（サクラ独自形式のみ・矩形選択なし・行選択あり）
-		MockCClipboard clipboard;
-		EXPECT_CALL(clipboard, SetClipboardData(sakuraFormat, SakuraFormatInGlobalMemory(text)));
-		EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"MSDEVLineSelect"), ByteValueInGlobalMemory(1)));
-		EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"VisualStudioEditorOperationsLineCutCopyClipboardTag"), ByteValueInGlobalMemory(1)));
-		EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), false, true, sakuraFormat));
-	}
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, SetClipboardData(CF_UNICODETEXT, WideStringInGlobalMemory(text)));
+	EXPECT_CALL(clipboard, SetClipboardData(sakuraFormat, SakuraFormatInGlobalMemory(text)));
+	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
+}
+
+// SetText のテスト（CF_UNICODETEXTのみ・矩形選択あり・行選択なし）
+TEST(CClipboard, SetText2) {
+	constexpr std::wstring_view text = L"てすと";
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, SetClipboardData(CF_UNICODETEXT, WideStringInGlobalMemory(text)));
+	EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"MSDEVColumnSelect"), ByteValueInGlobalMemory(0)));
+	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), true, false, CF_UNICODETEXT));
+}
+
+// SetText のテスト（サクラ独自形式のみ・矩形選択なし・行選択あり）
+TEST(CClipboard, SetText3) {
+	constexpr std::wstring_view text = L"てすと";
+	const CLIPFORMAT sakuraFormat = CClipboard::GetSakuraFormat();
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, SetClipboardData(sakuraFormat, SakuraFormatInGlobalMemory(text)));
+	EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"MSDEVLineSelect"), ByteValueInGlobalMemory(1)));
+	EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"VisualStudioEditorOperationsLineCutCopyClipboardTag"), ByteValueInGlobalMemory(1)));
+	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), false, true, sakuraFormat));
 }
 
 class GlobalMemory {
@@ -256,167 +266,182 @@ private:
 	HGLOBAL handle_;
 };
 
-TEST(CClipboard, GetText) {
-	const CLIPFORMAT sakuraFormat = CClipboard::GetSakuraFormat();
+class CClipboardGetText : public testing::Test {
+protected:
+	CClipboardGetText()
+		: sakuraFormat(CClipboard::GetSakuraFormat())
+		, unicodeMemory(GMEM_MOVEABLE, (unicodeText.size() + 1) * sizeof(wchar_t))
+		, sakuraMemory(GMEM_MOVEABLE, sizeof(int) + (sakuraText.size() + 1) * sizeof(wchar_t))
+		, oemMemory(GMEM_MOVEABLE, oemText.size() + 1)
+	{
+		unicodeMemory.Lock<wchar_t>([=](wchar_t* p) {
+			std::wcscpy(p, unicodeText.data());
+		});
+		sakuraMemory.Lock<unsigned char>([=](unsigned char* p) {
+			*(int*)p = sakuraText.size();
+			std::wcscpy((wchar_t*)(p + sizeof(int)), sakuraText.data());
+		});
+		oemMemory.Lock<char>([=](char* p) {
+			std::strcpy(p, oemText.data());
+		});
+	}
 
-	const std::wstring_view unicodeText = L"CF_UNICODE";
-	GlobalMemory unicodeMemory(GMEM_MOVEABLE | GMEM_DDESHARE, (unicodeText.size() + 1) * sizeof(wchar_t));
-	unicodeMemory.Lock<wchar_t>([=](wchar_t* p) {
-		std::wcscpy(p, unicodeText.data());
-	});
+	const CLIPFORMAT sakuraFormat;
+	static constexpr std::wstring_view unicodeText = L"CF_UNICODE";
+	static constexpr std::wstring_view sakuraText = L"SAKURAClipW";
+	static constexpr std::string_view oemText = "CF_OEMTEXT";
+	GlobalMemory unicodeMemory;
+	GlobalMemory sakuraMemory;
+	GlobalMemory oemMemory;
+};
 
-	const std::wstring_view sakuraText = L"SAKURAClipW";
-	GlobalMemory sakuraMemory(GMEM_MOVEABLE | GMEM_DDESHARE,
-		sizeof(int) + (sakuraText.size() + 1) * sizeof(wchar_t));
-	sakuraMemory.Lock<unsigned char>([=](unsigned char* p) {
-		*(int*)p = sakuraText.size();
-		std::wcscpy((wchar_t*)(p + sizeof(int)), sakuraText.data());
-	});
+// CClipboard::GetText のテスト群。
+// 
+// 取得したいデータ形式が特に指定されていない場合、
+// サクラ形式 -> CF_UNICODETEXT -> CF_OEMTEXT -> CF_HDROP の順で取得を試みる。
 
-	const std::string_view oemText = "CF_OEMTEXT";
-	GlobalMemory oemMemory(GMEM_MOVEABLE | GMEM_DDESHARE, oemText.size() + 1);
-	oemMemory.Lock<char>([=](char* p) {
-		std::strcpy(p, oemText.data());
-	});
+// サクラ形式を正常に取得するパス。
+TEST_F(CClipboardGetText, NoSpecifiedFormat1) {
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillOnce(Return(TRUE));
+	EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).WillOnce(Return(sakuraMemory.Get()));
+	EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
+	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
+	EXPECT_STREQ(buffer.GetStringPtr(), sakuraText.data());
+}
 
-	// 取得したいデータ形式が特に指定されていない場合、
-	// サクラ形式 -> CF_UNICODETEXT -> CF_OEMTEXT -> CF_HDROP の順で取得を試みる。
-	{
-		// サクラ形式を正常に取得するパス。
-		MockCClipboard clipboard;
-		CNativeW buffer;
-		CEol eol(EEolType::cr_and_lf);
-		EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillOnce(Return(TRUE));
-		EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).WillOnce(Return(sakuraMemory.Get()));
-		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
-		EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
-		EXPECT_STREQ(buffer.GetStringPtr(), sakuraText.data());
-	}
-	{
-		// クリップボードにサクラ形式がなかった場合、CF_UNICODETEXTを取得する。
-		MockCClipboard clipboard;
-		CNativeW buffer;
-		CEol eol(EEolType::cr_and_lf);
-		EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillOnce(Return(FALSE));
-		EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillOnce(Return(unicodeMemory.Get()));
-		EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
-		EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
-		EXPECT_STREQ(buffer.GetStringPtr(), unicodeText.data());
-	}
-	{
-		// クリップボードにはサクラ形式があるはずだが、GetClipboardDataが失敗した場合、CF_UNICODETEXTを取得する。
-		MockCClipboard clipboard;
-		CNativeW buffer;
-		CEol eol(EEolType::cr_and_lf);
-		EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillOnce(Return(TRUE));
-		EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).WillOnce(Return(nullptr));
-		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillOnce(Return(unicodeMemory.Get()));
-		EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
-		EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
-		EXPECT_STREQ(buffer.GetStringPtr(), unicodeText.data());
-	}
-	{
-		// サクラ形式とCF_UNICODETEXTの取得に失敗した場合、CF_OEMTEXTを取得する。
-		MockCClipboard clipboard;
-		CNativeW buffer;
-		CEol eol(EEolType::cr_and_lf);
-		EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillOnce(Return(FALSE));
-		EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillOnce(Return(nullptr));
-		EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).WillOnce(Return(oemMemory.Get()));
-		EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
-		EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
-		EXPECT_STREQ(buffer.GetStringPtr(), L"CF_OEMTEXT");
-	}
-	{
-		// サクラ形式とCF_UNICODETEXTとCF_OEMTEXTが失敗した場合、CF_HDROPを取得する。
-		// （テストデータを用意するのが大変そうなので実施しません）
-	}
-	// 取得したいデータ形式が指定されている場合、他のデータ形式は無視する。
-	{
-		// サクラ形式を指定して取得するパス。
-		MockCClipboard clipboard;
-		CNativeW buffer;
-		CEol eol(EEolType::cr_and_lf);
-		EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillOnce(Return(TRUE));
-		EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).WillOnce(Return(sakuraMemory.Get()));
-		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
-		EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, sakuraFormat));
-		EXPECT_STREQ(buffer.GetStringPtr(), sakuraText.data());
-	}
-	{
-		// サクラ形式が指定されているが取得に失敗した場合、GetTextはfalseを返す。
-		MockCClipboard clipboard;
-		CNativeW buffer;
-		CEol eol(EEolType::cr_and_lf);
-		EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillOnce(Return(FALSE));
-		EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
-		EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol, sakuraFormat));
-	}
-	{
-		// CF_UNICODETEXTを指定して取得するパス。
-		MockCClipboard clipboard;
-		CNativeW buffer;
-		CEol eol(EEolType::cr_and_lf);
-		EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillOnce(Return(unicodeMemory.Get()));
-		EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
-		EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_UNICODETEXT));
-		EXPECT_STREQ(buffer.GetStringPtr(), unicodeText.data());
-	}
-	{
-		// CF_UNICODETEXTが指定されているが取得に失敗した場合、GetTextはfalseを返す。
-		MockCClipboard clipboard;
-		CNativeW buffer;
-		CEol eol(EEolType::cr_and_lf);
-		EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillOnce(Return(nullptr));
-		EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
-		EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_UNICODETEXT));
-	}
-	{
-		// CF_OEMTEXTを指定して取得するパス。
-		MockCClipboard clipboard;
-		CNativeW buffer;
-		CEol eol(EEolType::cr_and_lf);
-		EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).WillOnce(Return(oemMemory.Get()));
-		EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
-		EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_OEMTEXT));
-		EXPECT_STREQ(buffer.GetStringPtr(), L"CF_OEMTEXT");
-	}
-	{
-		// CF_OEMTEXTが指定されているが取得に失敗した場合、GetTextはfalseを返す。
-		MockCClipboard clipboard;
-		CNativeW buffer;
-		CEol eol(EEolType::cr_and_lf);
-		EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).Times(0);
-		EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).WillOnce(Return(nullptr));
-		EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
-		EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_OEMTEXT));
-	}
-	{
-		// CF_HDROPを指定して取得するパス。
-		// （テストデータを用意するのが大変そうなので実施しません）
-	}
+// クリップボードにサクラ形式がなかった場合、CF_UNICODETEXTを取得する。
+TEST_F(CClipboardGetText, NoSpecifiedFormat2) {
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillOnce(Return(FALSE));
+	EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillOnce(Return(unicodeMemory.Get()));
+	EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
+	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
+	EXPECT_STREQ(buffer.GetStringPtr(), unicodeText.data());
+}
+
+// クリップボードにはサクラ形式があるはずだが、GetClipboardDataが失敗した場合、CF_UNICODETEXTを取得する。
+TEST_F(CClipboardGetText, NoSpecifiedFormat3) {
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillOnce(Return(TRUE));
+	EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).WillOnce(Return(nullptr));
+	EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillOnce(Return(unicodeMemory.Get()));
+	EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
+	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
+	EXPECT_STREQ(buffer.GetStringPtr(), unicodeText.data());
+
+}
+
+// サクラ形式とCF_UNICODETEXTの取得に失敗した場合、CF_OEMTEXTを取得する。
+TEST_F(CClipboardGetText, NoSpecifiedFormat4) {
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillOnce(Return(FALSE));
+	EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillOnce(Return(nullptr));
+	EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).WillOnce(Return(oemMemory.Get()));
+	EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
+	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
+	EXPECT_STREQ(buffer.GetStringPtr(), L"CF_OEMTEXT");
+}
+
+// サクラ形式とCF_UNICODETEXTとCF_OEMTEXTが失敗した場合、CF_HDROPを取得する。
+TEST_F(CClipboardGetText, DISABLED_NoSpecifiedFormat5) {
+}
+
+// 取得したいデータ形式が指定されている場合、他のデータ形式は無視する。
+
+// サクラ形式を指定して取得する。
+TEST_F(CClipboardGetText, SakuraFormatSuccess) {
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillOnce(Return(TRUE));
+	EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).WillOnce(Return(sakuraMemory.Get()));
+	EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
+	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, sakuraFormat));
+	EXPECT_STREQ(buffer.GetStringPtr(), sakuraText.data());
+}
+
+// サクラ形式が指定されているが取得に失敗した場合。
+TEST_F(CClipboardGetText, SakuraFormatFailure) {
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillOnce(Return(FALSE));
+	EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
+	EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol, sakuraFormat));
+}
+
+// CF_UNICODETEXTを指定して取得する。
+TEST_F(CClipboardGetText, UnicodeTextSucces) {
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillOnce(Return(unicodeMemory.Get()));
+	EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
+	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_UNICODETEXT));
+	EXPECT_STREQ(buffer.GetStringPtr(), unicodeText.data());
+}
+
+// CF_UNICODETEXTが指定されているが取得に失敗した場合。
+TEST_F(CClipboardGetText, UnicodeTextFailure) {
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillOnce(Return(nullptr));
+	EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
+	EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_UNICODETEXT));
+}
+
+// CF_OEMTEXTを指定して取得する。
+TEST_F(CClipboardGetText, OemTextSuccess) {
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).WillOnce(Return(oemMemory.Get()));
+	EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
+	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_OEMTEXT));
+	EXPECT_STREQ(buffer.GetStringPtr(), L"CF_OEMTEXT");
+}
+
+// CF_OEMTEXTが指定されているが取得に失敗した場合。
+TEST_F(CClipboardGetText, OemTextFailure) {
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(sakuraFormat)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).Times(0);
+	EXPECT_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).WillOnce(Return(nullptr));
+	EXPECT_CALL(clipboard, GetClipboardData(CF_HDROP)).Times(0);
+	EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_OEMTEXT));
 }
 
 /*!

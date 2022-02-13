@@ -72,6 +72,7 @@ protected:
 	CClipboard() : m_bOpenResult(TRUE) {};
 	virtual HANDLE SetClipboardData(UINT uFormat, HANDLE hMem);
 	virtual HANDLE GetClipboardData(UINT uFormat);
+	virtual BOOL EmptyClipboard();
 	virtual BOOL IsClipboardFormatAvailable(UINT format);
 };
 #endif /* SAKURA_CCLIPBOARD_4E783022_214C_4E51_A2E0_54EC343500F6_H_ */
