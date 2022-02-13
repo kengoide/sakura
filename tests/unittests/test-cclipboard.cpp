@@ -29,6 +29,7 @@
 #define NOMINMAX
 #endif /* #ifndef NOMINMAX */
 
+#include <array>
 #include <cstring>
 #include <functional>
 #include <memory>
@@ -205,7 +206,7 @@ MATCHER_P(ByteValueInGlobalMemory, value, "") {
 
 class MockCClipboard : public CClipboard {
 public:
-	MockCClipboard() : CClipboard() {}
+	MockCClipboard(bool openStatus = true) : CClipboard(openStatus) {}
 	~MockCClipboard() override {}
 	MOCK_METHOD2(SetClipboardData, HANDLE (UINT, HANDLE));
 	MOCK_METHOD1(GetClipboardData, HANDLE (UINT));
@@ -247,6 +248,14 @@ TEST(CClipboard, SetText3) {
 	EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"MSDEVLineSelect"), ByteValueInGlobalMemory(1)));
 	EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"VisualStudioEditorOperationsLineCutCopyClipboardTag"), ByteValueInGlobalMemory(1)));
 	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), false, true, sakuraFormat));
+}
+
+// クリップボードのオープンに失敗していた場合、SetText は何もせずに失敗する。
+TEST(CClipboard, SetText4) {
+	constexpr std::wstring_view text = L"てすと";
+	MockCClipboard clipboard(false);
+	EXPECT_CALL(clipboard, SetClipboardData(_, _)).Times(0);
+	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), false, false, -1));
 }
 
 class GlobalMemory {
@@ -447,7 +456,7 @@ TEST_F(CClipboardGetText, OemTextFailure) {
 /*!
  * @brief SetHtmlTextのテスト
  */
-TEST(CClipboard, SetHtmlTextMock)
+TEST(CClipboard, SetHtmlText1)
 {
 	constexpr const wchar_t inputData[] = L"test 109";
 	constexpr const char expected[] =
@@ -466,4 +475,71 @@ TEST(CClipboard, SetHtmlTextMock)
 	MockCClipboard clipboard;
 	EXPECT_CALL(clipboard, SetClipboardData(uHtmlFormat, AnsiStringInGlobalMemory(expected)));
 	EXPECT_TRUE(clipboard.SetHtmlText(inputData));
+}
+
+// クリップボードのオープンに失敗していた場合、SetHtmlText は何もせずに失敗する。
+TEST(CClipboard, SetHtmlText2) {
+	MockCClipboard clipboard(false);
+	EXPECT_CALL(clipboard, SetClipboardData(_, _)).Times(0);
+	EXPECT_FALSE(clipboard.SetHtmlText(L"test"));
+}
+
+struct ClipboardFormatDefinition {
+	CLIPFORMAT id;
+	const wchar_t* const name;
+};
+
+const std::array<ClipboardFormatDefinition, 17> KNOWN_FORMATS = {
+	{
+		{CF_TEXT        ,L"CF_TEXT"},
+		{CF_BITMAP      ,L"CF_BITMAP"},
+		{CF_METAFILEPICT,L"CF_METAFILEPICT"},
+		{CF_SYLK        ,L"CF_SYLK"},
+		{CF_DIF         ,L"CF_DIF"},
+		{CF_TIFF        ,L"CF_TIFF"},
+		{CF_OEMTEXT     ,L"CF_OEMTEXT"},
+		{CF_DIB         ,L"CF_DIB"},
+		{CF_PALETTE     ,L"CF_PALETTE"},
+		{CF_PENDATA     ,L"CF_PENDATA"},
+		{CF_RIFF        ,L"CF_RIFF"},
+		{CF_WAVE        ,L"CF_WAVE"},
+		{CF_UNICODETEXT ,L"CF_UNICODETEXT"},
+		{CF_ENHMETAFILE ,L"CF_ENHMETAFILE"},
+		{CF_HDROP       ,L"CF_HDROP"},
+		{CF_LOCALE      ,L"CF_LOCALE"},
+		{CF_DIBV5       ,L"CF_DIBV5"}
+	}
+};
+
+// 標準フォーマットを指定した場合
+TEST(CClipboard, IsIncludeClipboradFormat1) {
+	for (auto format : KNOWN_FORMATS) {
+		MockCClipboard clipboard;
+		EXPECT_CALL(clipboard, IsClipboardFormatAvailable(format.id)).WillOnce(Return(TRUE));
+		EXPECT_TRUE(clipboard.IsIncludeClipboradFormat(format.name));
+	}
+}
+
+// 数値を指定した場合
+TEST(CClipboard, IsIncludeClipboardFormat2) {
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(12345)).WillOnce(Return(TRUE));
+	EXPECT_TRUE(clipboard.IsIncludeClipboradFormat(L"12345"));
+}
+
+// 標準フォーマット以外の文字列を指定した場合
+TEST(CClipboard, IsIncludeClipboardFormat3) {
+	const wchar_t* const FORMAT_NAME = L"123SakuraUnittest";
+	const UINT format = ::RegisterClipboardFormatW(FORMAT_NAME);
+
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(format)).WillOnce(Return(TRUE));
+	EXPECT_TRUE(clipboard.IsIncludeClipboradFormat(FORMAT_NAME));
+}
+
+// 対象フォーマットのデータが存在しなかった場合に失敗することを確認するテスト
+TEST(CClipboard, IsIncludeClipboardFormat4) {
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(12345)).WillOnce(Return(FALSE));
+	EXPECT_FALSE(clipboard.IsIncludeClipboradFormat(L"12345"));
 }

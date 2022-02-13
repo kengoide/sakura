@@ -425,7 +425,7 @@ static CLIPFORMAT GetClipFormat(const wchar_t* pFormatName)
 bool CClipboard::IsIncludeClipboradFormat(const wchar_t* pFormatName)
 {
 	CLIPFORMAT uFormat = GetClipFormat(pFormatName);
-	if( ::IsClipboardFormatAvailable(uFormat) ){
+	if( IsClipboardFormatAvailable(uFormat) ){
 		return true;
 	}
 	return false;
