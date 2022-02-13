@@ -167,6 +167,7 @@ TEST_F(CClipboardTestFixture, DISABLED_SetTextAndGetText)
 	EXPECT_TRUE(line);
 }
 
+// グローバルメモリに書き込まれた特定の Unicode 文字列にマッチする述語関数
 MATCHER_P(WideStringInGlobalMemory, expected_string, "") {
 	const wchar_t* s = (const wchar_t*)::GlobalLock(arg);
 	if (!s) return false;
@@ -176,6 +177,7 @@ MATCHER_P(WideStringInGlobalMemory, expected_string, "") {
 	return match;
 }
 
+// グローバルメモリに書き込まれた特定の ANSI 文字列にマッチする述語関数
 MATCHER_P(AnsiStringInGlobalMemory, expected_string, "") {
 	const char* s = (const char*)::GlobalLock(arg);
 	if (!s) return false;
@@ -185,6 +187,7 @@ MATCHER_P(AnsiStringInGlobalMemory, expected_string, "") {
 	return match;
 }
 
+// グローバルメモリに書き込まれたサクラ独自形式データにマッチする述語関数
 MATCHER_P(SakuraFormatInGlobalMemory, expected_string, "") {
 	char* p = (char*)::GlobalLock(arg);
 	if (!p) return false;
@@ -196,6 +199,7 @@ MATCHER_P(SakuraFormatInGlobalMemory, expected_string, "") {
 	return match;
 }
 
+// グローバルメモリに書き込まれた特定のバイト値にマッチする述語関数
 MATCHER_P(ByteValueInGlobalMemory, value, "") {
 	unsigned char* p = (unsigned char*)::GlobalLock(arg);
 	if (!p) return false;
@@ -214,6 +218,8 @@ public:
 	MOCK_METHOD1(IsClipboardFormatAvailable, BOOL (UINT));
 };
 
+// Empty のテスト。
+// EmptyClipboard が呼ばれることを確認する。
 TEST(CClipboard, Empty) {
 	MockCClipboard clipboard;
 	EXPECT_CALL(clipboard, EmptyClipboard()).WillOnce(Return(TRUE));
@@ -250,6 +256,7 @@ TEST(CClipboard, SetText3) {
 	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), false, true, sakuraFormat));
 }
 
+// SetText のテスト。
 // クリップボードのオープンに失敗していた場合、SetText は何もせずに失敗する。
 TEST(CClipboard, SetText4) {
 	constexpr std::wstring_view text = L"てすと";
@@ -258,6 +265,7 @@ TEST(CClipboard, SetText4) {
 	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), false, false, -1));
 }
 
+// グローバルメモリを RAII で管理する簡易ヘルパークラス
 class GlobalMemory {
 public:
 	GlobalMemory(UINT flags, SIZE_T bytes) : handle_(::GlobalAlloc(flags, bytes)) {}
@@ -275,6 +283,7 @@ private:
 	HGLOBAL handle_;
 };
 
+// GetText のテストで使用するダミーデータを準備するためのフィクスチャクラス
 class CClipboardGetText : public testing::Test {
 protected:
 	CClipboardGetText()
@@ -306,7 +315,7 @@ protected:
 
 // CClipboard::GetText のテスト群。
 // 
-// 取得したいデータ形式が特に指定されていない場合、
+// GetText で取得したいデータ形式が特に指定されていない場合、
 // サクラ形式 -> CF_UNICODETEXT -> CF_OEMTEXT -> CF_HDROP の順で取得を試みる。
 
 // サクラ形式を正常に取得するパス。
@@ -368,9 +377,10 @@ TEST_F(CClipboardGetText, NoSpecifiedFormat4) {
 
 // サクラ形式とCF_UNICODETEXTとCF_OEMTEXTが失敗した場合、CF_HDROPを取得する。
 TEST_F(CClipboardGetText, DISABLED_NoSpecifiedFormat5) {
+	// 適切なダミーデータを用意するのが難しいため未実装
 }
 
-// 取得したいデータ形式が指定されている場合、他のデータ形式は無視する。
+// GetText で取得したいデータ形式が指定されている場合、他のデータ形式は無視する。
 
 // サクラ形式を指定して取得する。
 TEST_F(CClipboardGetText, SakuraFormatSuccess) {
@@ -453,9 +463,13 @@ TEST_F(CClipboardGetText, OemTextFailure) {
 	EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_OEMTEXT));
 }
 
-/*!
- * @brief SetHtmlTextのテスト
- */
+// CF_HDROP を指定して取得する。
+TEST_F(CClipboardGetText, DISABLED_HDropSuccess) {
+	// 適切なダミーデータを用意するのが難しいため未実装
+}
+
+// SetHtmlTextのテスト。
+// SetClipboardData に渡された引数が期待される結果と一致することを確認する。
 TEST(CClipboard, SetHtmlText1)
 {
 	constexpr const wchar_t inputData[] = L"test 109";
@@ -511,6 +525,8 @@ const std::array<ClipboardFormatDefinition, 17> KNOWN_FORMATS = {
 	}
 };
 
+const wchar_t* const UNITTEST_FORMAT_NAME = L"123SakuraUnittest";
+
 // 標準フォーマットを指定した場合
 TEST(CClipboard, IsIncludeClipboradFormat1) {
 	for (auto format : KNOWN_FORMATS) {
@@ -529,12 +545,11 @@ TEST(CClipboard, IsIncludeClipboardFormat2) {
 
 // 標準フォーマット以外の文字列を指定した場合
 TEST(CClipboard, IsIncludeClipboardFormat3) {
-	const wchar_t* const FORMAT_NAME = L"123SakuraUnittest";
-	const UINT format = ::RegisterClipboardFormatW(FORMAT_NAME);
+	const UINT format = ::RegisterClipboardFormatW(UNITTEST_FORMAT_NAME);
 
 	MockCClipboard clipboard;
 	EXPECT_CALL(clipboard, IsClipboardFormatAvailable(format)).WillOnce(Return(TRUE));
-	EXPECT_TRUE(clipboard.IsIncludeClipboradFormat(FORMAT_NAME));
+	EXPECT_TRUE(clipboard.IsIncludeClipboradFormat(UNITTEST_FORMAT_NAME));
 }
 
 // 対象フォーマットのデータが存在しなかった場合に失敗することを確認するテスト
