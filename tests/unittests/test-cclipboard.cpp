@@ -64,7 +64,7 @@ using windowHolder = std::unique_ptr<std::remove_pointer<HWND>::type, window_clo
 /*!
  * @brief SetHtmlTextのテスト
  */
-TEST(CClipboard, SetHtmlText)
+TEST(CClipboard, DISABLED_SetHtmlText)
 {
 	constexpr const wchar_t inputData[] = L"test 109";
 	constexpr const char expected[] =
@@ -131,7 +131,7 @@ protected:
 	HWND hWnd = nullptr;
 };
 
-TEST_F(CClipboardTestFixture, SetTextAndGetText)
+TEST_F(CClipboardTestFixture, DISABLED_SetTextAndGetText)
 {
 	const std::wstring_view text = L"てすと";
 	CClipboard clipboard(hWnd);
