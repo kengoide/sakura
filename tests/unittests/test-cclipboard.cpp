@@ -212,10 +212,10 @@ class MockCClipboard : public CClipboard {
 public:
 	MockCClipboard(bool openStatus = true) : CClipboard(openStatus) {}
 	~MockCClipboard() override {}
-	MOCK_METHOD2(SetClipboardData, HANDLE (UINT, HANDLE));
-	MOCK_METHOD1(GetClipboardData, HANDLE (UINT));
-	MOCK_METHOD0(EmptyClipboard, BOOL ());
-	MOCK_METHOD1(IsClipboardFormatAvailable, BOOL (UINT));
+	MOCK_CONST_METHOD2(SetClipboardData, HANDLE (UINT, HANDLE));
+	MOCK_CONST_METHOD1(GetClipboardData, HANDLE (UINT));
+	MOCK_CONST_METHOD0(EmptyClipboard, BOOL ());
+	MOCK_CONST_METHOD1(IsClipboardFormatAvailable, BOOL (UINT));
 };
 
 // Empty のテスト。
@@ -224,6 +224,36 @@ TEST(CClipboard, Empty) {
 	MockCClipboard clipboard;
 	EXPECT_CALL(clipboard, EmptyClipboard()).WillOnce(Return(TRUE));
 	clipboard.Empty();
+}
+
+// SetHtmlTextのテスト。
+// SetClipboardData に渡された引数が期待される結果と一致することを確認する。
+TEST(CClipboard, SetHtmlText1)
+{
+	constexpr const wchar_t inputData[] = L"test 109";
+	constexpr const char expected[] =
+		"Version:0.9\r\n"
+		"StartHTML:00000097\r\n"
+		"EndHTML:00000178\r\n"
+		"StartFragment:00000134\r\n"
+		"EndFragment:00000142\r\n"
+		"<html><body>\r\n"
+		"<!--StartFragment -->\r\n"
+		"test 109\r\n"
+		"<!--EndFragment-->\r\n"
+		"</body></html>\r\n";
+	const UINT uHtmlFormat = ::RegisterClipboardFormat(L"HTML Format");
+
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, SetClipboardData(uHtmlFormat, AnsiStringInGlobalMemory(expected)));
+	EXPECT_TRUE(clipboard.SetHtmlText(inputData));
+}
+
+// クリップボードのオープンに失敗していた場合、SetHtmlText は何もせずに失敗する。
+TEST(CClipboard, SetHtmlText2) {
+	MockCClipboard clipboard(false);
+	EXPECT_CALL(clipboard, SetClipboardData(_, _)).Times(0);
+	EXPECT_FALSE(clipboard.SetHtmlText(L"test"));
 }
 
 // SetText のテスト（フォーマット指定なし・矩形選択なし・行選択なし）
@@ -403,35 +433,6 @@ TEST_F(CClipboardGetText, DISABLED_HDropSuccess) {
 	// 適切なダミーデータを用意するのが難しいため未実装
 }
 
-// SetHtmlTextのテスト。
-// SetClipboardData に渡された引数が期待される結果と一致することを確認する。
-TEST(CClipboard, SetHtmlText1)
-{
-	constexpr const wchar_t inputData[] = L"test 109";
-	constexpr const char expected[] =
-		"Version:0.9\r\n"
-		"StartHTML:00000097\r\n"
-		"EndHTML:00000178\r\n"
-		"StartFragment:00000134\r\n"
-		"EndFragment:00000142\r\n"
-		"<html><body>\r\n"
-		"<!--StartFragment -->\r\n"
-		"test 109\r\n"
-		"<!--EndFragment-->\r\n"
-		"</body></html>\r\n";
-	const UINT uHtmlFormat = ::RegisterClipboardFormat(L"HTML Format");
-
-	MockCClipboard clipboard;
-	EXPECT_CALL(clipboard, SetClipboardData(uHtmlFormat, AnsiStringInGlobalMemory(expected)));
-	EXPECT_TRUE(clipboard.SetHtmlText(inputData));
-}
-
-// クリップボードのオープンに失敗していた場合、SetHtmlText は何もせずに失敗する。
-TEST(CClipboard, SetHtmlText2) {
-	MockCClipboard clipboard(false);
-	EXPECT_CALL(clipboard, SetClipboardData(_, _)).Times(0);
-	EXPECT_FALSE(clipboard.SetHtmlText(L"test"));
-}
 
 struct ClipboardFormatDefinition {
 	CLIPFORMAT id;

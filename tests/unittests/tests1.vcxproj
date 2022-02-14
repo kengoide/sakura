@@ -112,6 +112,7 @@
     <ClCompile Include="test-cdoclinemgr.cpp" />
     <ClCompile Include="test-csearchagent.cpp" />
     <ClCompile Include="test-crunningtimer.cpp" />
+    <ClCompile Include="test-csharedata.cpp" />
     <ClCompile Include="test-czipfile.cpp" />
     <ClCompile Include="test-printEFunctionCode.cpp" />
     <ClCompile Include="test-cclipboard.cpp" />
@@ -150,6 +151,7 @@
     <ClCompile Include="test-statictype.cpp" />
     <ClCompile Include="test-StdControl.cpp" />
     <ClCompile Include="test-string_ex.cpp" />
+    <ClCompile Include="test-window.cpp" />
     <ClCompile Include="test-zoom.cpp" />
     <ClCompile Include="test-winmain.cpp" />
   </ItemGroup>
