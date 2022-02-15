@@ -208,6 +208,17 @@ MATCHER_P(ByteValueInGlobalMemory, value, "") {
 	return match;
 }
 
+// グローバルメモリに書き込まれた特定のバイト列にマッチする述語関数
+MATCHER_P2(BytesInGlobalMemory, bytes, size, "") {
+	if (size != ::GlobalSize(arg))
+		return false;
+	void* p = ::GlobalLock(arg);
+	if (!p) return false;
+	bool match = std::memcmp(p, bytes, size) == 0;
+	::GlobalUnlock(arg);
+	return match;
+}
+
 class MockCClipboard : public CClipboard {
 public:
 	MockCClipboard(bool openStatus = true) : CClipboard(openStatus) {}
