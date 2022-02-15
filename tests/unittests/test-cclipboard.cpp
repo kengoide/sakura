@@ -475,7 +475,7 @@ const std::array<ClipboardFormatDefinition, 17> KNOWN_FORMATS = {
 const wchar_t* const UNITTEST_FORMAT_NAME = L"123SakuraUnittest";
 
 // 標準フォーマットを指定した場合
-TEST(CClipboard, IsIncludeClipboradFormat1) {
+TEST(CClipboard, IsIncludeClipboardFormat1) {
 	for (auto format : KNOWN_FORMATS) {
 		MockCClipboard clipboard;
 		ON_CALL(clipboard, IsClipboardFormatAvailable(format.id)).WillByDefault(Return(TRUE));
@@ -504,4 +504,39 @@ TEST(CClipboard, IsIncludeClipboardFormat4) {
 	MockCClipboard clipboard;
 	ON_CALL(clipboard, IsClipboardFormatAvailable(12345)).WillByDefault(Return(FALSE));
 	EXPECT_FALSE(clipboard.IsIncludeClipboradFormat(L"12345"));
+}
+
+// モード-1（バイナリデータ）のテスト。
+// UTF-16 の符号単位（0x0000～0x00ff）を 0x00～0xff のバイト値にマップする。
+// 終端モード0では文字列中の \0 をバイナリとして扱う（終端として認識しない）。
+TEST(CClipboard, SetClipboardByFormat1) {
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, SetClipboardData(12345, BytesInGlobalMemory("\x00\x01\xfe\xff", 4)));
+	EXPECT_TRUE(clipboard.SetClipboradByFormat({L"\x00\x01\xfe\xff", 4}, L"12345", -1, 0));
+}
+
+// モード-1（バイナリデータ）のテスト。
+// 0x100以上の値が含まれている場合は失敗する。
+TEST(CClipboard, SetClipboardByFormat2) {
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, SetClipboardData(_, _)).Times(0);
+	EXPECT_FALSE(clipboard.SetClipboradByFormat({L"\x100", 1}, L"12345", -1, 0));
+}
+
+// モード3（UTF-16）のテスト。コード変換を行わないパターン。
+// 終端モードには2を設定する（2バイトの0値で終端する）。
+TEST(CClipboard, SetClipboardByFormat3) {
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, SetClipboardData(12345, WideStringInGlobalMemory(L"テスト")));
+	EXPECT_TRUE(clipboard.SetClipboradByFormat({L"テスト", 3}, L"12345", 3, 2));
+}
+
+// モード4（UTF-8）のテスト。コード変換を行う。
+// 終端モードには1を設定する（1バイトの0値で終端する）。
+//
+// 共有データに依存するためテスト不能。
+TEST(CClipboard, DISABLED_SetClipboardByFormat4) {
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, SetClipboardData(12345, AnsiStringInGlobalMemory("テスト")));
+	EXPECT_TRUE(clipboard.SetClipboradByFormat({L"テスト", 3}, L"12345", 4, 1));
 }

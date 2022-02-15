@@ -521,7 +521,7 @@ bool CClipboard::SetClipboradByFormat(const CStringRef& cstr, const wchar_t* pFo
 		memset( &pszClip[nTextByteLen], 0, nulLen );
 	}
 	::GlobalUnlock( hgClipText );
-	::SetClipboardData( uFormat, hgClipText );
+	SetClipboardData( uFormat, hgClipText );
 
 	return true;
 }
