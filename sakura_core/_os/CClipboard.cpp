@@ -563,7 +563,7 @@ bool CClipboard::GetClipboradByFormat(CNativeW& mem, const wchar_t* pFormatName,
 	if( uFormat == (CLIPFORMAT)-1 ){
 		return false;
 	}
-	if( !::IsClipboardFormatAvailable(uFormat) ){
+	if( !IsClipboardFormatAvailable(uFormat) ){
 		return false;
 	}
 	if( nMode == -2 ){
@@ -576,7 +576,7 @@ bool CClipboard::GetClipboradByFormat(CNativeW& mem, const wchar_t* pFormatName,
 		}
 		return bret;
 	}
-	HGLOBAL hClipData = ::GetClipboardData( uFormat );
+	HGLOBAL hClipData = GetClipboardData( uFormat );
 	if( hClipData != NULL ){
 		bool retVal = true;
 		const BYTE* pData = (BYTE*)::GlobalLock( hClipData );

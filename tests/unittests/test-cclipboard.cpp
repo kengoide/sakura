@@ -506,10 +506,16 @@ TEST(CClipboard, IsIncludeClipboardFormat4) {
 	EXPECT_FALSE(clipboard.IsIncludeClipboradFormat(L"12345"));
 }
 
+// 不明なモード値を指定すると失敗する。
+TEST(CClipboard, SetClipboardByFormat1) {
+	MockCClipboard clipboard;
+	EXPECT_FALSE(clipboard.SetClipboradByFormat({L"テスト", 3}, L"12345", 99999, 1));
+}
+
 // モード-1（バイナリデータ）のテスト。
 // UTF-16 の符号単位（0x0000～0x00ff）を 0x00～0xff のバイト値にマップする。
 // 終端モード0では文字列中の \0 をバイナリとして扱う（終端として認識しない）。
-TEST(CClipboard, SetClipboardByFormat1) {
+TEST(CClipboard, SetClipboardByFormat2) {
 	MockCClipboard clipboard;
 	EXPECT_CALL(clipboard, SetClipboardData(12345, BytesInGlobalMemory("\x00\x01\xfe\xff", 4)));
 	EXPECT_TRUE(clipboard.SetClipboradByFormat({L"\x00\x01\xfe\xff", 4}, L"12345", -1, 0));
@@ -517,7 +523,7 @@ TEST(CClipboard, SetClipboardByFormat1) {
 
 // モード-1（バイナリデータ）のテスト。
 // 0x100以上の値が含まれている場合は失敗する。
-TEST(CClipboard, SetClipboardByFormat2) {
+TEST(CClipboard, SetClipboardByFormat3) {
 	MockCClipboard clipboard;
 	EXPECT_CALL(clipboard, SetClipboardData(_, _)).Times(0);
 	EXPECT_FALSE(clipboard.SetClipboradByFormat({L"\x100", 1}, L"12345", -1, 0));
@@ -525,7 +531,7 @@ TEST(CClipboard, SetClipboardByFormat2) {
 
 // モード3（UTF-16）のテスト。コード変換を行わないパターン。
 // 終端モードには2を設定する（2バイトの0値で終端する）。
-TEST(CClipboard, SetClipboardByFormat3) {
+TEST(CClipboard, SetClipboardByFormat4) {
 	MockCClipboard clipboard;
 	EXPECT_CALL(clipboard, SetClipboardData(12345, WideStringInGlobalMemory(L"テスト")));
 	EXPECT_TRUE(clipboard.SetClipboradByFormat({L"テスト", 3}, L"12345", 3, 2));
@@ -535,8 +541,68 @@ TEST(CClipboard, SetClipboardByFormat3) {
 // 終端モードには1を設定する（1バイトの0値で終端する）。
 //
 // 共有データに依存するためテスト不能。
-TEST(CClipboard, DISABLED_SetClipboardByFormat4) {
+TEST(CClipboard, DISABLED_SetClipboardByFormat5) {
 	MockCClipboard clipboard;
 	EXPECT_CALL(clipboard, SetClipboardData(12345, AnsiStringInGlobalMemory("テスト")));
 	EXPECT_TRUE(clipboard.SetClipboradByFormat({L"テスト", 3}, L"12345", 4, 1));
+}
+
+// 要求されたフォーマットのデータがクリップボードに存在しなければ失敗する。
+TEST(CClipboard, GetClipboardByFormat1) {
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	ON_CALL(clipboard, IsClipboardFormatAvailable(12345)).WillByDefault(Return(FALSE));
+	EXPECT_FALSE(clipboard.GetClipboradByFormat(buffer, L"12345", -1, 0, eol));
+}
+
+// モード-1（バイナリデータ）のテスト。
+// 0x00～0xff のバイト値を UTF-16 の符号単位（0x0000～0x00ff）にマップする。
+// 終端モード0ではデータ中の \0 をバイナリとして扱う（終端として認識しない）。
+TEST(CClipboard, GetClipboardByFormat2) {
+	GlobalMemory memory(GMEM_MOVEABLE, 2);
+	memory.Lock<char>([=](char* p) {
+		std::memcpy(p, "\x00\xff", 2);
+	});
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	ON_CALL(clipboard, IsClipboardFormatAvailable(12345)).WillByDefault(Return(TRUE));
+	ON_CALL(clipboard, GetClipboardData(12345)).WillByDefault(Return(memory.Get()));
+	EXPECT_TRUE(clipboard.GetClipboradByFormat(buffer, L"12345", -1, 0, eol));
+	EXPECT_STREQ(buffer.GetStringPtr(), L"\x00\xff");
+}
+
+// モード3（UTF-16）のテスト。コード変換を行わないパターン。
+// 終端モードには2を設定する（2バイトの0値で終端されていることを期待する）。
+TEST(CClipboard, GetClipboardByFormat3) {
+	GlobalMemory memory(GMEM_MOVEABLE, sizeof(wchar_t) * 8);
+	memory.Lock<wchar_t>([=](wchar_t* p) {
+		std::memcpy(p, L"テスト\x00データ", 8);
+	});
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	ON_CALL(clipboard, IsClipboardFormatAvailable(12345)).WillByDefault(Return(TRUE));
+	ON_CALL(clipboard, GetClipboardData(12345)).WillByDefault(Return(memory.Get()));
+	EXPECT_TRUE(clipboard.GetClipboradByFormat(buffer, L"12345", 3, 2, eol));
+	EXPECT_STREQ(buffer.GetStringPtr(), L"テスト");
+}
+
+// モード4（UTF-8）のテスト。コード変換を行う。
+// 終端モードには1を設定する（1バイトの0値で終端されていることを期待する）。
+//
+// CEditDoc のインスタンスに依存するためテスト不能。
+TEST(CClipboard, DISABLED_GetClipboardByFormat4) {
+	GlobalMemory memory(GMEM_MOVEABLE, 14);
+	memory.Lock<char>([=](char* p) {
+		std::memcpy(p, "テスト\x00データ", 14);
+	});
+	MockCClipboard clipboard;
+	CNativeW buffer;
+	CEol eol(EEolType::cr_and_lf);
+	ON_CALL(clipboard, IsClipboardFormatAvailable(12345)).WillByDefault(Return(TRUE));
+	ON_CALL(clipboard, GetClipboardData(12345)).WillByDefault(Return(memory.Get()));
+	EXPECT_TRUE(clipboard.GetClipboradByFormat(buffer, L"12345", 4, 1, eol));
+	EXPECT_STREQ(buffer.GetStringPtr(), L"テスト");
 }
