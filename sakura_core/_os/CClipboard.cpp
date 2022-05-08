@@ -25,6 +25,7 @@
 */
 
 #include "StdAfx.h"
+#include <optional>
 #include <ShellAPI.h>// HDROP
 #include "CClipboard.h"
 #include "doc/CEditDoc.h"
@@ -35,36 +36,19 @@
 #include "CEol.h"
 #include "mem/CNativeA.h"
 
-// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
-//               コンストラクタ・デストラクタ                  //
-// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
-
-CClipboard::CClipboard(HWND hwnd)
+std::optional<CClipboard> CClipboard::Open(HWND hWnd)
 {
-	m_hwnd = hwnd;
-	m_bOpenResult = ::OpenClipboard(hwnd);
+	return ::OpenClipboard(hWnd) ? std::make_optional(CClipboard()) : std::nullopt;
 }
 
 CClipboard::~CClipboard()
 {
-	Close();
+	::CloseClipboard();
 }
-
-// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
-//                     インターフェース                        //
-// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 
 void CClipboard::Empty()
 {
 	EmptyClipboard();
-}
-
-void CClipboard::Close()
-{
-	if(m_bOpenResult){
-		::CloseClipboard();
-		m_bOpenResult=FALSE;
-	}
 }
 
 bool CClipboard::SetText(
@@ -75,10 +59,6 @@ bool CClipboard::SetText(
 	UINT			uFormat
 )
 {
-	if( !m_bOpenResult ){
-		return false;
-	}
-
 	/*
 	// テキスト形式のデータ (CF_OEMTEXT)
 	HGLOBAL hgClipText = ::GlobalAlloc(
@@ -213,10 +193,6 @@ bool CClipboard::SetText(
 
 bool CClipboard::SetHtmlText(const CNativeW& cmemBUf)
 {
-	if( !m_bOpenResult ){
-		return false;
-	}
-
 	CNativeA cmemUtf8;
 	CUtf8().UnicodeToCode(cmemBUf, cmemUtf8._GetMemory());
 
@@ -263,9 +239,6 @@ bool CClipboard::SetHtmlText(const CNativeW& cmemBUf)
 */
 bool CClipboard::GetText(CNativeW* cmemBuf, bool* pbColumnSelect, bool* pbLineSelect, const CEol& cEol, UINT uGetFormat)
 {
-	if( !m_bOpenResult ){
-		return false;
-	}
 	if( NULL != pbColumnSelect ){
 		*pbColumnSelect = false;
 	}

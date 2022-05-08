@@ -27,6 +27,9 @@
 #define SAKURA_CCLIPBOARD_4E783022_214C_4E51_A2E0_54EC343500F6_H_
 #pragma once
 
+#include <optional>
+#include <Windows.h>
+
 class CEol;
 class CNativeW;
 class CStringRef;
@@ -35,18 +38,19 @@ class CStringRef;
 class CClipboard{
 	using Me = CClipboard;
 
-public:
-	//コンストラクタ・デストラクタ
-	CClipboard(HWND hwnd); //!< コンストラクタ内でクリップボードが開かれる
 	CClipboard(const Me&) = delete;
 	Me& operator = (const Me&) = delete;
-	CClipboard(Me&&) noexcept = delete;
-	Me& operator = (Me&&) noexcept = delete;
-	virtual ~CClipboard(); //!< デストラクタ内でCloseが呼ばれる
 
-	//インターフェース
+public:
+	CClipboard(Me&&) noexcept = default;
+	Me& operator = (Me&&) noexcept = default;
+	virtual ~CClipboard();
+
+	//! クリップボードを開く。
+	//! @retval CClipboard クリップボードのオープンに成功した。
+	//! @retval std::nullopt クリップボードのオープンに失敗した。
+	static std::optional<CClipboard> Open(HWND hWnd);
 	void Empty(); //!< クリップボードを空にする
-	void Close(); //!< クリップボードを閉じる
 	bool SetText(const wchar_t* pData, int nDataLen, bool bColumnSelect, bool bLineSelect, UINT uFormat = (UINT)-1);   //!< テキストを設定する
 	bool SetHtmlText(const CNativeW& cmemBUf);
 	bool GetText(CNativeW* cmemBuf, bool* pbColumnSelect, bool* pbLineSelect, const CEol& cEol, UINT uGetFormat = (UINT)-1); //!< テキストを取得する
@@ -54,23 +58,17 @@ public:
 	bool SetClipboradByFormat(const CStringRef& cstr, const wchar_t* pFormatName, int nMode, int nEndMode);
 	bool GetClipboradByFormat(CNativeW& mem, const wchar_t* pFormatName, int nMode, int nEndMode, const CEol& cEol);
 
-	//演算子
-	operator bool() const{ return m_bOpenResult!=FALSE; } //!< クリップボードを開けたならtrue
-
+private:
 	int GetDataType() const; //!< クリップボードデータ形式(CF_UNICODETEXT等)の取得
 
-private:
-	HWND m_hwnd;
-	BOOL m_bOpenResult;
-
-	// -- -- staticインターフェース -- -- //
 public:
+	// -- -- staticインターフェース -- -- //
 	static bool HasValidData();    //!< クリップボード内に、サクラエディタで扱えるデータがあればtrue
 	static CLIPFORMAT GetSakuraFormat(); //!< サクラエディタ独自のクリップボードデータ形式
 
 protected:
-	// 単体テスト用コンストラクタ
-	explicit CClipboard(bool openStatus) : m_bOpenResult(openStatus) {}
+	// 単体テスト用に protected で宣言する。
+	CClipboard() = default;
 
 	// 同名の Windows API に引数を転送する仮想メンバ関数。
 	// 単体テスト内でオーバーライドすることで副作用のないテストを実施するのが目的。

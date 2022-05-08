@@ -2292,12 +2292,12 @@ bool CEditView::MyGetClipboardData( CNativeW& cmemBuf, bool* pbColumnSelect, boo
 	if(!CClipboard::HasValidData())
 		return false;
 
-	CClipboard cClipboard(GetHwnd());
-	if(!cClipboard)
+	std::optional<CClipboard> clipboard = CClipboard::Open(GetHwnd());
+	if(!clipboard)
 		return false;
 
 	CEol cEol = m_pcEditDoc->m_cDocEditor.GetNewLineCode();
-	if(!cClipboard.GetText(&cmemBuf,pbColumnSelect,pbLineSelect,cEol)){
+	if(!clipboard->GetText(&cmemBuf,pbColumnSelect,pbLineSelect,cEol)){
 		return false;
 	}
 
@@ -2310,12 +2310,12 @@ bool CEditView::MyGetClipboardData( CNativeW& cmemBuf, bool* pbColumnSelect, boo
 bool CEditView::MySetClipboardData( const WCHAR* pszText, int nTextLen, bool bColumnSelect, bool bLineSelect /*= false*/ )
 {
 	/* Windowsクリップボードにコピー */
-	CClipboard cClipboard(GetHwnd());
-	if(!cClipboard){
+	std::optional<CClipboard> clipboard = CClipboard::Open(GetHwnd());
+	if(!clipboard){
 		return false;
 	}
-	cClipboard.Empty();
-	return cClipboard.SetText(pszText,nTextLen,bColumnSelect,bLineSelect);
+	clipboard->Empty();
+	return clipboard->SetText(pszText,nTextLen,bColumnSelect,bLineSelect);
 }
 
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //

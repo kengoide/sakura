@@ -40,6 +40,7 @@
 */
 
 #include "StdAfx.h"
+#include <optional>
 #include "func/Funccode.h"
 #include "CMacro.h"
 #include "_main/CControlTray.h"
@@ -1400,8 +1401,10 @@ bool CMacro::HandleCommand(
 		break;
 	case F_CLIPBOARDEMPTY:
 		{
-			CClipboard cClipboard(pcEditView->GetHwnd());
-			cClipboard.Empty();
+			std::optional<CClipboard> clipboard = CClipboard::Open(pcEditView->GetHwnd());
+			if (clipboard) {
+				clipboard->Empty();
+			}
 		}
 		break;
 	case F_SETVIEWTOP:
@@ -2220,8 +2223,9 @@ bool CMacro::HandleFunction(CEditView *View, EFunctionCode ID, const VARIANT *Ar
 		{
 			if( 1 <= ArgSize ){
 				if( !VariantToBStr(varCopy, Arguments[0]) ) return false;
-				CClipboard cClipboard(View->GetHwnd());
-				bool bret = cClipboard.IsIncludeClipboradFormat(varCopy.Data.bstrVal);
+				std::optional<CClipboard> clipboard = CClipboard::Open(View->GetHwnd());
+				if (!clipboard) return false;
+				bool bret = clipboard->IsIncludeClipboradFormat(varCopy.Data.bstrVal);
 				Wrap( &Result )->Receive( bret ? 1 : 0 );
 				return true;
 			}
@@ -2238,10 +2242,11 @@ bool CMacro::HandleFunction(CEditView *View, EFunctionCode ID, const VARIANT *Ar
 				}else{
 					varCopy3.Data.lVal = -1;
 				}
-				CClipboard cClipboard(View->GetHwnd());
+				std::optional<CClipboard> clipboard = CClipboard::Open(View->GetHwnd());
+				if (!clipboard) return false;
 				CNativeW mem;
 				CEol cEol = View->m_pcEditDoc->m_cDocEditor.GetNewLineCode();
-				cClipboard.GetClipboradByFormat(mem, varCopy.Data.bstrVal, varCopy2.Data.lVal, varCopy3.Data.lVal, cEol);
+				clipboard->GetClipboradByFormat(mem, varCopy.Data.bstrVal, varCopy2.Data.lVal, varCopy3.Data.lVal, cEol);
 				SysString ret = SysString(mem.GetStringPtr(), mem.GetStringLength());
 				Wrap( &Result )->Receive( ret );
 				return true;
@@ -2260,9 +2265,10 @@ bool CMacro::HandleFunction(CEditView *View, EFunctionCode ID, const VARIANT *Ar
 				}else{
 					varCopy4.Data.lVal = -1;
 				}
-				CClipboard cClipboard(View->GetHwnd());
+				std::optional<CClipboard> clipboard = CClipboard::Open(View->GetHwnd());
+				if (!clipboard) return false;
 				CStringRef cstr(varCopy.Data.bstrVal, ::SysStringLen(varCopy.Data.bstrVal));
-				bool bret = cClipboard.SetClipboradByFormat(cstr, varCopy2.Data.bstrVal, varCopy3.Data.lVal, varCopy4.Data.lVal);
+				bool bret = clipboard->SetClipboradByFormat(cstr, varCopy2.Data.bstrVal, varCopy3.Data.lVal, varCopy4.Data.lVal);
 				Wrap( &Result )->Receive( bret ? 1 : 0 );
 				return true;
 			}

@@ -103,7 +103,7 @@ MATCHER_P2(BytesInGlobalMemory, bytes, size, "") {
 
 class MockCClipboard : public CClipboard {
 public:
-	MockCClipboard(bool openStatus = true) : CClipboard(openStatus) {}
+	MockCClipboard() = default;
 	~MockCClipboard() override {}
 	MOCK_CONST_METHOD2(SetClipboardData, HANDLE (UINT, HANDLE));
 	MOCK_CONST_METHOD1(GetClipboardData, HANDLE (UINT));
@@ -145,13 +145,6 @@ TEST(CClipboard, SetHtmlText1)
 	EXPECT_TRUE(clipboard.SetHtmlText(inputData));
 }
 
-// クリップボードのオープンに失敗していた場合、SetHtmlText は何もせずに失敗する。
-TEST(CClipboard, SetHtmlText2) {
-	MockCClipboard clipboard(false);
-	EXPECT_CALL(clipboard, SetClipboardData(_, _)).Times(0);
-	EXPECT_FALSE(clipboard.SetHtmlText(L"test"));
-}
-
 // SetText のテスト（フォーマット指定なし・矩形選択なし・行選択なし）
 TEST(CClipboard, SetText1) {
 	constexpr std::wstring_view text = L"てすと";
@@ -182,15 +175,6 @@ TEST(CClipboard, SetText3) {
 	EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"MSDEVLineSelect"), ByteValueInGlobalMemory(1)));
 	EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"VisualStudioEditorOperationsLineCutCopyClipboardTag"), ByteValueInGlobalMemory(1)));
 	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), false, true, sakuraFormat));
-}
-
-// SetText のテスト。
-// クリップボードのオープンに失敗していた場合、SetText は何もせずに失敗する。
-TEST(CClipboard, SetText4) {
-	constexpr std::wstring_view text = L"てすと";
-	MockCClipboard clipboard(false);
-	EXPECT_CALL(clipboard, SetClipboardData(_, _)).Times(0);
-	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), false, false, -1));
 }
 
 // SetText のテスト。矩形選択マークの設定に失敗した場合。
@@ -467,14 +451,6 @@ TEST_F(CClipboardGetText, GetClipboardByFormatFailure2) {
 	ON_CALL(clipboard, IsClipboardFormatAvailable(CF_UNICODETEXT)).WillByDefault(Return(FALSE));
 	EXPECT_FALSE(clipboard.GetClipboradByFormat(buffer, L"CF_UNICODETEXT", -2, 0, eol));
 	EXPECT_STREQ(buffer.GetStringPtr(), L"");
-}
-
-// OpenClipboard が失敗していた場合。
-TEST(CClipboard, GetTextNoClipboard) {
-	CNativeW buffer;
-	CEol eol;
-	MockCClipboard clipboard(false);
-	EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol));
 }
 
 struct ClipboardFormatDefinition {

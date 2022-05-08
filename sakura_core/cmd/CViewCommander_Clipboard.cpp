@@ -19,6 +19,7 @@
 */
 
 #include "StdAfx.h"
+#include <optional>
 #include "CViewCommander.h"
 #include "CViewCommander_inline.h"
 #include "view/colors/CColorStrategy.h"
@@ -1024,13 +1025,13 @@ void CViewCommander::Command_COPY_COLOR_HTML(bool bLineNumber)
 	}
 	cmemClip.AppendString(L"</pre>", 6);
 
-	CClipboard cClipboard( GetEditWindow()->GetHwnd() );
-	if(!cClipboard){
+	std::optional<CClipboard> clipboard = CClipboard::Open(GetEditWindow()->GetHwnd());
+	if(!clipboard){
 		return;
 	}
-	cClipboard.Empty();
-	cClipboard.SetHtmlText(cmemClip);
-	cClipboard.SetText(cmemClip.GetStringPtr(), cmemClip.GetStringLength(), false, false);
+	clipboard->Empty();
+	clipboard->SetHtmlText(cmemClip);
+	clipboard->SetText(cmemClip.GetStringPtr(), cmemClip.GetStringLength(), false, false);
 }
 
 /*!
