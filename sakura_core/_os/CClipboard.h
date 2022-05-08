@@ -51,6 +51,7 @@ public:
 	//! @retval std::nullopt クリップボードのオープンに失敗した。
 	static std::optional<CClipboard> Open(HWND hWnd);
 	void Empty(); //!< クリップボードを空にする
+
 	//! テキストを設定する
 	//! @param[in]  pData    コピーするUNICODE文字列
 	//! @param[in]  nDataLen pDataの長さ（文字単位）
@@ -59,8 +60,19 @@ public:
 	void MarkAsColumnSelection() const;
 	//! 行選択を示すダミーデータを設定する。
 	void MarkAsLineSelection() const;
+
 	bool SetHtmlText(const CNativeW& cmemBUf);
-	bool GetText(CNativeW* cmemBuf, bool* pbColumnSelect, bool* pbLineSelect, const CEol& cEol, UINT uGetFormat = (UINT)-1); //!< テキストを取得する
+
+	//! テキストを取得する。
+	//! @param[out] cmemBuf    取得したテキストの格納先
+	//! @param[in]  cEol       HDROP形式のときの改行コード
+	//! @param[in]  uGetFormat クリップボード形式
+	bool GetText(CNativeW* cmemBuf, const CEol& cEol, UINT uGetFormat = (UINT)-1) const;
+	//! 矩形選択の状態を取得する。
+	bool IsColumnSelection() const;
+	//! 行選択の状態を取得する。
+	bool IsLineSelection() const;
+
 	bool IsIncludeClipboradFormat(const wchar_t* pFormatName);
 	bool SetClipboradByFormat(const CStringRef& cstr, const wchar_t* pFormatName, int nMode, int nEndMode);
 	bool GetClipboradByFormat(CNativeW& mem, const wchar_t* pFormatName, int nMode, int nEndMode, const CEol& cEol);

@@ -243,7 +243,7 @@ protected:
 TEST_F(CClipboardGetText, NoSpecifiedFormat1) {
 	ON_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillByDefault(Return(TRUE));
 	ON_CALL(clipboard, GetClipboardData(sakuraFormat)).WillByDefault(Return(sakuraMemory.Get()));
-	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
+	EXPECT_TRUE(clipboard.GetText(&buffer, eol, -1));
 	EXPECT_STREQ(buffer.GetStringPtr(), sakuraText.data());
 }
 
@@ -251,7 +251,7 @@ TEST_F(CClipboardGetText, NoSpecifiedFormat1) {
 TEST_F(CClipboardGetText, NoSpecifiedFormat2) {
 	ON_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillByDefault(Return(FALSE));
 	ON_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillByDefault(Return(unicodeMemory.Get()));
-	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
+	EXPECT_TRUE(clipboard.GetText(&buffer, eol, -1));
 	EXPECT_STREQ(buffer.GetStringPtr(), unicodeText.data());
 }
 
@@ -260,7 +260,7 @@ TEST_F(CClipboardGetText, NoSpecifiedFormat3) {
 	ON_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillByDefault(Return(TRUE));
 	ON_CALL(clipboard, GetClipboardData(sakuraFormat)).WillByDefault(Return(nullptr));
 	ON_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillByDefault(Return(unicodeMemory.Get()));
-	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
+	EXPECT_TRUE(clipboard.GetText(&buffer, eol, -1));
 	EXPECT_STREQ(buffer.GetStringPtr(), unicodeText.data());
 }
 
@@ -269,7 +269,7 @@ TEST_F(CClipboardGetText, NoSpecifiedFormat4) {
 	ON_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillByDefault(Return(FALSE));
 	ON_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillByDefault(Return(nullptr));
 	ON_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).WillByDefault(Return(oemMemory.Get()));
-	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
+	EXPECT_TRUE(clipboard.GetText(&buffer, eol, -1));
 	EXPECT_STREQ(buffer.GetStringPtr(), L"CF_OEMTEXT");
 }
 
@@ -287,7 +287,7 @@ TEST_F(CClipboardGetText, NoSpecifiedFormat5) {
 	ON_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).WillByDefault(Return(nullptr));
 	ON_CALL(clipboard, IsClipboardFormatAvailable(CF_HDROP)).WillByDefault(Return(TRUE));
 	ON_CALL(clipboard, GetClipboardData(CF_HDROP)).WillByDefault(Return(mem.Get()));
-	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
+	EXPECT_TRUE(clipboard.GetText(&buffer, eol, -1));
 	EXPECT_STREQ(buffer.GetStringPtr(), L"CF_HDROP");
 }
 
@@ -297,7 +297,7 @@ TEST_F(CClipboardGetText, NoSpecifiedFormat6) {
 	ON_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillByDefault(Return(nullptr));
 	ON_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).WillByDefault(Return(nullptr));
 	ON_CALL(clipboard, IsClipboardFormatAvailable(CF_HDROP)).WillByDefault(Return(FALSE));
-	EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol, -1));
+	EXPECT_FALSE(clipboard.GetText(&buffer, eol, -1));
 }
 
 // GetText で取得したいデータ形式が指定されている場合、他のデータ形式は無視する。
@@ -306,40 +306,40 @@ TEST_F(CClipboardGetText, NoSpecifiedFormat6) {
 TEST_F(CClipboardGetText, SakuraFormatSuccess) {
 	ON_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillByDefault(Return(TRUE));
 	ON_CALL(clipboard, GetClipboardData(sakuraFormat)).WillByDefault(Return(sakuraMemory.Get()));
-	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, sakuraFormat));
+	EXPECT_TRUE(clipboard.GetText(&buffer, eol, sakuraFormat));
 	EXPECT_STREQ(buffer.GetStringPtr(), sakuraText.data());
 }
 
 // サクラ形式が指定されているが取得に失敗した場合。
 TEST_F(CClipboardGetText, SakuraFormatFailure) {
 	ON_CALL(clipboard, IsClipboardFormatAvailable(sakuraFormat)).WillByDefault(Return(FALSE));
-	EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol, sakuraFormat));
+	EXPECT_FALSE(clipboard.GetText(&buffer, eol, sakuraFormat));
 }
 
 // CF_UNICODETEXTを指定して取得する。
 TEST_F(CClipboardGetText, UnicodeTextSucces) {
 	ON_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillByDefault(Return(unicodeMemory.Get()));
-	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_UNICODETEXT));
+	EXPECT_TRUE(clipboard.GetText(&buffer, eol, CF_UNICODETEXT));
 	EXPECT_STREQ(buffer.GetStringPtr(), unicodeText.data());
 }
 
 // CF_UNICODETEXTが指定されているが取得に失敗した場合。
 TEST_F(CClipboardGetText, UnicodeTextFailure) {
 	ON_CALL(clipboard, GetClipboardData(CF_UNICODETEXT)).WillByDefault(Return(nullptr));
-	EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_UNICODETEXT));
+	EXPECT_FALSE(clipboard.GetText(&buffer, eol, CF_UNICODETEXT));
 }
 
 // CF_OEMTEXTを指定して取得する。
 TEST_F(CClipboardGetText, OemTextSuccess) {
 	ON_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).WillByDefault(Return(oemMemory.Get()));
-	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_OEMTEXT));
+	EXPECT_TRUE(clipboard.GetText(&buffer, eol, CF_OEMTEXT));
 	EXPECT_STREQ(buffer.GetStringPtr(), L"CF_OEMTEXT");
 }
 
 // CF_OEMTEXTが指定されているが取得に失敗した場合。
 TEST_F(CClipboardGetText, OemTextFailure) {
 	ON_CALL(clipboard, GetClipboardData(CF_OEMTEXT)).WillByDefault(Return(nullptr));
-	EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_OEMTEXT));
+	EXPECT_FALSE(clipboard.GetText(&buffer, eol, CF_OEMTEXT));
 }
 
 // CF_HDROP を指定して取得する。
@@ -354,7 +354,7 @@ TEST_F(CClipboardGetText, HDropSuccessSingleFile) {
 	});
 	ON_CALL(clipboard, IsClipboardFormatAvailable(CF_HDROP)).WillByDefault(Return(TRUE));
 	ON_CALL(clipboard, GetClipboardData(CF_HDROP)).WillByDefault(Return(mem.Get()));
-	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_HDROP));
+	EXPECT_TRUE(clipboard.GetText(&buffer, eol, CF_HDROP));
 	EXPECT_STREQ(buffer.GetStringPtr(), L"file");
 }
 
@@ -370,7 +370,7 @@ TEST_F(CClipboardGetText, HDropSuccessMultipleFiles) {
 	});
 	ON_CALL(clipboard, IsClipboardFormatAvailable(CF_HDROP)).WillByDefault(Return(TRUE));
 	ON_CALL(clipboard, GetClipboardData(CF_HDROP)).WillByDefault(Return(mem.Get()));
-	EXPECT_TRUE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_HDROP));
+	EXPECT_TRUE(clipboard.GetText(&buffer, eol, CF_HDROP));
 	EXPECT_STREQ(buffer.GetStringPtr(), L"file1\r\nfile2\r\n");
 }
 
@@ -378,47 +378,42 @@ TEST_F(CClipboardGetText, HDropSuccessMultipleFiles) {
 TEST_F(CClipboardGetText, HDropFailure) {
 	ON_CALL(clipboard, IsClipboardFormatAvailable(CF_HDROP)).WillByDefault(Return(TRUE));
 	ON_CALL(clipboard, GetClipboardData(CF_HDROP)).WillByDefault(Return(nullptr));
-	EXPECT_FALSE(clipboard.GetText(&buffer, nullptr, nullptr, eol, CF_HDROP));
+	EXPECT_FALSE(clipboard.GetText(&buffer, eol, CF_HDROP));
 }
 
 // 矩形選択マーク取得のテスト。
-TEST_F(CClipboardGetText, ColumnSelectIsFalse) {
+TEST(CClipboard, IsColumnSelectionFalse) {
+	MockCClipboard clipboard;
 	ON_CALL(clipboard, EnumClipboardFormats(0)).WillByDefault(Return(0));
-	bool column;
-	clipboard.GetText(&buffer, &column, nullptr, eol);
-	EXPECT_FALSE(column);
+	EXPECT_FALSE(clipboard.IsColumnSelection());
 }
 
-TEST_F(CClipboardGetText, ColumnSelectIsTrue) {
+TEST(CClipboard, IsColumnSelectionTrue) {
+	MockCClipboard clipboard;
 	UINT format = RegisterClipboardFormatW(L"MSDEVColumnSelect");
 	ON_CALL(clipboard, EnumClipboardFormats(0)).WillByDefault(Return(format));
-	bool column;
-	clipboard.GetText(&buffer, &column, nullptr, eol);
-	EXPECT_TRUE(column);
+	EXPECT_TRUE(clipboard.IsColumnSelection());
 }
 
 // 行選択マーク取得のテスト。
-TEST_F(CClipboardGetText, LineSelectIsFalse) {
+TEST(CClipboard, IsLineSelectionFalse) {
+	MockCClipboard clipboard;
 	ON_CALL(clipboard, EnumClipboardFormats(0)).WillByDefault(Return(0));
-	bool line;
-	clipboard.GetText(&buffer, &line, nullptr, eol);
-	EXPECT_FALSE(line);
+	EXPECT_FALSE(clipboard.IsLineSelection());
 }
 
-TEST_F(CClipboardGetText, LineSelectIsTrue1) {
+TEST(CClipboard, IsLineSelectionTrue1) {
+	MockCClipboard clipboard;
 	UINT format = RegisterClipboardFormatW(L"MSDEVLineSelect");
 	ON_CALL(clipboard, EnumClipboardFormats(0)).WillByDefault(Return(format));
-	bool line;
-	clipboard.GetText(&buffer, nullptr, &line, eol);
-	EXPECT_TRUE(line);
+	EXPECT_TRUE(clipboard.IsLineSelection());
 }
 
-TEST_F(CClipboardGetText, LineSelectIsTrue2) {
+TEST(CClipboard, IsLineSelectionTrue2) {
+	MockCClipboard clipboard;
 	UINT format = RegisterClipboardFormatW(L"VisualStudioEditorOperationsLineCutCopyClipboardTag");
 	ON_CALL(clipboard, EnumClipboardFormats(0)).WillByDefault(Return(format));
-	bool line;
-	clipboard.GetText(&buffer, nullptr, &line, eol);
-	EXPECT_TRUE(line);
+	EXPECT_TRUE(clipboard.IsLineSelection());
 }
 
 // GetClipboardByFormatのモード-2のテスト。GetTextと同じ処理が行われることを期待する。

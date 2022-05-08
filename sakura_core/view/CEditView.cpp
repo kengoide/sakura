@@ -2283,12 +2283,6 @@ void CEditView::CopySelectedAllLines(
 */
 bool CEditView::MyGetClipboardData( CNativeW& cmemBuf, bool* pbColumnSelect, bool* pbLineSelect /*= NULL*/ )
 {
-	if(pbColumnSelect)
-		*pbColumnSelect = false;
-
-	if(pbLineSelect)
-		*pbLineSelect = false;
-
 	if(!CClipboard::HasValidData())
 		return false;
 
@@ -2296,12 +2290,13 @@ bool CEditView::MyGetClipboardData( CNativeW& cmemBuf, bool* pbColumnSelect, boo
 	if(!clipboard)
 		return false;
 
-	CEol cEol = m_pcEditDoc->m_cDocEditor.GetNewLineCode();
-	if(!clipboard->GetText(&cmemBuf,pbColumnSelect,pbLineSelect,cEol)){
-		return false;
-	}
+	if(pbColumnSelect)
+		*pbColumnSelect = clipboard->IsColumnSelection();
+	if(pbLineSelect)
+		*pbLineSelect = clipboard->IsLineSelection();
 
-	return true;
+	CEol cEol = m_pcEditDoc->m_cDocEditor.GetNewLineCode();
+	return clipboard->GetText(&cmemBuf, cEol);
 }
 
 /* クリップボードにデータを設定

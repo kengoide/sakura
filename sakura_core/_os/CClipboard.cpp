@@ -194,45 +194,8 @@ bool CClipboard::SetHtmlText(const CNativeW& cmemBUf)
 	return true;
 }
 
-/*! テキストを取得する
-	@param [out] cmemBuf 取得したテキストの格納先
-	@param [in,out] pbColumnSelect 矩形選択形式
-	@param [in,out] pbLineSelect 行選択形式
-	@param [in] cEol HDROP形式のときの改行コード
-	@param [in] uGetFormat クリップボード形式
-*/
-bool CClipboard::GetText(CNativeW* cmemBuf, bool* pbColumnSelect, bool* pbLineSelect, const CEol& cEol, UINT uGetFormat)
+bool CClipboard::GetText(CNativeW* cmemBuf, const CEol& cEol, UINT uGetFormat) const
 {
-	if( NULL != pbColumnSelect ){
-		*pbColumnSelect = false;
-	}
-	if( NULL != pbLineSelect ){
-		*pbLineSelect = false;
-	}
-
-	//矩形選択や行選択のデータがあれば取得
-	if( NULL != pbColumnSelect || NULL != pbLineSelect ){
-		UINT uFormat = 0;
-		while( ( uFormat = EnumClipboardFormats( uFormat ) ) != 0 ){
-			// Jul. 2, 2005 genta : check return value of GetClipboardFormatName
-			WCHAR szFormatName[128];
-			if( ::GetClipboardFormatName( uFormat, szFormatName, _countof(szFormatName) - 1 ) ){
-				if( NULL != pbColumnSelect && 0 == lstrcmpi( L"MSDEVColumnSelect", szFormatName ) ){
-					*pbColumnSelect = true;
-					break;
-				}
-				if( NULL != pbLineSelect && 0 == lstrcmpi( L"MSDEVLineSelect", szFormatName ) ){
-					*pbLineSelect = true;
-					break;
-				}
-				if( NULL != pbLineSelect && 0 == lstrcmpi( L"VisualStudioEditorOperationsLineCutCopyClipboardTag", szFormatName ) ){
-					*pbLineSelect = true;
-					break;
-				}
-			}
-		}
-	}
-
 	//サクラ形式のデータがあれば取得
 	CLIPFORMAT uFormatSakuraClip = CClipboard::GetSakuraFormat();
 	if( (uGetFormat == -1 || uGetFormat == uFormatSakuraClip)
@@ -303,6 +266,37 @@ bool CClipboard::GetText(CNativeW* cmemBuf, bool* pbColumnSelect, bool* pbLineSe
 		}
 	}
 
+	return false;
+}
+
+bool CClipboard::IsColumnSelection() const {
+	UINT uFormat = 0;
+	while( ( uFormat = EnumClipboardFormats( uFormat ) ) != 0 ){
+		// Jul. 2, 2005 genta : check return value of GetClipboardFormatName
+		WCHAR szFormatName[128];
+		if( ::GetClipboardFormatName( uFormat, szFormatName, _countof(szFormatName) - 1 ) ){
+			if( 0 == lstrcmpi( L"MSDEVColumnSelect", szFormatName ) ){
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool CClipboard::IsLineSelection() const {
+	UINT uFormat = 0;
+	while( ( uFormat = EnumClipboardFormats( uFormat ) ) != 0 ){
+		// Jul. 2, 2005 genta : check return value of GetClipboardFormatName
+		WCHAR szFormatName[128];
+		if( ::GetClipboardFormatName( uFormat, szFormatName, _countof(szFormatName) - 1 ) ){
+			if( 0 == lstrcmpi( L"MSDEVLineSelect", szFormatName ) ){
+				return true;
+			}
+			if( 0 == lstrcmpi( L"VisualStudioEditorOperationsLineCutCopyClipboardTag", szFormatName ) ){
+				return true;
+			}
+		}
+	}
 	return false;
 }
 
@@ -506,7 +500,7 @@ bool CClipboard::GetClipboradByFormat(CNativeW& mem, const wchar_t* pFormatName,
 	if( nMode == -2 ){
 		bool bret = false;
 		if( -1 != GetDataType() ){
-			bret = GetText(&mem, NULL, NULL, cEol, uFormat);
+			bret = GetText(&mem, cEol, uFormat);
 			if( !bret ){
 				mem.SetString(L"");
 			}
