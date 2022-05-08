@@ -51,7 +51,14 @@ public:
 	//! @retval std::nullopt クリップボードのオープンに失敗した。
 	static std::optional<CClipboard> Open(HWND hWnd);
 	void Empty(); //!< クリップボードを空にする
-	bool SetText(const wchar_t* pData, int nDataLen, bool bColumnSelect, bool bLineSelect, UINT uFormat = (UINT)-1);   //!< テキストを設定する
+	//! テキストを設定する
+	//! @param[in]  pData    コピーするUNICODE文字列
+	//! @param[in]  nDataLen pDataの長さ（文字単位）
+	bool SetText(const wchar_t* pData, int nDataLen, UINT uFormat = (UINT)-1) const;
+	//! 矩形選択を示すダミーデータを設定する。
+	void MarkAsColumnSelection() const;
+	//! 行選択を示すダミーデータを設定する。
+	void MarkAsLineSelection() const;
 	bool SetHtmlText(const CNativeW& cmemBUf);
 	bool GetText(CNativeW* cmemBuf, bool* pbColumnSelect, bool* pbLineSelect, const CEol& cEol, UINT uGetFormat = (UINT)-1); //!< テキストを取得する
 	bool IsIncludeClipboradFormat(const wchar_t* pFormatName);

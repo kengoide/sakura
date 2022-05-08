@@ -152,45 +152,39 @@ TEST(CClipboard, SetText1) {
 	MockCClipboard clipboard;
 	EXPECT_CALL(clipboard, SetClipboardData(CF_UNICODETEXT, WideStringInGlobalMemory(text)));
 	EXPECT_CALL(clipboard, SetClipboardData(sakuraFormat, SakuraFormatInGlobalMemory(text)));
-	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), false, false, -1));
+	EXPECT_TRUE(clipboard.SetText(text.data(), text.length(), -1));
 }
 
-// SetText のテスト（CF_UNICODETEXTのみ・矩形選択あり・行選択なし）
+// SetText のテスト（CF_UNICODETEXTのみ）
 TEST(CClipboard, SetText2) {
 	constexpr std::wstring_view text = L"てすと";
 	MockCClipboard clipboard;
 	ON_CALL(clipboard, GlobalAlloc(_, _)).WillByDefault(Invoke(::GlobalAlloc));
 	EXPECT_CALL(clipboard, SetClipboardData(CF_UNICODETEXT, WideStringInGlobalMemory(text)));
-	EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"MSDEVColumnSelect"), ByteValueInGlobalMemory(0)));
-	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), true, false, CF_UNICODETEXT));
+	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), CF_UNICODETEXT));
 }
 
-// SetText のテスト（サクラ独自形式のみ・矩形選択なし・行選択あり）
+// SetText のテスト（サクラ独自形式のみ）
 TEST(CClipboard, SetText3) {
 	constexpr std::wstring_view text = L"てすと";
 	const CLIPFORMAT sakuraFormat = CClipboard::GetSakuraFormat();
 	MockCClipboard clipboard;
 	ON_CALL(clipboard, GlobalAlloc(_, _)).WillByDefault(Invoke(::GlobalAlloc));
 	EXPECT_CALL(clipboard, SetClipboardData(sakuraFormat, SakuraFormatInGlobalMemory(text)));
+	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), sakuraFormat));
+}
+
+TEST(CClipboard, MarkAsColumnSelection) {
+	MockCClipboard clipboard;
+	EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"MSDEVColumnSelect"), ByteValueInGlobalMemory(0)));
+	clipboard.MarkAsColumnSelection();
+}
+
+TEST(CClipboard, MarkAsLineSelection) {
+	MockCClipboard clipboard;
 	EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"MSDEVLineSelect"), ByteValueInGlobalMemory(1)));
 	EXPECT_CALL(clipboard, SetClipboardData(::RegisterClipboardFormat(L"VisualStudioEditorOperationsLineCutCopyClipboardTag"), ByteValueInGlobalMemory(1)));
-	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), false, true, sakuraFormat));
-}
-
-// SetText のテスト。矩形選択マークの設定に失敗した場合。
-TEST(CClipboard, SetText5) {
-	constexpr std::wstring_view text = L"てすと";
-	MockCClipboard clipboard;
-	ON_CALL(clipboard, GlobalAlloc(_, 1)).WillByDefault(Return(nullptr));
-	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), true, false, 0));
-}
-
-// SetText のテスト。行選択マークの設定に失敗した場合。
-TEST(CClipboard, SetText6) {
-	constexpr std::wstring_view text = L"てすと";
-	MockCClipboard clipboard;
-	ON_CALL(clipboard, GlobalAlloc(_, 1)).WillByDefault(Return(nullptr));
-	EXPECT_FALSE(clipboard.SetText(text.data(), text.length(), false, true, 0));
+	clipboard.MarkAsLineSelection();
 }
 
 // グローバルメモリを RAII で管理する簡易ヘルパークラス

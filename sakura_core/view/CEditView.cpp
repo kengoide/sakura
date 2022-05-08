@@ -2315,7 +2315,11 @@ bool CEditView::MySetClipboardData( const WCHAR* pszText, int nTextLen, bool bCo
 		return false;
 	}
 	clipboard->Empty();
-	return clipboard->SetText(pszText,nTextLen,bColumnSelect,bLineSelect);
+	if (bColumnSelect)
+		clipboard->MarkAsColumnSelection();
+	if (bLineSelect)
+		clipboard->MarkAsLineSelection();
+	return clipboard->SetText(pszText, nTextLen);
 }
 
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //

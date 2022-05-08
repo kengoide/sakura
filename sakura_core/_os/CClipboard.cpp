@@ -51,29 +51,8 @@ void CClipboard::Empty()
 	EmptyClipboard();
 }
 
-bool CClipboard::SetText(
-	const wchar_t*	pData,			//!< コピーするUNICODE文字列
-	int				nDataLen,		//!< pDataの長さ（文字単位）
-	bool			bColumnSelect,
-	bool			bLineSelect,
-	UINT			uFormat
-)
+bool CClipboard::SetText(const wchar_t*	pData, int nDataLen, UINT uFormat) const
 {
-	/*
-	// テキスト形式のデータ (CF_OEMTEXT)
-	HGLOBAL hgClipText = ::GlobalAlloc(
-		GMEM_MOVEABLE | GMEM_DDESHARE,
-		nTextLen + 1
-	);
-	if( hgClipText ){
-		char* pszClip = static_cast<char*>(::GlobalLock(hgClipText));
-		memcpy( pszClip, pszText, nTextLen );
-		pszClip[nTextLen] = '\0';
-		::GlobalUnlock( hgClipText );
-		::SetClipboardData( CF_OEMTEXT, hgClipText );
-	}
-	*/
-
 	// UNICODE形式のデータ (CF_UNICODETEXT)
 	HGLOBAL hgClipText = NULL;
 	bool bUnicodeText = (uFormat == (UINT)-1 || uFormat == CF_UNICODETEXT);
@@ -127,68 +106,53 @@ bool CClipboard::SetText(
 	}
 	//	1回しか通らない. breakでここまで飛ぶ
 
-	// 矩形選択を示すダミーデータ
-	HGLOBAL hgClipMSDEVColumn = NULL;
-	if( bColumnSelect ){
-		UINT uFormat = ::RegisterClipboardFormat( L"MSDEVColumnSelect" );
-		if( 0 != uFormat ){
-			hgClipMSDEVColumn = GlobalAlloc(
-				GMEM_MOVEABLE | GMEM_DDESHARE,
-				1
-			);
-			if( hgClipMSDEVColumn ){
-				BYTE* pClip = static_cast<BYTE*>(::GlobalLock(hgClipMSDEVColumn));
-				pClip[0] = 0;
-				::GlobalUnlock( hgClipMSDEVColumn );
-				SetClipboardData( uFormat, hgClipMSDEVColumn );
-			}
-		}
-	}
-
-	/* 行選択を示すダミーデータ */
-	HGLOBAL hgClipMSDEVLine = NULL;		// VS2008 以前の形式
-	if( bLineSelect ){
-		UINT uFormat = ::RegisterClipboardFormat( L"MSDEVLineSelect" );
-		if( 0 != uFormat ){
-			hgClipMSDEVLine = GlobalAlloc(
-				GMEM_MOVEABLE | GMEM_DDESHARE,
-				1
-			);
-			if( hgClipMSDEVLine ){
-				BYTE* pClip = (BYTE*)::GlobalLock( hgClipMSDEVLine );
-				pClip[0] = 0x01;
-				::GlobalUnlock( hgClipMSDEVLine );
-				SetClipboardData( uFormat, hgClipMSDEVLine );
-			}
-		}
-	}
-	HGLOBAL hgClipMSDEVLine2 = NULL;	// VS2010 形式
-	if( bLineSelect ){
-		UINT uFormat = ::RegisterClipboardFormat( L"VisualStudioEditorOperationsLineCutCopyClipboardTag" );
-		if( 0 != uFormat ){
-			hgClipMSDEVLine2 = GlobalAlloc(
-				GMEM_MOVEABLE | GMEM_DDESHARE,
-				1
-			);
-			if( hgClipMSDEVLine2 ){
-				BYTE* pClip = (BYTE*)::GlobalLock( hgClipMSDEVLine2 );
-				pClip[0] = 0x01;	// ※ ClipSpy で調べるとデータはこれとは違うが内容には無関係に動くっぽい
-				::GlobalUnlock( hgClipMSDEVLine2 );
-				SetClipboardData( uFormat, hgClipMSDEVLine2 );
-			}
-		}
-	}
-
-	if( bColumnSelect && !hgClipMSDEVColumn ){
-		return false;
-	}
-	if( bLineSelect && !(hgClipMSDEVLine && hgClipMSDEVLine2) ){
-		return false;
-	}
 	if( !(hgClipText && hgClipSakura) ){
 		return false;
 	}
 	return true;
+}
+
+void CClipboard::MarkAsColumnSelection() const
+{
+	UINT uFormat = ::RegisterClipboardFormat( L"MSDEVColumnSelect" );
+	if (uFormat == 0)
+		return;
+
+	HGLOBAL hgClipMSDEVColumn = ::GlobalAlloc(GMEM_MOVEABLE, 1);
+	if (!hgClipMSDEVColumn)
+		return;
+
+	BYTE* pClip = static_cast<BYTE*>(::GlobalLock(hgClipMSDEVColumn));
+	pClip[0] = 0;
+	::GlobalUnlock( hgClipMSDEVColumn );
+	SetClipboardData( uFormat, hgClipMSDEVColumn );
+}
+
+void CClipboard::MarkAsLineSelection() const
+{
+	// VS2008 以前の形式
+	UINT uFormat = ::RegisterClipboardFormat( L"MSDEVLineSelect" );
+	if( 0 != uFormat ){
+		HGLOBAL hgClipMSDEVLine = ::GlobalAlloc(GMEM_MOVEABLE, 1);
+		if( hgClipMSDEVLine ){
+			BYTE* pClip = (BYTE*)::GlobalLock( hgClipMSDEVLine );
+			pClip[0] = 0x01;
+			::GlobalUnlock( hgClipMSDEVLine );
+			SetClipboardData( uFormat, hgClipMSDEVLine );
+		}
+	}
+
+	// VS2010 形式
+	uFormat = ::RegisterClipboardFormat( L"VisualStudioEditorOperationsLineCutCopyClipboardTag" );
+	if( 0 != uFormat ){
+		HGLOBAL hgClipMSDEVLine2 = ::GlobalAlloc(GMEM_MOVEABLE, 1);
+		if( hgClipMSDEVLine2 ){
+			BYTE* pClip = (BYTE*)::GlobalLock( hgClipMSDEVLine2 );
+			pClip[0] = 0x01;	// ※ ClipSpy で調べるとデータはこれとは違うが内容には無関係に動くっぽい
+			::GlobalUnlock( hgClipMSDEVLine2 );
+			SetClipboardData( uFormat, hgClipMSDEVLine2 );
+		}
+	}
 }
 
 bool CClipboard::SetHtmlText(const CNativeW& cmemBUf)
@@ -432,7 +396,7 @@ bool CClipboard::SetClipboradByFormat(const CStringRef& cstr, const wchar_t* pFo
 	}
 	if( nMode == -2 ){
 		if( uFormat == CF_UNICODETEXT || uFormat == GetSakuraFormat() ){
-			return SetText(cstr.GetPtr(), cstr.GetLength(), false, false, uFormat);
+			return SetText(cstr.GetPtr(), cstr.GetLength(), uFormat);
 		}
 		return false;
 	}

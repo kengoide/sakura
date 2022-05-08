@@ -1031,7 +1031,7 @@ void CViewCommander::Command_COPY_COLOR_HTML(bool bLineNumber)
 	}
 	clipboard->Empty();
 	clipboard->SetHtmlText(cmemClip);
-	clipboard->SetText(cmemClip.GetStringPtr(), cmemClip.GetStringLength(), false, false);
+	clipboard->SetText(cmemClip.GetStringPtr(), cmemClip.GetStringLength());
 }
 
 /*!
