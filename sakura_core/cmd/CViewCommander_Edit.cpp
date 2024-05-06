@@ -42,8 +42,8 @@ void CViewCommander::Command_WCHAR( wchar_t wcChar, bool bConvertEOL )
 
 	GetDocument()->m_cDocEditor.SetModified(true,true);	//	Jan. 22, 2002 genta
 
-	if( m_pCommanderView->m_bHideMouse && 0 <= m_pCommanderView->m_nMousePouse ){
-		m_pCommanderView->m_nMousePouse = -1;
+	if( m_pCommanderView->m_bHideMouse && 0 <= m_pCommanderView->m_nMousePause ){
+		m_pCommanderView->m_nMousePause = -1;
 		::SetCursor( NULL );
 	}
 
@@ -176,7 +176,7 @@ end_of_for:;
 
 			if( plugs.size() > 0 ){
 				assert_warning( 1 == plugs.size() );
-				//インタフェースオブジェクト準備
+				//インターフェースオブジェクト準備
 				CWSHIfObj::List params;
 				CSmartIndentIfObj* objIndent = new CSmartIndentIfObj( wcChar );	//スマートインデントオブジェクト
 				objIndent->AddRef();
@@ -234,8 +234,8 @@ void CViewCommander::Command_IME_CHAR( WORD wChar )
 	}
 	GetDocument()->m_cDocEditor.SetModified(true,true);	//	Jan. 22, 2002 genta
 
- 	if( m_pCommanderView->m_bHideMouse && 0 <= m_pCommanderView->m_nMousePouse ){
-		m_pCommanderView->m_nMousePouse = -1;
+	if( m_pCommanderView->m_bHideMouse && 0 <= m_pCommanderView->m_nMousePause ){
+		m_pCommanderView->m_nMousePause = -1;
 		::SetCursor( NULL );
 	}
 

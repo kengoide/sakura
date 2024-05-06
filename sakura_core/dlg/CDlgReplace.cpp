@@ -245,7 +245,7 @@ int CDlgReplace::GetData( void )
 
 	/* 置換後文字列 */
 	if( ::IsDlgButtonChecked( GetHwnd(), IDC_RADIO_LINEDELETE ) ){
-		m_strText2 = L"";
+		m_strText2.clear();
 	}else{
 		ApiWrap::DlgItem_GetText( GetHwnd(), IDC_COMBO_TEXT2, m_strText2 );
 	}
@@ -331,7 +331,7 @@ BOOL CDlgReplace::OnInitDialog( HWND hwndDlg, WPARAM wParam, LPARAM lParam )
 	//	Combo_LimitText( GetItemHwnd( IDC_COMBO_TEXT ), _MAX_PATH - 1 );
 	//	Combo_LimitText( GetItemHwnd( IDC_COMBO_TEXT2 ), _MAX_PATH - 1 );
 
-	/* コンボボックスのユーザー インターフェイスを拡張インターフェースにする */
+	/* コンボボックスのユーザー インターフェースを拡張インターフェースにする */
 	Combo_SetExtendedUI( GetItemHwnd( IDC_COMBO_TEXT ), TRUE );
 	Combo_SetExtendedUI( GetItemHwnd( IDC_COMBO_TEXT2 ), TRUE );
 

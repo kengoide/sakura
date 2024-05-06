@@ -34,6 +34,11 @@
 #define SAKURA_MESSAGEBOXF_542C25FF_34EB_4920_AC1A_DA32919E101B_H_
 #pragma once
 
+#include <tchar.h>
+#include <Windows.h>
+
+#include <cstdarg>
+
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 //                 メッセージボックス：実装                    //
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
@@ -47,7 +52,7 @@ int Wrap_MessageBox(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
 int VMessageBoxF( HWND hwndOwner, UINT uType, LPCWSTR lpCaption, LPCWSTR lpText, va_list& v );
 int MessageBoxF ( HWND hwndOwner, UINT uType, LPCWSTR lpCaption, LPCWSTR lpText, ... );
 
-//                ユーザ用メッセージボックス                   //
+//                ユーザー用メッセージボックス                   //
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 
 //デバッグ用メッセージボックス

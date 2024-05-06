@@ -45,7 +45,7 @@ typedef int PlugId;
 #define PII_L10NDIR					L"local"
 #define PII_L10NFILEBASE			L"plugin_"
 #define PII_L10NFILEEXT				L".def"
-//オプションファイル拡張子（オプションファイル＝個別フォルダ名＋拡張子）
+//オプションファイル拡張子（オプションファイル＝個別フォルダー名＋拡張子）
 #define PII_OPTFILEEXT				L".ini"
 
 //プラグイン定義ファイル・キー文字列
@@ -185,22 +185,20 @@ public:
 	//コンストラクタ
 public:
 	CPluginOption( CPlugin* parent, wstring sLabel, wstring sSection, wstring sKey, wstring sType, wstring sSelects, wstring sDefaultVal, int index) 
+		: m_sLabel(sLabel), m_sSection(sSection), m_sKey(sKey)
 	{
 		m_parent	= parent;
-		m_sLabel	= sLabel;
-		m_sSection	= sSection;
-		m_sKey		= sKey;
 		// 小文字変換
 		std::transform( sType.begin (), sType.end (), sType.begin (), my_towlower2 );
-		m_sType		= sType;
-		m_sSelects	= sSelects;
-		m_sDefaultVal = sDefaultVal;
+		m_sType		= std::move(sType);
+		m_sSelects	= std::move(sSelects);
+		m_sDefaultVal = std::move(sDefaultVal);
 		m_index		= index;
 	}
 
 	//デストラクタ
 public:
-	~CPluginOption() {}
+	~CPluginOption() = default;
 
 	//操作
 public:
@@ -277,10 +275,10 @@ protected:
 
 	//属性
 public:
-	wstring GetFilePath( const wstring& sFileName ) const;				//プラグインフォルダ基準の相対パスをフルパスに変換
+	wstring GetFilePath( const wstring& sFileName ) const;				//プラグインフォルダー基準の相対パスをフルパスに変換
 	wstring GetPluginDefPath() const{ return GetFilePath( PII_FILENAME ); }	//プラグイン定義ファイルのパス
 	wstring GetOptionPath() const{ return m_sOptionDir + PII_OPTFILEEXT; }	//オプションファイルのパス
-	wstring GetFolderName() const;	//プラグインのフォルダ名を取得
+	wstring GetFolderName() const;	//プラグインのフォルダー名を取得
 	virtual CPlug::Array GetPlugs() const = 0;								//プラグの一覧
 
 	//メンバ変数

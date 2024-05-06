@@ -122,8 +122,7 @@ public:
 		, m_nLineNum(0)
 	{
 	}
-	~CFileLoadOrWnd(){
-	}
+	~CFileLoadOrWnd() = default;
 	ECodeType FileOpen(const WCHAR* pszFile, bool bBigFile, ECodeType charCode, int nFlag)
 	{
 		if( m_hWnd ){
@@ -259,7 +258,7 @@ std::wstring CGrepAgent::ChopYen( const std::wstring& str )
 	std::wstring dst = str;
 	size_t nPathLen = dst.length();
 
-	// 最後のフォルダ区切り記号を削除する
+	// 最後のフォルダー区切り記号を削除する
 	// [A:\]などのルートであっても削除
 	for(size_t i = 0; i < nPathLen; i++ ){
 #ifdef _MBCS
@@ -355,7 +354,7 @@ int GetHwndTitle(HWND& hWndTarget, CNativeW* pmemTitle, WCHAR* pszWindowName, WC
 
   @param[in] pcmGrepKey 検索パターン
   @param[in] pcmGrepFile 検索対象ファイルパターン(!で除外指定))
-  @param[in] pcmGrepFolder 検索対象フォルダ
+  @param[in] pcmGrepFolder 検索対象フォルダー
 
   @date 2008.12.07 nasukoji	ファイル名パターンのバッファオーバラン対策
   @date 2008.12.13 genta 検索パターンのバッファオーバラン対策
@@ -626,9 +625,9 @@ DWORD CGrepAgent::DoGrep(
 	cmemMessage += cmemWork;
 	cmemMessage.AppendString( L"\r\n" );
 
-	cmemMessage.AppendString( LS( STR_GREP_SEARCH_FOLDER ) );	//L"フォルダ   "
+	cmemMessage.AppendString( LS( STR_GREP_SEARCH_FOLDER ) );	//L"フォルダー   "
 	{
-		// フォルダリストから末尾のバックスラッシュを削ったパスリストを作る
+		// フォルダーリストから末尾のバックスラッシュを削ったパスリストを作る
 		std::list<std::wstring> folders;
 		std::transform( vPaths.cbegin(), vPaths.cend(), std::back_inserter( folders ), []( const auto& path ) { return ChopYen( path ); } );
 		std::wstring strPatterns = FormatPathList( folders );
@@ -645,9 +644,9 @@ DWORD CGrepAgent::DoGrep(
 	}
 	cmemMessage.AppendString(L"\r\n");
 
-	cmemMessage.AppendString(LS(STR_GREP_EXCLUDE_FOLDER));	//L"除外フォルダ   "
+	cmemMessage.AppendString(LS(STR_GREP_EXCLUDE_FOLDER));	//L"除外フォルダー   "
 	{
-		// 除外フォルダの解析済みリストを取得する
+		// 除外フォルダーの解析済みリストを取得する
 		auto excludeFolders = cGrepEnumKeys.GetExcludeFolders();
 		std::wstring strPatterns = FormatPathList( excludeFolders );
 		cmemMessage.AppendString( strPatterns.c_str(), strPatterns.length() );
@@ -656,9 +655,9 @@ DWORD CGrepAgent::DoGrep(
 
 	const wchar_t*	pszWork;
 	if( sGrepOption.bGrepSubFolder ){
-		pszWork = LS( STR_GREP_SUBFOLDER_YES );	//L"    (サブフォルダも検索)\r\n"
+		pszWork = LS( STR_GREP_SUBFOLDER_YES );	//L"    (サブフォルダーも検索)\r\n"
 	}else{
-		pszWork = LS( STR_GREP_SUBFOLDER_NO );	//L"    (サブフォルダを検索しない)\r\n"
+		pszWork = LS( STR_GREP_SUBFOLDER_NO );	//L"    (サブフォルダーを検索しない)\r\n"
 	}
 	cmemMessage.AppendString( pszWork );
 
@@ -874,7 +873,7 @@ DWORD CGrepAgent::DoGrep(
 		pCEditWnd->RedrawAllViews( NULL );
 
 	if( !bGrepCurFolder ){
-		// 現行フォルダを検索したフォルダに変更
+		// 現行フォルダーを検索したフォルダーに変更
 		if( 0 < vPaths.size() ){
 			::SetCurrentDirectory( vPaths[0].c_str() );
 		}
@@ -886,7 +885,7 @@ DWORD CGrepAgent::DoGrep(
 /*! @brief Grep実行
 
 	@date 2001.06.27 genta	正規表現ライブラリの差し替え
-	@date 2003.06.23 Moca   サブフォルダ→ファイルだったのをファイル→サブフォルダの順に変更
+	@date 2003.06.23 Moca   サブフォルダー→ファイルだったのをファイル→サブフォルダーの順に変更
 	@date 2003.06.23 Moca   ファイル名から""を取り除くように
 	@date 2003.03.27 みく   除外ファイル指定の導入と重複検索防止の追加．
 		大部分が変更されたため，個別の変更点記入は無し．
@@ -898,15 +897,15 @@ int CGrepAgent::DoGrepTree(
 	const CNativeW&			cmGrepReplace,
 	CGrepEnumKeys&			cGrepEnumKeys,		//!< [in] 検索対象ファイルパターン
 	CGrepEnumFiles&			cGrepExceptAbsFiles,	//!< [in] 除外ファイル絶対パス
-	CGrepEnumFolders&		cGrepExceptAbsFolders,	//!< [in] 除外フォルダ絶対パス
+	CGrepEnumFolders&		cGrepExceptAbsFolders,	//!< [in] 除外フォルダー絶対パス
 	const WCHAR*			pszPath,			//!< [in] 検索対象パス
-	const WCHAR*			pszBasePath,		//!< [in] 検索対象パス(ベースフォルダ)
+	const WCHAR*			pszBasePath,		//!< [in] 検索対象パス(ベースフォルダー)
 	const SSearchOption&	sSearchOption,		//!< [in] 検索オプション
 	const SGrepOption&		sGrepOption,		//!< [in] Grepオプション
 	const CSearchStringPattern& pattern,		//!< [in] 検索パターン
 	CBregexp*				pRegexp,			//!< [in] 正規表現コンパイルデータ。既にコンパイルされている必要がある
 	int						nNest,				//!< [in] ネストレベル
-	bool&					bOutputBaseFolder,	//!< [i/o] ベースフォルダ名出力
+	bool&					bOutputBaseFolder,	//!< [i/o] ベースフォルダー名出力
 	int*					pnHitCount,			//!< [i/o] ヒット数の合計
 	CNativeW&				cmemMessage,		//!< [i/o] Grep結果文字列
 	CNativeW&				cUnicodeBuffer
@@ -924,7 +923,7 @@ int CGrepAgent::DoGrepTree(
 	cGrepEnumFilterFiles.Enumerates( pszPath, cGrepEnumKeys, cGrepEnumOptions, cGrepExceptAbsFiles );
 
 	/*
-	 * カレントフォルダのファイルを探索する。
+	 * カレントフォルダーのファイルを探索する。
 	 */
 	count = cGrepEnumFilterFiles.GetCount();
 	for( i = 0; i < count; i++ ){
@@ -1034,7 +1033,7 @@ int CGrepAgent::DoGrepTree(
 	}
 
 	/*
-	 * サブフォルダを検索する。
+	 * サブフォルダーを検索する。
 	 */
 	if( sGrepOption.bGrepSubFolder ){
 		CGrepEnumOptions cGrepEnumOptionsDir;
@@ -1048,7 +1047,7 @@ int CGrepAgent::DoGrepTree(
 			DWORD dwNow = ::GetTickCount();
 			if( dwNow - m_dwTickUICheck > UICHECK_INTERVAL_MILLISEC ) {
 				m_dwTickUICheck = dwNow;
-				//サブフォルダの探索を再帰呼び出し。
+				//サブフォルダーの探索を再帰呼び出し。
 				/* 処理中のユーザー操作を可能にする */
 				if( !::BlockingHook( pcDlgCancel->GetHwnd() ) ){
 					goto cancel_return;
@@ -1063,8 +1062,8 @@ int CGrepAgent::DoGrepTree(
 				);
 			}
 
-			//フォルダ名を作成する。
-			// 2010.08.01 キャンセルでメモリーリークしてました
+			//フォルダー名を作成する。
+			// 2010.08.01 キャンセルでメモリリークしてました
 			std::wstring currentPath  = pszPath;
 			currentPath += L"\\";
 			currentPath += lpFileName;
@@ -1092,7 +1091,7 @@ int CGrepAgent::DoGrepTree(
 			if( -1 == nGrepTreeResult ){
 				goto cancel_return;
 			}
-			::DlgItem_SetText( pcDlgCancel->GetHwnd(), IDC_STATIC_CURPATH, pszPath );	//@@@ 2002.01.10 add サブフォルダから戻ってきたら...
+			::DlgItem_SetText( pcDlgCancel->GetHwnd(), IDC_STATIC_CURPATH, pszPath );	//@@@ 2002.01.10 add サブフォルダーから戻ってきたら...
 		}
 	}
 
@@ -1319,8 +1318,8 @@ int CGrepAgent::DoGrepFile(
 	CBregexp*				pRegexp,			//!< [in] 正規表現コンパイルデータ。既にコンパイルされている必要がある
 	int*					pnHitCount,			//!< [i/o] ヒット数の合計．元々の値に見つかった数を加算して返す．
 	const WCHAR*			pszFullPath,		//!< [in] 処理対象ファイルパス C:\Folder\SubFolder\File.ext
-	const WCHAR*			pszBaseFolder,		//!< [in] 検索フォルダ C:\Folder
-	const WCHAR*			pszFolder,			//!< [in] サブフォルダ SubFolder (!bGrepSeparateFolder) または C:\Folder\SubFolder (!bGrepSeparateFolder)
+	const WCHAR*			pszBaseFolder,		//!< [in] 検索フォルダー C:\Folder
+	const WCHAR*			pszFolder,			//!< [in] サブフォルダー SubFolder (!bGrepSeparateFolder) または C:\Folder\SubFolder (!bGrepSeparateFolder)
 	const WCHAR*			pszRelPath,			//!< [in] 相対パス File.ext(bGrepSeparateFolder) または  SubFolder\File.ext(!bGrepSeparateFolder)
 	bool&					bOutputBaseFolder,	//!< 
 	bool&					bOutputFolderName,	//!< 
@@ -1738,9 +1737,10 @@ public:
 
 class CWriteData{
 public:
-	CWriteData(int& hit, LPCWSTR name, ECodeType code_, bool bBom_, bool bOldSave_, CNativeW& message)
+	CWriteData(int& hit, LPCWSTR name_, ECodeType code_, bool bBom_, bool bOldSave_, CNativeW& message)
 		:nHitCount(hit)
-		,fileName(name)
+		,fileName(name_)
+		,name(name_)
 		,code(code_)
 		,bBom(bBom_)
 		,bOldSave(bOldSave_)
@@ -1748,7 +1748,9 @@ public:
 		,out(NULL)
 		,pcCodeBase(CCodeFactory::CreateCodeBase(code_,0))
 		,memMessage(message)
-		{}
+	{
+		name += L".skrnew";
+	}
 	void AppendBuffer(const CNativeW& strLine)
 	{
 		if( !out ){
@@ -1765,8 +1767,6 @@ public:
 	void OutputHead()
 	{
 		if( !out ){
-			std::wstring name = fileName;
-			name += L".skrnew";
 			try{
 				out = new CBinaryOutputStream(name.c_str(), true);
 			}catch( const CError_FileOpen& ){
@@ -1819,8 +1819,6 @@ public:
 					return;
 				}
 			}
-			std::wstring name(fileName);
-			name += L".skrnew";
 			if( FALSE == ::MoveFile( name.c_str(), fileName ) ){
 				memMessage.AppendString( LS(STR_GREP_REP_ERR_REPLACE) );
 				memMessage.AppendStringF( L"[%s]\r\n", fileName );
@@ -1835,14 +1833,13 @@ public:
 			out->Close();
 			delete out;
 			out = NULL;
-			std::wstring name(fileName);
-			name += L".skrnew";
 			::DeleteFile( name.c_str() );
 		}
 	}
 private:
 	int& nHitCount;
 	LPCWSTR fileName;
+	std::wstring name;
 	ECodeType code;
 	bool bBom;
 	bool bOldSave;

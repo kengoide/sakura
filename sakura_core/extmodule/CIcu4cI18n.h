@@ -39,7 +39,7 @@ typedef enum UErrorCode {
 /*!
  * ICU4C の i18n ライブラリ(icuin.dll) をラップするクラス
  */
-class CIcu4cI18n final : public CDllImp
+class CIcu4cI18n : public CDllImp
 {
 	// DLL関数型定義
 	typedef UCharsetDetector*		(__cdecl *ucsdet_open_t)(UErrorCode *status);
@@ -59,7 +59,7 @@ public:
 	CIcu4cI18n() noexcept;
 
 protected:
-	// CDllImpインタフェース
+	// CDllImpインターフェース
 	LPCWSTR GetDllNameImp(int nIndex) override;
 	bool InitDllImp() override;
 

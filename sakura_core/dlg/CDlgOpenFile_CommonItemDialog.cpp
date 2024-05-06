@@ -439,7 +439,7 @@ void CDlgOpenFile_CommonItemDialog::Create(
 		m_strDefaultWildCard = pszUserWildCard;
 	}
 
-	/* 「開く」での初期フォルダ */
+	/* 「開く」での初期フォルダー */
 	if( pszDefaultPath && pszDefaultPath[0] != L'\0' ){	//現在編集中のファイルのパス	//@@@ 2002.04.18
 		WCHAR szDrive[_MAX_DRIVE];
 		WCHAR szDir[_MAX_DIR];
@@ -462,6 +462,7 @@ bool CDlgOpenFile_CommonItemDialog::DoModal_GetOpenFileName( WCHAR* pszPath, EFi
 {
 	//	2003.05.12 MIK
 	std::vector<COMDLG_FILTERSPEC> specs;
+	specs.reserve(7);
 	std::vector<std::wstring> strs;
 	strs.reserve(8);
 
@@ -610,7 +611,7 @@ HRESULT CDlgOpenFile_CommonItemDialog::DoModalOpenDlgImpl1(
 #define RETURN_IF_FAILED if (FAILED(hr)) { /* __debugbreak(); */ return hr; }
 	FILEOPENDIALOGOPTIONS options;
 	hr = pFileOpenDialog->GetOptions(&options); RETURN_IF_FAILED
-	options |= FOS_NOCHANGEDIR | FOS_FORCEFILESYSTEM | FOS_FILEMUSTEXIST | FOS_CREATEPROMPT;
+	options |= FOS_NOCHANGEDIR | FOS_FORCEFILESYSTEM | FOS_FILEMUSTEXIST;
 	if (bAllowMultiSelect) {
 		options |= FOS_ALLOWMULTISELECT;
 	}

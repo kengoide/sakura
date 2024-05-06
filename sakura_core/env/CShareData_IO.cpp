@@ -362,7 +362,7 @@ void CShareData_IO::ShareData_IO_Grep( CDataProfile& cProfile )
 		cProfile.IOProfileData(pszSecName, szKeyName, pShare->m_sSearchKeywords.m_aExcludeFiles[i]);
 	}
 
-	/* 除外フォルダパターン */
+	/* 除外フォルダーパターン */
 	cProfile.IOProfileData(pszSecName, LTEXT("_GREPEXCLUDEFOLDER_Counts"), pShare->m_sSearchKeywords.m_aExcludeFolders._GetSizeRef());
 	pShare->m_sSearchKeywords.m_aExcludeFolders.SetSizeLimit();
 	nSize = pShare->m_sSearchKeywords.m_aExcludeFolders.size();
@@ -383,9 +383,9 @@ void CShareData_IO::ShareData_IO_Folders( CDataProfile& cProfile )
 	DLLSHAREDATA* pShare = &GetDllShareData();
 
 	const WCHAR* pszSecName = LTEXT("Folders");
-	/* マクロ用フォルダ */
+	/* マクロ用フォルダー */
 	cProfile.IOProfileData( pszSecName, LTEXT("szMACROFOLDER"), pShare->m_Common.m_sMacro.m_szMACROFOLDER );
-	/* 設定インポート用フォルダ */
+	/* 設定インポート用フォルダー */
 	cProfile.IOProfileData( pszSecName, LTEXT("szIMPORTFOLDER"), pShare->m_sHistory.m_szIMPORTFOLDER );
 }
 
@@ -559,7 +559,7 @@ void CShareData_IO::ShareData_IO_Common( CDataProfile& cProfile )
 		int	nDummy;
 		int	nCharChars;
 		nDummy = wcslen( common.m_sBackup.m_szBackUpFolder );
-		/* フォルダの最後が「半角かつ'\\'」でない場合は、付加する */
+		/* フォルダーの最後が「半角かつ'\\'」でない場合は、付加する */
 		nCharChars = &common.m_sBackup.m_szBackUpFolder[nDummy]
 			- CNativeW::GetCharPrev( common.m_sBackup.m_szBackUpFolder, nDummy, &common.m_sBackup.m_szBackUpFolder[nDummy] );
 		if( 1 == nCharChars && common.m_sBackup.m_szBackUpFolder[nDummy - 1] == '\\' ){
@@ -572,7 +572,7 @@ void CShareData_IO::ShareData_IO_Common( CDataProfile& cProfile )
 		int	nDummy;
 		int	nCharChars;
 		nDummy = wcslen( common.m_sBackup.m_szBackUpFolder );
-		/* フォルダの最後が「半角かつ'\\'」でない場合は、付加する */
+		/* フォルダーの最後が「半角かつ'\\'」でない場合は、付加する */
 		nCharChars = &common.m_sBackup.m_szBackUpFolder[nDummy]
 			- CNativeW::GetCharPrev( common.m_sBackup.m_szBackUpFolder, nDummy, &common.m_sBackup.m_szBackUpFolder[nDummy] );
 		if( 1 == nCharChars && common.m_sBackup.m_szBackUpFolder[nDummy - 1] == '\\' ){
@@ -1295,14 +1295,14 @@ void CShareData_IO::ShareData_IO_Print( CDataProfile& cProfile )
 		cProfile.IOProfileData(pszSecName, szKeyName, StringBufferW(printsetting.m_szPrintFontFaceHan));
 		auto_sprintf( szKeyName, LTEXT("PS[%02d].szFFZ")	, i );
 		cProfile.IOProfileData(pszSecName, szKeyName, StringBufferW(printsetting.m_szPrintFontFaceZen));
-		// ヘッダ/フッタ
+		// ヘッダー/フッター
 		for( j = 0; j < 3; ++j ){
 			auto_sprintf( szKeyName, LTEXT("PS[%02d].szHF[%d]") , i, j );
 			cProfile.IOProfileData(pszSecName, szKeyName, StringBufferW(printsetting.m_szHeaderForm[j]));
 			auto_sprintf( szKeyName, LTEXT("PS[%02d].szFTF[%d]"), i, j );
 			cProfile.IOProfileData(pszSecName, szKeyName, StringBufferW(printsetting.m_szFooterForm[j]));
 		}
-		{ // ヘッダ/フッタ フォント設定
+		{ // ヘッダー/フッター フォント設定
 			WCHAR	szKeyName2[64];
 			WCHAR	szKeyName3[64];
 			auto_sprintf( szKeyName,  LTEXT("PS[%02d].lfHeader"),			i );
@@ -1639,6 +1639,7 @@ void CShareData_IO::ShareData_IO_Type_One( CDataProfile& cProfile, STypeConfig& 
 	cProfile.IOProfileData( pszSecName, LTEXT("bIndentCppStringIgnore")		, types.m_bIndentCppStringIgnore );
 	cProfile.IOProfileData( pszSecName, LTEXT("bIndentCppCommentIgnore")	, types.m_bIndentCppCommentIgnore );
 	cProfile.IOProfileData( pszSecName, LTEXT("bIndentCppUndoSep")	, types.m_bIndentCppUndoSep );
+	cProfile.IOProfileData( pszSecName, LTEXT("bDetectIndentationStyleOnFileLoad"), types.m_bDetectIndentationStyleOnFileLoad );
 	//	Nov. 20, 2000 genta
 	cProfile.IOProfileData( pszSecName, LTEXT("nImeState")			, types.m_nImeState );	//	IME制御
 

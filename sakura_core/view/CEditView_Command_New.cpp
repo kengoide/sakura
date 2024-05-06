@@ -26,7 +26,7 @@
 #include "charset/charcode.h"
 #include "COpe.h" ///	2002/2/3 aroka from here
 #include "COpeBlk.h" ///
-#include "doc/CEditDoc.h"	//	2002/5/13 YAZAKI ヘッダ整理
+#include "doc/CEditDoc.h"	//	2002/5/13 YAZAKI ヘッダー整理
 #include "doc/CDocReader.h"
 #include "doc/layout/CLayout.h"
 #include "doc/logic/CDocLine.h"
@@ -116,11 +116,11 @@ void CEditView::InsertData_CEditView(
 			 || m_pTypeData->m_bKinsokuKuto );	//@@@ 2002.04.19 MIK
 
 	CLayoutInt	nLineAllColLen;
-	CLogicInt	nIdxFrom = CLogicInt(0);
 	CLayoutInt	nColumnFrom = ptInsertPos.GetX2();
 	CNativeW	cMem(L"");
 	COpeLineData insData;
 	if( pLine ){
+		CLogicInt	nIdxFrom = CLogicInt(0);
 		// 更新が前行からになる可能性を調べる	// 2009.02.17 ryoji
 		// ※折り返し行頭への句読点入力で前の行だけが更新される場合もある
 		// ※挿入位置は行途中でも句読点入力＋ワードラップで前の文字列から続けて前行に回り込む場合もある
@@ -557,7 +557,7 @@ void CEditView::DeleteData(
 			
 			CLayoutPoint caretOld = CLayoutPoint(rcSel.left, rcSel.top);
 			m_pcEditDoc->m_cLayoutMgr.GetLineStr( rcSel.top, &nLineLen, &pcLayout );
-			if( rcSel.left <= pcLayout->CalcLayoutWidth( m_pcEditDoc->m_cLayoutMgr ) ){
+			if( pcLayout != NULL && rcSel.left <= pcLayout->CalcLayoutWidth( m_pcEditDoc->m_cLayoutMgr ) ){
 				// EOLより左なら文字の単位にそろえる
 				CLogicInt nIdxCaret = LineColumnToIndex( pcLayout, rcSel.left );
 				caretOld.SetX( LineIndexToColumn( pcLayout, nIdxCaret ) );
@@ -613,7 +613,7 @@ void CEditView::DeleteData(
 			nNxtPos = GetCaret().GetCaretLayoutPos().GetX() + CLayoutInt(pcLayout->GetLayoutEol().GetLen()>0?1+m_pcEditDoc->m_cLayoutMgr.GetCharSpacing():0);
 		}
 		else{
-			nNxtIdx = CLogicInt(CNativeW::GetCharNext( pLine, nLineLen, &pLine[nCurIdx] ) - pLine);
+			nNxtIdx = nCurIdx + CNativeW::GetSizeOfChar( pLine, nLineLen, nCurIdx);
 			// 指定された行のデータ内の位置に対応する桁の位置を調べる
 			nNxtPos = LineIndexToColumn( pcLayout, nNxtIdx );
 		}

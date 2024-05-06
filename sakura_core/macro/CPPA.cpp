@@ -187,7 +187,7 @@ bool CPPA::InitDllImp()
 	char buf[1024];
 	// コマンドに置き換えられない関数 ＝ PPA無しでは使えない。。。
 	for (i=0; CSMacroMgr::m_MacroFuncInfoArr[i].m_pszFuncName != NULL; i++) {
-		//	2003.06.08 Moca メモリーリークの修正
+		//	2003.06.08 Moca メモリリークの修正
 		//	2003.06.16 genta バッファを外から与えるように
 		//	関数登録用文字列を作成する
 		GetDeclarations( CSMacroMgr::m_MacroFuncInfoArr[i], buf );
@@ -196,7 +196,7 @@ bool CPPA::InitDllImp()
 
 	// コマンドに置き換えられる関数 ＝ PPA無しでも使える。
 	for (i=0; CSMacroMgr::m_MacroFuncInfoCommandArr[i].m_pszFuncName != NULL; i++) {
-		//	2003.06.08 Moca メモリーリークの修正
+		//	2003.06.08 Moca メモリリークの修正
 		//	2003.06.16 genta バッファを外から与えるように
 		//	関数登録用文字列を作成する
 		GetDeclarations( CSMacroMgr::m_MacroFuncInfoCommandArr[i], buf );
@@ -325,7 +325,7 @@ void __stdcall CPPA::stdStrObj(const char* ObjName, int Index, BYTE GS_Mode, int
 	@param Err_CD IN  0以外各コールバック関数が設定した値
 			 1以上 FuncID + 1
 			 0     PPAのエラー
-			-1以下 その他ユーザ定義エラー
+			-1以下 その他ユーザー定義エラー
 	@param Err_Mes IN エラーメッセージ
 
 	@date 2003.06.01 Moca

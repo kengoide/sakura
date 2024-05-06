@@ -110,10 +110,13 @@
     <ClCompile Include="code-main.cpp" />
     <ClCompile Include="test-cdocline.cpp" />
     <ClCompile Include="test-cdoclinemgr.cpp" />
+    <ClCompile Include="test-codechecker.cpp" />
+    <ClCompile Include="test-cppa.cpp" />
     <ClCompile Include="test-csearchagent.cpp" />
     <ClCompile Include="test-crunningtimer.cpp" />
     <ClCompile Include="test-csharedata.cpp" />
     <ClCompile Include="test-czipfile.cpp" />
+    <ClCompile Include="test-extmodules.cpp" />
     <ClCompile Include="test-printEFunctionCode.cpp" />
     <ClCompile Include="test-cclipboard.cpp" />
     <ClCompile Include="test-ccodebase.cpp" />
@@ -142,6 +145,7 @@
     <ClCompile Include="test-int2dec.cpp" />
     <ClCompile Include="test-is_mailaddress.cpp" />
     <ClCompile Include="test-loadstring.cpp" />
+    <ClCompile Include="test-messageboxf.cpp" />
     <ClCompile Include="test-mydevmode.cpp" />
     <ClCompile Include="test-parameterized.cpp" />
     <ClCompile Include="test-printECodeType.cpp" />
@@ -156,6 +160,8 @@
     <ClCompile Include="test-winmain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="eval_outputs.hpp" />
+    <ClInclude Include="TExtModule.hpp" />
     <ClInclude Include="tests1_rc.h" />
   </ItemGroup>
   <ItemGroup>

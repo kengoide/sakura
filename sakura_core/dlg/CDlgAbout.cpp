@@ -20,7 +20,7 @@
 */
 
 #include "StdAfx.h"
-#include <ShellAPI.h>
+#include <shellapi.h>
 #include "dlg/CDlgAbout.h"
 #include "uiparts/HandCursor.h"
 #include "util/file.h"
@@ -169,7 +169,7 @@ BOOL CDlgAbout::OnInitDialog( HWND hwndDlg, WPARAM wParam, LPARAM lParam )
 	//	Jun. 8, 2001 genta	GPL化に伴い、OfficialなReleaseとしての道を歩み始める
 	//	Feb. 7, 2002 genta コンパイラ情報追加
 	//	2004.05.13 Moca バージョン番号は、プロセスごとに取得する
-	//	2010.04.15 Moca コンパイラ情報を分離/WINヘッダ,N_SHAREDATA_VERSION追加
+	//	2010.04.15 Moca コンパイラ情報を分離/WINヘッダー,N_SHAREDATA_VERSION追加
 
 	// 以下の形式で出力
 	//サクラエディタ開発版(64bitデバッグ) Ver. 2.4.1.1234 GHA (xxxxxxxx)
@@ -241,7 +241,7 @@ BOOL CDlgAbout::OnInitDialog( HWND hwndDlg, WPARAM wParam, LPARAM lParam )
 	// 2011.06.01 nasukoji	各国語メッセージリソース対応
 	LPCWSTR pszDesc = LS( IDS_ABOUT_DESCRIPTION );
 	WCHAR szMsg[2048];
-	if( wcslen(pszDesc) > 0 ){
+	if( pszDesc[0] != '\0' ) {
 		wcsncpy( szMsg, pszDesc, _countof(szMsg) - 1 );
 		szMsg[_countof(szMsg) - 1] = 0;
 		::DlgItem_SetText( GetHwnd(), IDC_EDIT_ABOUT, szMsg );

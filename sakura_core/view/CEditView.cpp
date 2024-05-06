@@ -151,7 +151,7 @@ CEditView::CEditView( void )
 , m_bActivateByMouse( FALSE )	// 2007.10.02 nasukoji
 , m_nWheelDelta(0)
 , m_eWheelScroll(F_0)
-, m_nMousePouse(0)
+, m_nMousePause(0)
 , m_nAutoScrollMode(0)
 , m_cHistory(NULL)
 , m_cRegexKeyword(NULL)
@@ -220,7 +220,7 @@ BOOL CEditView::Create(
 	m_szComposition[0] = L'\0';
 
 	/* ルーラー表示 */
-	GetTextArea().SetAreaTop(GetTextArea().GetAreaTop()+GetDllShareData().m_Common.m_sWindow.m_nRulerHeight);	/* ルーラー高さ */
+	GetTextArea().SetAreaTop(GetTextArea().GetAreaTop()+DpiScaleY(GetDllShareData().m_Common.m_sWindow.m_nRulerHeight));	/* ルーラー高さ */
 	GetRuler().SetRedrawFlag();	// ルーラー全体を描き直す時=true   2002.02.25 Add By KK
 	m_hdcCompatDC = NULL;		/* 再描画用コンパチブルＤＣ */
 	m_hbmpCompatBMP = NULL;		/* 再描画用メモリＢＭＰ */
@@ -274,13 +274,13 @@ BOOL CEditView::Create(
 	m_cRegexKeyword = new CRegexKeyword( GetDllShareData().m_Common.m_sSearch.m_szRegexpLib );	//@@@ 2001.11.17 add MIK
 	m_cRegexKeyword->RegexKeySetTypes(m_pTypeData);	//@@@ 2001.11.17 add MIK
 
-	GetTextArea().SetTopYohaku( GetDllShareData().m_Common.m_sWindow.m_nRulerBottomSpace ); 	/* ルーラーとテキストの隙間 */
+	GetTextArea().SetTopYohaku(DpiScaleY(GetDllShareData().m_Common.m_sWindow.m_nRulerBottomSpace)); 	/* ルーラーとテキストの隙間 */
 	GetTextArea().SetAreaTop( GetTextArea().GetTopYohaku() );								/* 表示域の上端座標 */
 	/* ルーラー表示 */
 	if( m_pTypeData->m_ColorInfoArr[COLORIDX_RULER].m_bDisp && !m_bMiniMap ){
-		GetTextArea().SetAreaTop( GetTextArea().GetAreaTop() + GetDllShareData().m_Common.m_sWindow.m_nRulerHeight);	/* ルーラー高さ */
+		GetTextArea().SetAreaTop(GetTextArea().GetAreaTop() + DpiScaleY(GetDllShareData().m_Common.m_sWindow.m_nRulerHeight));	/* ルーラー高さ */
 	}
-	GetTextArea().SetLeftYohaku( GetDllShareData().m_Common.m_sWindow.m_nLineNumRightSpace );
+	GetTextArea().SetLeftYohaku(DpiScaleX(GetDllShareData().m_Common.m_sWindow.m_nLineNumRightSpace));
 
 	/* ウィンドウクラスの登録 */
 	//	Apr. 27, 2000 genta
@@ -490,7 +490,7 @@ LRESULT CEditView::DispatchEvent(
 
 		// From Here 2007.09.09 Moca 互換BMPによる画面バッファ
 	case WM_SHOWWINDOW:
-		// ウィンドウ非表示の再に互換BMPを廃棄してメモリーを節約する
+		// ウィンドウ非表示の再に互換BMPを廃棄してメモリを節約する
 		if( hwnd == GetHwnd() && (BOOL)wParam == FALSE ){
 			DeleteCompatibleBitmap();
 		}
@@ -569,8 +569,8 @@ LRESULT CEditView::DispatchEvent(
 			/* テキストを貼り付け */
 			BOOL bHokan;
 			bHokan = m_bHokan;
-			if( m_bHideMouse && 0 <= m_nMousePouse ){
-				m_nMousePouse = -1;
+			if( m_bHideMouse && 0 <= m_nMousePause ){
+				m_nMousePause = -1;
 				::SetCursor( NULL );
 			}
 			GetCommander().HandleCommand( F_INSTEXT_W, true, (LPARAM)pszText, (LPARAM)wcslen(pszText), TRUE, 0 );
@@ -708,8 +708,8 @@ LRESULT CEditView::DispatchEvent(
 //		MYTRACE( L"	WM_VSCROLL nPos=%d\n", GetScrollPos( m_hwndVScrollBar, SB_CTL ) );
 		//	Sep. 11, 2004 genta 同期スクロールの関数化
 		{
-			CLayoutInt Scroll = OnVScroll(
-				(int) LOWORD( wParam ), ((int) HIWORD( wParam )) * m_nVScrollRate );
+			// 垂直スクロールする
+			auto Scroll = OnVScroll(LOWORD(wParam), HIWORD(wParam) * m_nVScrollRate);
 
 			//	シフトキーが押されていないときだけ同期スクロール
 			if(!GetKeyState_Shift()){
@@ -723,8 +723,8 @@ LRESULT CEditView::DispatchEvent(
 //		MYTRACE( L"	WM_HSCROLL nPos=%d\n", GetScrollPos( m_hwndHScrollBar, SB_CTL ) );
 		//	Sep. 11, 2004 genta 同期スクロールの関数化
 		{
-			CLayoutInt Scroll = OnHScroll(
-				(int) LOWORD( wParam ), ((int) HIWORD( wParam )) );
+			// 水平スクロールする
+			auto Scroll = OnHScroll(LOWORD(wParam), HIWORD(wParam));
 
 			//	シフトキーが押されていないときだけ同期スクロール
 			if(!GetKeyState_Shift()){
@@ -1121,7 +1121,7 @@ void CEditView::SetFont( void )
 	if( m_bMiniMap ){
 		GetTextMetrics().Update(hdc, GetFontset().GetFontHan(), 0, 0);
 	}else{
-		GetTextMetrics().Update(hdc, GetFontset().GetFontHan(), m_pTypeData->m_nLineSpace, m_pTypeData->m_nColumnSpace);
+		GetTextMetrics().Update(hdc, GetFontset().GetFontHan(), DpiScaleY(m_pTypeData->m_nLineSpace), DpiScaleX(m_pTypeData->m_nColumnSpace));
 	}
 
 	::ReleaseDC( GetHwnd(), hdc );
@@ -1396,9 +1396,9 @@ void CEditView::ConvSelectedArea( EFunctionCode nFuncCode )
 				nIdxFrom	= CLogicInt(0);
 				nIdxTo		= CLogicInt(0);
 			}
-			CLogicInt	nDelPos = nDelPosNext;
 			nDelLen	= nDelLenNext;
 			if( nLineNum < rcSelLayout.bottom && 0 < nDelLen ){
+				CLogicInt	nDelPos = nDelPosNext;
 				CLayoutPoint sPos;
 				m_pcEditDoc->m_cLayoutMgr.GetLineStr( nLineNum + CLayoutInt(1), &nLineLen2, &pcLayout );
 				sPos.Set(
@@ -1690,7 +1690,7 @@ void CEditView::OnChangeSetting()
 	}
 	RECT		rc;
 
-	GetTextArea().SetTopYohaku( GetDllShareData().m_Common.m_sWindow.m_nRulerBottomSpace ); 		/* ルーラーとテキストの隙間 */
+	GetTextArea().SetTopYohaku(DpiScaleY(GetDllShareData().m_Common.m_sWindow.m_nRulerBottomSpace)); 		/* ルーラーとテキストの隙間 */
 	GetTextArea().SetAreaTop( GetTextArea().GetTopYohaku() );									/* 表示域の上端座標 */
 
 	// 文書種別更新
@@ -1698,9 +1698,9 @@ void CEditView::OnChangeSetting()
 
 	/* ルーラー表示 */
 	if( m_pTypeData->m_ColorInfoArr[COLORIDX_RULER].m_bDisp && !m_bMiniMap ){
-		GetTextArea().SetAreaTop(GetTextArea().GetAreaTop() + GetDllShareData().m_Common.m_sWindow.m_nRulerHeight);	/* ルーラー高さ */
+		GetTextArea().SetAreaTop(GetTextArea().GetAreaTop() + DpiScaleY(GetDllShareData().m_Common.m_sWindow.m_nRulerHeight));	/* ルーラー高さ */
 	}
-	GetTextArea().SetLeftYohaku( GetDllShareData().m_Common.m_sWindow.m_nLineNumRightSpace );
+	GetTextArea().SetLeftYohaku(DpiScaleX(GetDllShareData().m_Common.m_sWindow.m_nLineNumRightSpace));
 
 	/* フォントの変更 */
 	SetFont();
@@ -1826,7 +1826,6 @@ bool CEditView::GetSelectedData(
 	wchar_t*		pszLineNum = NULL;
 	const wchar_t*	pszSpaces = L"                    ";
 	const CLayout*	pcLayout;
-	CEol			appendEol( neweol );
 
 	/* 範囲選択がされていない */
 	if( !GetSelectionInfo().IsTextSelected() ){
@@ -1915,7 +1914,8 @@ bool CEditView::GetSelectedData(
 		}
 	}
 	else{
-		cmemBuf->SetString(L"");
+		CEol appendEol(neweol);
+		cmemBuf->Clear();
 
 		//<< 2002/04/18 Azumaiya
 		//  これから貼り付けに使う領域の大まかなサイズを取得する。
@@ -2648,7 +2648,7 @@ bool  CEditView::ShowKeywordHelp( POINT po, LPCWSTR pszHelp, LPRECT prcHokanWin)
 					return false;
 				}
 			}else{
-				m_cTipWnd.m_cKey = cmemCurText;
+				m_cTipWnd.m_cKey = std::move(cmemCurText);
 				/* 検索実行 */
 				if(!KeySearchCore(&m_cTipWnd.m_cKey))	// 2006.04.10 fon
 					return FALSE;

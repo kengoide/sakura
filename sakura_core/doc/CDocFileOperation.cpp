@@ -80,10 +80,10 @@ void CDocFileOperation::DoFileUnlock()
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 
 /* 「ファイルを開く」ダイアログ */
-//	Mar. 30, 2003 genta	ファイル名未定時の初期ディレクトリをカレントフォルダに
+//	Mar. 30, 2003 genta	ファイル名未定時の初期ディレクトリをカレントフォルダーに
 bool CDocFileOperation::OpenFileDialog(
 	HWND				hwndParent,		//!< [in]
-	const WCHAR*		pszOpenFolder,	//!< [in]     NULL以外を指定すると初期フォルダを指定できる
+	const WCHAR*		pszOpenFolder,	//!< [in]     NULL以外を指定すると初期フォルダーを指定できる
 	SLoadInfo*			pLoadInfo,		//!< [in,out] ロード情報
 	std::vector<std::wstring>&	files
 )
@@ -97,7 +97,7 @@ bool CDocFileOperation::OpenFileDialog(
 		G_AppInstance(),
 		hwndParent,
 		L"*.*",
-		pszOpenFolder ? pszOpenFolder : CSakuraEnvironment::GetDlgInitialDir().c_str(),	// 初期フォルダ
+		pszOpenFolder ? pszOpenFolder : CSakuraEnvironment::GetDlgInitialDir().c_str(),	// 初期フォルダー
 		CMRUFile().GetPathList(),															// MRUリストのファイルのリスト
 		CMRUFolder().GetPathList()														// OPENFOLDERリストのファイルのリスト
 	);
@@ -179,8 +179,6 @@ void CDocFileOperation::ReloadCurrentFile(
 	}
 
 	//カーソル位置保存
-	CLayoutInt		nViewTopLine = GetEditWnd().GetActiveView().GetTextArea().GetViewTopLine();	/* 表示域の一番上の行(0開始) */
-	CLayoutInt		nViewLeftCol = GetEditWnd().GetActiveView().GetTextArea().GetViewLeftCol();	/* 表示域の一番左の桁(0開始) */
 	CLayoutPoint	ptCaretPosXY = GetEditWnd().GetActiveView().GetCaret().GetCaretLayoutPos();
 
 	//ロード
@@ -195,6 +193,8 @@ void CDocFileOperation::ReloadCurrentFile(
 	// カーソル位置復元 (※ここではオプションのカーソル位置復元（＝改行単位）が指定されていない場合でも復元する)
 	// 2007.08.23 ryoji 表示領域復元
 	if( ptCaretPosXY.GetY2() < m_pcDocRef->m_cLayoutMgr.GetLineCount() ){
+		CLayoutInt nViewTopLine = GetEditWnd().GetActiveView().GetTextArea().GetViewTopLine();	/* 表示域の一番上の行(0開始) */
+		CLayoutInt nViewLeftCol = GetEditWnd().GetActiveView().GetTextArea().GetViewLeftCol();	/* 表示域の一番左の桁(0開始) */
 		GetEditWnd().GetActiveView().GetTextArea().SetViewTopLine(nViewTopLine);
 		GetEditWnd().GetActiveView().GetTextArea().SetViewLeftCol(nViewLeftCol);
 	}
@@ -216,7 +216,7 @@ void CDocFileOperation::ReloadCurrentFile(
 
 /*! 「ファイル名を付けて保存」ダイアログ
 	@date 2001.02.09 genta	改行コードを示す引数追加
-	@date 2003.03.30 genta	ファイル名未定時の初期ディレクトリをカレントフォルダに
+	@date 2003.03.30 genta	ファイル名未定時の初期ディレクトリをカレントフォルダーに
 	@date 2003.07.20 ryoji	BOMの有無を示す引数追加
 	@date 2006.11.10 ryoji	ユーザー指定の拡張子を状況依存で変化させる
 */
@@ -284,9 +284,9 @@ bool CDocFileOperation::SaveFileDialog(
 		G_AppInstance(),
 		CEditWnd::getInstance()->GetHwnd(),
 		strDefaultWildCard.c_str(),
-		CSakuraEnvironment::GetDlgInitialDir().c_str(),	// 初期フォルダ
+		CSakuraEnvironment::GetDlgInitialDir().c_str(),	// 初期フォルダー
 		CMRUFile().GetPathList(),		//	最近のファイル
-		CMRUFolder().GetPathList()	//	最近のフォルダ
+		CMRUFolder().GetPathList()	//	最近のフォルダー
 	);
 	return cDlgOpenFile.DoModalSaveDlg( pSaveInfo, pSaveInfo->eCharCode == CODE_CODEMAX );
 }
@@ -449,7 +449,7 @@ bool CDocFileOperation::FileSaveAs( const WCHAR* filename,ECodeType eCodeType, E
 
 /*
 	閉じて(無題)。
-	ユーザキャンセル操作等によりクローズされなかった場合は false を返す。
+	ユーザーキャンセル操作等によりクローズされなかった場合は false を返す。
 
 	@date 2006.12.30 ryoji CEditView::Command_FILESAVEAS()から処理本体を切り出し
 */

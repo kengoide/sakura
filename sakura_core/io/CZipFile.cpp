@@ -27,7 +27,7 @@
 		   distribution.
 */
 #include "StdAfx.h"
-#include <ShellAPI.h>
+#include <shellapi.h>
 #include "CZipFile.h"
 #include "basis/CMyString.h"
 
@@ -77,7 +77,7 @@ bool CZipFile::SetZip(const std::wstring& sZipPath)
 	return true;
 }
 
-// ZIP File 内 フォルダ名取得と定義ファイル検査(Plugin用)
+// ZIP File 内 フォルダー名取得と定義ファイル検査(Plugin用)
 bool CZipFile::ChkPluginDef(const std::wstring& sDefFile, std::wstring& sFolderName)
 {
 	HRESULT			hr;
@@ -86,7 +86,7 @@ bool CZipFile::ChkPluginDef(const std::wstring& sDefFile, std::wstring& sFolderN
 	long			lCount;
 	bool			bFoundDef = false;
 
-	sFolderName = L"";
+	sFolderName.clear();
 
 	// ZIP File List
 	hr = pZipFile->Items(&pZipFileItems);

@@ -68,7 +68,7 @@ void CMainToolBar::ProcSearchBox( MSG *msg )
 					//検索キーを登録
 					CSearchKeywordManager().AddToSearchKeyArr( strText.c_str() );
 				}
-				m_pOwner->GetActiveView().m_strCurSearchKey = strText;
+				m_pOwner->GetActiveView().m_strCurSearchKey = std::move(strText);
 				m_pOwner->GetActiveView().m_bCurSearchUpdate = true;
 				m_pOwner->GetActiveView().ChangeCurRegexp();
 
@@ -106,7 +106,7 @@ static LRESULT CALLBACK ToolBarWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPAR
 	switch( msg )
 	{
 	// WinXP Visual Style のときにツールバー上でのマウス左右ボタン同時押しで無応答になる
-	//（マウスをキャプチャーしたまま放さない） 問題を回避するために右ボタンを無視する
+	//（マウスをキャプチャしたまま放さない） 問題を回避するために右ボタンを無視する
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
 		return 0L;				// 右ボタンの UP/DOWN は本来のウィンドウプロシージャに渡さない
@@ -604,7 +604,7 @@ int CMainToolBar::GetSearchKey(std::wstring& strText)
 	if( m_hwndSearchBox ){
 		ApiWrap::Wnd_GetText( m_hwndSearchBox, strText );
 	}else{
-		strText = L"";
+		strText.clear();
 	}
 	return strText.length();
 }

@@ -125,7 +125,7 @@ EDllResult CDllImp::InitDll(LPCWSTR pszSpecifiedDllName)
 	}
 }
 
-bool CDllImp::DeinitDll(bool force)
+bool CDllImp::DeinitDll(bool force) noexcept
 {
 	if( m_hInstance == NULL || (!IsAvailable()) ){
 		//	DLLが読み込まれていなければ何もしない
@@ -138,7 +138,7 @@ bool CDllImp::DeinitDll(bool force)
 	//DLL解放
 	if( ret || force ){
 		//DLL名を解放
-		m_strLoadedDllName = L"";
+		m_strLoadedDllName.clear();
 
 		//DLL解放
 		::FreeLibrary( m_hInstance );

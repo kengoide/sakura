@@ -31,7 +31,7 @@ typedef struct uchardet * uchardet_t;
 /*!
  * uchardet ライブラリ(uchardet.dll) をラップするクラス
  */
-class CUchardet final : public CDllImp
+class CUchardet : public CDllImp
 {
 public:
 	// DLL関数ポインタ
@@ -43,7 +43,7 @@ public:
 	const char * (*_uchardet_get_charset)(uchardet_t ud) = nullptr;
 
 protected:
-	// CDllImpインタフェース
+	// CDllImpインターフェース
 	LPCWSTR GetDllNameImp(int nIndex) override;
 	bool InitDllImp() override;
 

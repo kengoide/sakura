@@ -68,7 +68,7 @@ bool CWSHMacroManager::ExecKeyMacro(CEditView *EditView, int flags) const
 	bool bRet = false;
 	if(Engine->m_Valid)
 	{
-		//インタフェースオブジェクトの登録
+		//インターフェースオブジェクトの登録
 		CWSHIfObj* objEditor = new CEditorIfObj();
 		objEditor->ReadyMethods( EditView, flags );
 		Engine->AddInterfaceObject( objEditor );
@@ -92,7 +92,7 @@ bool CWSHMacroManager::ExecKeyMacro(CEditView *EditView, int flags) const
 BOOL CWSHMacroManager::LoadKeyMacro(HINSTANCE hInstance, const WCHAR* pszPath)
 {
 	//ソース読み込み -> m_Source
-	m_Source=L"";
+	m_Source.clear();
 	
 	CTextInputStream in(pszPath);
 	if(!in)
@@ -141,19 +141,19 @@ void CWSHMacroManager::declare()
 	CMacroFactory::getInstance()->RegisterCreator(Creator);
 }
 
-//インタフェースオブジェクトを追加する
+//インターフェースオブジェクトを追加する
 void CWSHMacroManager::AddParam( CWSHIfObj* param )
 {
 	m_Params.push_back( param );
 }
 
-//インタフェースオブジェクト達を追加する
+//インターフェースオブジェクト達を追加する
 void CWSHMacroManager::AddParam( CWSHIfObj::List& params )
 {
 	m_Params.insert( m_Params.end(), params.begin(), params.end() );
 }
 
-//インタフェースオブジェクトを削除する
+//インターフェースオブジェクトを削除する
 void CWSHMacroManager::ClearParam()
 {
 	m_Params.clear();

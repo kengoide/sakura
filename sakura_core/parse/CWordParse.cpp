@@ -140,11 +140,10 @@ ECharKind CWordParse::WhatKindOfChar(
 {
 	using namespace WCODE;
 
-	int nCharChars = CNativeW::GetSizeOfChar( pData, pDataLen, nIdx );
-	if( nCharChars == 0 ){
-		return CK_NULL;	// NULL
-	}
-	else if( nCharChars == 1 ){
+	ECharKind ret = CK_NULL;
+	if(const auto nCharChars = CNativeW::GetSizeOfChar(pData, pDataLen, nIdx);
+		nCharChars == 1)
+	{
 		wchar_t c=pData[nIdx];
 
 		//今までの半角
@@ -158,7 +157,7 @@ ECharKind CWordParse::WhatKindOfChar(
 		if( IsHankakuKatakana(c) )return CK_KATA;	// 半角のカタカナ
 		if( 0x00C0 <= c && c < 0x0180 && c != 0x00D7 && c != 0x00F7 )return CK_LATIN;
 													// ラテン１補助、ラテン拡張のうちアルファベット風のもの（×÷を除く）
-		//if( c == L'#'|| c == L'$' || c == L'@'|| c == L'\\' )return CK_UDEF;	// ユーザ定義
+		//if( c == L'#'|| c == L'$' || c == L'@'|| c == L'\\' )return CK_UDEF;	// ユーザー定義
 
 		//その他
 		if( IsZenkakuSpace(c)    )return CK_ZEN_SPACE;	// 全角スペース
@@ -186,9 +185,14 @@ ECharKind CWordParse::WhatKindOfChar(
 		}
 		return CK_ETC;	// 半角のその他
 	}
-	else{
-		return CK_NULL;	// NULL
+	// IVS（正字 + 異体字セレクタ）
+	else if (nCharChars == 3 &&
+		IsVariationSelector(pData + nIdx + 1))
+	{
+		ret = CK_ZEN_ETC;				// 全角のその他(漢字など)
 	}
+
+	return ret;
 }
 
 //! 二つの文字を結合したものの種類を調べる
@@ -207,7 +211,7 @@ ECharKind CWordParse::WhatKindOfTwoChars( ECharKind kindPre, ECharKind kindCur )
 
 	if( kindPre == CK_LATIN )kindPre = CK_CSYM;		// ラテン系文字はアルファベットとみなす
 	if( kindCur == CK_LATIN )kindCur = CK_CSYM;
-	if( kindPre == CK_UDEF )kindPre = CK_ETC;		// ユーザ定義文字はその他の半角とみなす
+	if( kindPre == CK_UDEF )kindPre = CK_ETC;		// ユーザー定義文字はその他の半角とみなす
 	if( kindCur == CK_UDEF )kindCur = CK_ETC;
 	if( kindPre == CK_CTRL )kindPre = CK_ETC;		// 制御文字はその他の半角とみなす
 	if( kindCur == CK_CTRL )kindCur = CK_ETC;
@@ -233,7 +237,7 @@ ECharKind CWordParse::WhatKindOfTwoChars4KW( ECharKind kindPre, ECharKind kindCu
 
 	if( kindPre == CK_LATIN )kindPre = CK_CSYM;		// ラテン系文字はアルファベットとみなす
 	if( kindCur == CK_LATIN )kindCur = CK_CSYM;
-	if( kindPre == CK_UDEF )kindPre = CK_CSYM;		// ユーザ定義文字はアルファベットとみなす
+	if( kindPre == CK_UDEF )kindPre = CK_CSYM;		// ユーザー定義文字はアルファベットとみなす
 	if( kindCur == CK_UDEF )kindCur = CK_CSYM;
 	if( kindPre == CK_CTRL )kindPre = CK_CTRL;		// 制御文字はそのまま制御文字とみなす
 	if( kindCur == CK_CTRL )kindCur = CK_CTRL;
@@ -477,7 +481,7 @@ BOOL IsURL(
 	if( wc_to_c(*begin)==0 ) return FALSE;	/* 2バイト文字 */
 	if( 0 < url_char[wc_to_c(*begin)] ){	/* URL開始文字 */
 		for(urlp = &url_table[url_char[wc_to_c(*begin)]-1]; urlp->name[0] == wc_to_c(*begin); urlp++){	/* URLテーブルを探索 */
-			if( (urlp->length <= end - begin) && (wmemcmp(urlp->name, begin, urlp->length) == 0) ){	/* URLヘッダは一致した */
+			if( (urlp->length <= end - begin) && (wmemcmp(urlp->name, begin, urlp->length) == 0) ){	/* URLヘッダーは一致した */
 				if( urlp->is_mail ){	/* メール専用の解析へ */
 					if( IsMailAddress(begin, urlp->length, end - begin - urlp->length, pnMatchLen) ){
 						*pnMatchLen = *pnMatchLen + urlp->length;
@@ -488,7 +492,7 @@ BOOL IsURL(
 				for(i = urlp->length; i < end - begin; i++){	/* 通常の解析へ */
 					if( wc_to_c(begin[i])==0 || (!(url_char[wc_to_c(begin[i])])) ) break;	/* 終端に達した */
 				}
-				if( i == urlp->length ) return FALSE;	/* URLヘッダだけ */
+				if( i == urlp->length ) return FALSE;	/* URLヘッダーだけ */
 				*pnMatchLen = i;
 				return TRUE;
 			}

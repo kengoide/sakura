@@ -45,7 +45,7 @@ class CPluginIfObj : public CWSHIfObj {
 		F_PL_SETOPTION,							//オプションファイルに値を書く
 		F_PL_ADDCOMMAND,						//コマンドを追加する
 		F_PL_FUNCTION_FIRST = F_FUNCTION_FIRST,	//↓関数は以下に追加する
-		F_PL_GETPLUGINDIR,						//プラグインフォルダパスを取得する
+		F_PL_GETPLUGINDIR,						//プラグインフォルダーパスを取得する
 		F_PL_GETDEF,							//設定ファイルから値を読む
 		F_PL_GETOPTION,							//オプションファイルから値を読む
 		F_PL_GETCOMMANDNO,						//実行中プラグの番号を取得する
@@ -82,13 +82,13 @@ public:
 		return m_MacroFuncInfoArr;
 	}
 	//関数を処理する
-	bool HandleFunction(CEditView* View, EFunctionCode ID, const VARIANT *Arguments, const int ArgSize, VARIANT &Result)
+	bool HandleFunction(CEditView* View, EFunctionCode ID, VARIANT *Arguments, const int ArgSize, VARIANT &Result)
 	{
 		Variant varCopy;	// VT_BYREFだと困るのでコピー用
 
 		switch(LOWORD(ID))
 		{
-		case F_PL_GETPLUGINDIR:			//プラグインフォルダパスを取得する
+		case F_PL_GETPLUGINDIR:			//プラグインフォルダーパスを取得する
 			{
 				SysString S(m_cPlugin.m_sBaseDir.c_str(), m_cPlugin.m_sBaseDir.size());
 				Wrap(&Result)->Receive(S);
@@ -144,7 +144,7 @@ public:
 					Wrap(&Result)->Receive(S);
 					return true;
 				}else if( 0 == num ){
-					std::wstring str = m_cPlugin.m_sLangName.c_str();
+					std::wstring str = m_cPlugin.m_sLangName;
 					SysString S(str.c_str(), str.size());
 					Wrap(&Result)->Receive(S);
 					return true;
@@ -205,7 +205,7 @@ MacroFuncInfo CPluginIfObj::m_MacroFuncInfoCommandArr[] =
 MacroFuncInfo CPluginIfObj::m_MacroFuncInfoArr[] = 
 {
 	//ID									関数名							引数										戻り値の型	m_pszData
-	{EFunctionCode(F_PL_GETPLUGINDIR),		LTEXT("GetPluginDir"),			{VT_EMPTY, VT_EMPTY, VT_EMPTY, VT_EMPTY},	VT_BSTR,	NULL }, //プラグインフォルダパスを取得する
+	{EFunctionCode(F_PL_GETPLUGINDIR),		LTEXT("GetPluginDir"),			{VT_EMPTY, VT_EMPTY, VT_EMPTY, VT_EMPTY},	VT_BSTR,	NULL }, //プラグインフォルダーパスを取得する
 	{EFunctionCode(F_PL_GETDEF),			LTEXT("GetDef"),				{VT_BSTR, VT_BSTR, VT_EMPTY, VT_EMPTY},		VT_BSTR,	NULL }, //設定ファイルから値を読む
 	{EFunctionCode(F_PL_GETOPTION),			LTEXT("GetOption"),				{VT_BSTR, VT_BSTR, VT_EMPTY, VT_EMPTY},		VT_BSTR,	NULL }, //オプションファイルから値を読む
 	{EFunctionCode(F_PL_GETCOMMANDNO),		LTEXT("GetCommandNo"),			{VT_EMPTY, VT_EMPTY, VT_EMPTY, VT_EMPTY},	VT_I4,		NULL }, //オプションファイルから値を読む

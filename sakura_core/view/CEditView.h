@@ -45,7 +45,7 @@
 
 #include <Windows.h>
 #include <ObjIdl.h>  // LPDATAOBJECT
-#include <ShellAPI.h>  // HDROP
+#include <shellapi.h>  // HDROP
 
 #include <thread>
 
@@ -74,13 +74,13 @@
 
 class CViewFont;
 class CRuler;
-class CDropTarget; /// 2002/2/3 aroka ヘッダ軽量化
+class CDropTarget; /// 2002/2/3 aroka ヘッダー軽量化
 class COpeBlk;///
 class CSplitBoxWnd;///
 class CRegexKeyword;///
-class CAutoMarkMgr; /// 2002/2/3 aroka ヘッダ軽量化 to here
-class CEditDoc;	//	2002/5/13 YAZAKI ヘッダ軽量化
-class CLayout;	//	2002/5/13 YAZAKI ヘッダ軽量化
+class CAutoMarkMgr; /// 2002/2/3 aroka ヘッダー軽量化 to here
+class CEditDoc;	//	2002/5/13 YAZAKI ヘッダー軽量化
+class CLayout;	//	2002/5/13 YAZAKI ヘッダー軽量化
 class CMigemo;	// 2004.09.14 isearch
 struct SColorStrategyInfo;
 struct CColor3Setting;
@@ -693,8 +693,8 @@ public:
 	CMyPoint		m_cMouseDownPos;	//!< クリック時のマウス座標
 	int				m_nWheelDelta;	//!< ホイール変化量
 	EFunctionCode	m_eWheelScroll; //!< スクロールの種類
-	int				m_nMousePouse;	// マウス停止時間
-	CMyPoint		m_cMousePousePos;	// マウスの停止位置
+	int				m_nMousePause;	// マウス停止時間
+	CMyPoint		m_cMousePausePos;	// マウスの停止位置
 	bool			m_bHideMouse;
 
 	int				m_nAutoScrollMode;			//!< オートスクロールモード

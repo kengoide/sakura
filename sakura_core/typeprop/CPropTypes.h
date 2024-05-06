@@ -115,6 +115,10 @@ protected:
 
 	// フォント表示用データ
 	HFONT			m_hTypeFont;							//!< タイプ別フォント表示ハンドル
+	std::shared_ptr<class CViewFont>	m_pViewFont;				//!< 色種別リストのフォント用
+
+	UINT m_uFocusBorderWidth = 1; // cache SPI_GETFOCUSBORDERWIDTH
+	UINT m_uFocusBorderHeight = 1; // cache SPI_GETFOCUSBORDERHEIGHT
 
 	// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- //
 	//                      各プロパティページ                     //

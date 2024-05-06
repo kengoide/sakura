@@ -212,7 +212,7 @@ normal_action:;
 		}
 		GetSelectionInfo().m_ptMouseRollPosOld = ptMouse;	// マウス範囲選択前回位置(XY座標)
 
-		/* 範囲選択開始 & マウスキャプチャー */
+		/* 範囲選択開始 & マウスキャプチャ */
 		GetSelectionInfo().SelectBeginBox();
 
 		::SetCapture( GetHwnd() );
@@ -248,7 +248,7 @@ normal_action:;
 		/* マウスのキャプチャなど */
 		GetSelectionInfo().m_ptMouseRollPosOld = ptMouse;	// マウス範囲選択前回位置(XY座標)
 		
-		/* 範囲選択開始 & マウスキャプチャー */
+		/* 範囲選択開始 & マウスキャプチャ */
 		GetSelectionInfo().SelectBeginNazo();
 		::SetCapture( GetHwnd() );
 		GetCaret().HideCaret_( GetHwnd() ); // 2002/07/22 novice
@@ -944,10 +944,10 @@ void CEditView::OnMOUSEMOVE( WPARAM fwKeys, int xPos_, int yPos_ )
 {
 	CMyPoint ptMouse(xPos_, yPos_);
 
-	if( m_cMousePousePos != ptMouse ){
-		m_cMousePousePos = ptMouse;
-		if( m_nMousePouse < 0 ){
-			m_nMousePouse = 0;
+	if( m_cMousePausePos != ptMouse ){
+		m_cMousePausePos = ptMouse;
+		if( m_nMousePause < 0 ){
+			m_nMousePause = 0;
 		}
 	}
 
@@ -1103,7 +1103,7 @@ void CEditView::OnMOUSEMOVE( WPARAM fwKeys, int xPos_, int yPos_ )
 					}
 				}else
 				/* アイビーム */
-				if( 0 <= m_nMousePouse ){
+				if( 0 <= m_nMousePause ){
 					::SetCursor( ::LoadCursor( NULL, IDC_IBEAM ) );
 				}
 			}
@@ -1112,7 +1112,7 @@ void CEditView::OnMOUSEMOVE( WPARAM fwKeys, int xPos_, int yPos_ )
 	}
 	// 以下、マウスでの選択中(ドラッグ中)
 
-	if( 0 <= m_nMousePouse ){
+	if( 0 <= m_nMousePause ){
 		::SetCursor( ::LoadCursor( NULL, IDC_IBEAM ) );
 	}
 
@@ -1192,7 +1192,7 @@ void CEditView::OnMOUSEMOVE( WPARAM fwKeys, int xPos_, int yPos_ )
 				}
 			}
 		}else{
-			GetCaret().MoveCursorToClientPoint( ptMouse, true, &ptNewCursor );
+			GetCaret().MoveCursorToClientPoint( ptMouse, false, &ptNewCursor );
 		}
 		GetSelectionInfo().m_ptMouseRollPosOld = ptMouse; // マウス範囲選択前回位置(XY座標)
 
@@ -1513,7 +1513,7 @@ void CEditView::OnLBUTTONUP( WPARAM fwKeys, int xPos , int yPos )
 {
 //	MYTRACE( L"OnLBUTTONUP()\n" );
 
-	/* 範囲選択終了 & マウスキャプチャーおわり */
+	/* 範囲選択終了 & マウスキャプチャおわり */
 	if( GetSelectionInfo().IsMouseSelecting() ){	/* 範囲選択中 */
 		/* マウス キャプチャを解放 */
 		::ReleaseCapture();
@@ -1572,7 +1572,7 @@ void CEditView::OnLBUTTONDBLCLK( WPARAM fwKeys, int _xPos , int _yPos )
 					strOPEN = L"ht" + strURL;
 				}
 				else{
-					strOPEN = strURL;
+					strOPEN = std::move(strURL);
 				}
 			}
 			{
@@ -1671,7 +1671,7 @@ void CEditView::OnLBUTTONDBLCLK( WPARAM fwKeys, int _xPos , int _yPos )
 	*/
 	if(F_SELECTWORD != nFuncID) return;
 
-	/* 範囲選択開始 & マウスキャプチャー */
+	/* 範囲選択開始 & マウスキャプチャ */
 	GetSelectionInfo().SelectBeginWord();
 
 	if( GetDllShareData().m_Common.m_sView.m_bFontIs_FIXED_PITCH ){	/* 現在のフォントは固定幅フォントである */
@@ -2052,7 +2052,7 @@ STDMETHODIMP CEditView::Drop( LPDATAOBJECT pDataObject, DWORD dwKeyState, POINTL
 	SetUndoBuffer();
 
 	::GlobalUnlock( hData );
-	// 2004.07.12 fotomo/もか メモリーリークの修正
+	// 2004.07.12 fotomo/もか メモリリークの修正
 	if( 0 == (GMEM_LOCKCOUNT & ::GlobalFlags(hData)) ){
 		::GlobalFree( hData );
 	}
